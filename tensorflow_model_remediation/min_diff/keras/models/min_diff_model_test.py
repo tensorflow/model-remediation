@@ -20,9 +20,9 @@ import os
 import tempfile
 import mock
 
-from model_remediation.min_diff import losses
-from model_remediation.min_diff.keras import utils
-from model_remediation.min_diff.keras.models import min_diff_model
+from tensorflow_model_remediation.min_diff import losses
+from tensorflow_model_remediation.min_diff.keras import utils
+from tensorflow_model_remediation.min_diff.keras.models import min_diff_model
 import tensorflow as tf
 
 

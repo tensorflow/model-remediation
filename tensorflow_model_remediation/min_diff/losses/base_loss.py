@@ -19,10 +19,10 @@
 import abc
 from typing import Optional, Text, Tuple, Union
 
-from model_remediation.common import docs
-from model_remediation.common import types
-from model_remediation.min_diff.losses import base_kernel
-from model_remediation.min_diff.losses import kernel_utils
+from tensorflow_model_remediation.common import docs
+from tensorflow_model_remediation.common import types
+from tensorflow_model_remediation.min_diff.losses import base_kernel
+from tensorflow_model_remediation.min_diff.losses import kernel_utils
 import tensorflow as tf
 
 

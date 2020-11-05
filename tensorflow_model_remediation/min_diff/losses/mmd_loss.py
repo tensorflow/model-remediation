@@ -18,9 +18,9 @@
 
 from typing import Optional, Text
 
-from model_remediation.common import types
-from model_remediation.min_diff.losses import base_kernel
-from model_remediation.min_diff.losses import base_loss
+from tensorflow_model_remediation.common import types
+from tensorflow_model_remediation.min_diff.losses import base_kernel
+from tensorflow_model_remediation.min_diff.losses import base_loss
 import tensorflow as tf
 
 

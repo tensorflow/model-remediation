@@ -15,5 +15,5 @@
 
 """Public API for min diff integration."""
 
-from model_remediation.min_diff import keras
-from model_remediation.min_diff import losses
+from tensorflow_model_remediation.min_diff import keras
+from tensorflow_model_remediation.min_diff import losses

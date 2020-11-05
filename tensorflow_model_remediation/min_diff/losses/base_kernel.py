@@ -19,7 +19,7 @@
 import abc
 from typing import Optional
 
-from model_remediation.common import types
+from tensorflow_model_remediation.common import types
 import tensorflow as tf
 
 

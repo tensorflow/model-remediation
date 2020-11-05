@@ -20,7 +20,7 @@ import os
 import tempfile
 import unittest.mock as mock
 
-from model_remediation.docs.examples import min_diff_keras_util
+from tensorflow_model_remediation.docs.examples import min_diff_keras_util
 import tensorflow.compat.v1 as tf
 
 

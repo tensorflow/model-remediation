@@ -15,4 +15,4 @@
 
 """High-level implementation supporting min diff integration for most arbitrary keras models."""
 
-from model_remediation.min_diff.keras.models.min_diff_model import MinDiffModel
+from tensorflow_model_remediation.min_diff.keras.models.min_diff_model import MinDiffModel

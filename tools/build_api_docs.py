@@ -19,7 +19,7 @@ import os
 from absl import app
 from absl import flags
 
-from model_remediation import min_diff
+from tensorflow_model_remediation import min_diff
 
 import tensorflow as tf
 

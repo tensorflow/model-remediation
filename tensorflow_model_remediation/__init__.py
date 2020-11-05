@@ -15,5 +15,5 @@
 
 """Init module for Model Remediation."""
 
-from model_remediation import min_diff
-from model_remediation.version import __version__
+from tensorflow_model_remediation import min_diff
+from tensorflow_model_remediation.version import __version__

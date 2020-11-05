@@ -15,7 +15,7 @@
 
 """Test laplace_kernel module."""
 
-from model_remediation.min_diff.losses import laplace_kernel
+from tensorflow_model_remediation.min_diff.losses import laplace_kernel
 import tensorflow as tf
 
 

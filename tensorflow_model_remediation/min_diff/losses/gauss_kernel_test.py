@@ -15,7 +15,7 @@
 
 """Test gauss_kernel module."""
 
-from model_remediation.min_diff.losses import gauss_kernel
+from tensorflow_model_remediation.min_diff.losses import gauss_kernel
 import tensorflow as tf
 
 

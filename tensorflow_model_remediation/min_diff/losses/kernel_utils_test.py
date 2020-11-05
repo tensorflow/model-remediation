@@ -15,10 +15,10 @@
 
 """Test kernel_utils module."""
 
-from model_remediation.min_diff.losses import base_kernel
-from model_remediation.min_diff.losses import gauss_kernel
-from model_remediation.min_diff.losses import kernel_utils as utils
-from model_remediation.min_diff.losses import laplace_kernel
+from tensorflow_model_remediation.min_diff.losses import base_kernel
+from tensorflow_model_remediation.min_diff.losses import gauss_kernel
+from tensorflow_model_remediation.min_diff.losses import kernel_utils as utils
+from tensorflow_model_remediation.min_diff.losses import laplace_kernel
 import tensorflow as tf
 
 

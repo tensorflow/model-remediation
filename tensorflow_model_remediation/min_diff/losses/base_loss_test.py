@@ -15,10 +15,10 @@
 
 """Test base_loss module."""
 
-from model_remediation.min_diff.losses import base_kernel
-from model_remediation.min_diff.losses import base_loss
-from model_remediation.min_diff.losses import gauss_kernel
-from model_remediation.min_diff.losses import laplace_kernel
+from tensorflow_model_remediation.min_diff.losses import base_kernel
+from tensorflow_model_remediation.min_diff.losses import base_loss
+from tensorflow_model_remediation.min_diff.losses import gauss_kernel
+from tensorflow_model_remediation.min_diff.losses import laplace_kernel
 import tensorflow as tf
 
 

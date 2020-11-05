@@ -18,11 +18,11 @@
 # pylint: disable=g-bad-import-order
 
 # Losses
-from model_remediation.min_diff.losses.absolute_correlation_loss import AbsoluteCorrelationLoss
-from model_remediation.min_diff.losses.base_loss import MinDiffLoss
-from model_remediation.min_diff.losses.mmd_loss import MMDLoss
+from tensorflow_model_remediation.min_diff.losses.absolute_correlation_loss import AbsoluteCorrelationLoss
+from tensorflow_model_remediation.min_diff.losses.base_loss import MinDiffLoss
+from tensorflow_model_remediation.min_diff.losses.mmd_loss import MMDLoss
 
 # Kernels
-from model_remediation.min_diff.losses.base_kernel import MinDiffKernel
-from model_remediation.min_diff.losses.gauss_kernel import GaussKernel
-from model_remediation.min_diff.losses.laplace_kernel import LaplaceKernel
+from tensorflow_model_remediation.min_diff.losses.base_kernel import MinDiffKernel
+from tensorflow_model_remediation.min_diff.losses.gauss_kernel import GaussKernel
+from tensorflow_model_remediation.min_diff.losses.laplace_kernel import LaplaceKernel

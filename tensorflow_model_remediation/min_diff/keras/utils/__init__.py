@@ -15,7 +15,7 @@
 
 """Utility functions and classes for integrating min diff."""
 
-from model_remediation.min_diff.keras.utils.input_utils import MinDiffPackedInputs
-from model_remediation.min_diff.keras.utils.input_utils import pack_min_diff_data
-from model_remediation.min_diff.keras.utils.input_utils import unpack_min_diff_data
-from model_remediation.min_diff.keras.utils.input_utils import unpack_original_inputs
+from tensorflow_model_remediation.min_diff.keras.utils.input_utils import MinDiffPackedInputs
+from tensorflow_model_remediation.min_diff.keras.utils.input_utils import pack_min_diff_data
+from tensorflow_model_remediation.min_diff.keras.utils.input_utils import unpack_min_diff_data
+from tensorflow_model_remediation.min_diff.keras.utils.input_utils import unpack_original_inputs

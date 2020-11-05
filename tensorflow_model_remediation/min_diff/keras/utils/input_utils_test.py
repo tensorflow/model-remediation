@@ -15,7 +15,7 @@
 
 """Tests for input util functions."""
 
-from model_remediation.min_diff.keras.utils import input_utils
+from tensorflow_model_remediation.min_diff.keras.utils import input_utils
 import tensorflow as tf
 
 

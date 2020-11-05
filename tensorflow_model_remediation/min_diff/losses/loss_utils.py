@@ -18,9 +18,9 @@
 
 from typing import Text, Union
 
-from model_remediation.min_diff.losses import absolute_correlation_loss as abscorrloss
-from model_remediation.min_diff.losses import base_loss
-from model_remediation.min_diff.losses import mmd_loss
+from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as abscorrloss
+from tensorflow_model_remediation.min_diff.losses import base_loss
+from tensorflow_model_remediation.min_diff.losses import mmd_loss
 
 import six
 

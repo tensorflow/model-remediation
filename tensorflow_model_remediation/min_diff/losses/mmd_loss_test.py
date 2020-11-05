@@ -15,8 +15,8 @@
 
 """Test mmd_loss module."""
 
-from model_remediation.min_diff.losses import gauss_kernel
-from model_remediation.min_diff.losses import mmd_loss as loss_lib
+from tensorflow_model_remediation.min_diff.losses import gauss_kernel
+from tensorflow_model_remediation.min_diff.losses import mmd_loss as loss_lib
 import tensorflow as tf
 
 

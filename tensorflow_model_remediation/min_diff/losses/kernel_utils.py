@@ -18,9 +18,9 @@
 
 from typing import Text, Union
 
-from model_remediation.min_diff.losses import base_kernel
-from model_remediation.min_diff.losses import gauss_kernel
-from model_remediation.min_diff.losses import laplace_kernel
+from tensorflow_model_remediation.min_diff.losses import base_kernel
+from tensorflow_model_remediation.min_diff.losses import gauss_kernel
+from tensorflow_model_remediation.min_diff.losses import laplace_kernel
 import six
 
 _KERNELS_DICT = {

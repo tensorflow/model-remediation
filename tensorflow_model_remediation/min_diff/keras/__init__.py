@@ -15,7 +15,7 @@
 
 """Public API for min diff integration in Keras."""
 
-from model_remediation.min_diff.keras import models
-from model_remediation.min_diff.keras import utils
+from tensorflow_model_remediation.min_diff.keras import models
+from tensorflow_model_remediation.min_diff.keras import utils
 
 MinDiffModel = models.MinDiffModel

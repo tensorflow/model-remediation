@@ -15,7 +15,7 @@
 
 """Test absolute_correlation_loss module."""
 
-from model_remediation.min_diff.losses import absolute_correlation_loss as loss_lib
+from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as loss_lib
 import tensorflow as tf
 
 

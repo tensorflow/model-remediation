@@ -21,9 +21,9 @@ delegates its call method to another Model and adds a `min_diff_loss`
 during training and optionally during evaluation.
 """
 
-from model_remediation.min_diff import losses
-from model_remediation.min_diff.keras import utils
-from model_remediation.min_diff.losses import loss_utils
+from tensorflow_model_remediation.min_diff import losses
+from tensorflow_model_remediation.min_diff.keras import utils
+from tensorflow_model_remediation.min_diff.losses import loss_utils
 import tensorflow as tf
 
 

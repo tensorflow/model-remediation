@@ -16,8 +16,8 @@
 # Lint as: python3
 """Implementation of LaplaceKernel for min diff."""
 
-from model_remediation.common import types
-from model_remediation.min_diff.losses import base_kernel
+from tensorflow_model_remediation.common import types
+from tensorflow_model_remediation.min_diff.losses import base_kernel
 import tensorflow as tf
 
 
