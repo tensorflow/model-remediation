@@ -18,7 +18,6 @@
 
 from typing import Text, Union
 
-
 from model_remediation.min_diff.losses import absolute_correlation_loss as abscorrloss
 from model_remediation.min_diff.losses import base_loss
 from model_remediation.min_diff.losses import mmd_loss
