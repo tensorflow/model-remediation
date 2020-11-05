@@ -34,7 +34,7 @@ flags.DEFINE_string("output_dir", "/tmp/min_diff_api",
 
 flags.DEFINE_string(
     "code_url_prefix",
-    "https://github.com/tensorflow/model-remediation/tree/master/tensorflow_model_remediation/",
+    "https://github.com/tensorflow/model-remediation/tree/main/tensorflow_model_remediation/",
     "The URL prefix for links to code.")
 
 flags.DEFINE_bool("search_hints", True,
