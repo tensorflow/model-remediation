@@ -8,7 +8,7 @@ performance for underperforming slices of data:
 -   The target metric you’re trying to improve is False Positive Rate (FPR) or False Negative Rate (FNR)
 -   You have a sufficient number of examples belonging to the underperforming (or can obtain enough examples)
 
-Further,  you might consider MinDiff when performing interventions on your
+Further, you might consider MinDiff when performing interventions on your
 dataset is impractical, either because it’s too difficult to collect more data,
 or because the data already represents the real-world distribution, but the
 real-world distribution is skewed.
