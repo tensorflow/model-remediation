@@ -15,10 +15,6 @@
 
 """Tests for model_remediation.docs.examples.min_diff_keras_util."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import csv
 import os
 import tempfile

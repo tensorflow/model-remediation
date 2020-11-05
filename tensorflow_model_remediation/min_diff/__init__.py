@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Public API for min diff integration.."""
-
+"""Public API for min diff integration."""
 
 from model_remediation.min_diff import keras
 from model_remediation.min_diff import losses
