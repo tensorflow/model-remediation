@@ -270,7 +270,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     return membership, predictions
 
   @abc.abstractmethod
-  @docs.doc_in_current_and_subclasses
+  @docs.do_not_doc_in_subclasses
   def call(self,
            membership: types.TensorType,
            predictions: types.TensorType,

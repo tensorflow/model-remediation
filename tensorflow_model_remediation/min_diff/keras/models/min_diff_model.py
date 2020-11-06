@@ -388,7 +388,7 @@ class MinDiffModel(tf.keras.Model):
 
     return min_diff_loss
 
-  @docs.doc_in_current_and_subclasses
+  @docs.do_not_doc_in_subclasses
   def call(self, inputs, training=None, mask=None):
     # pyformat: disable
     """Calls `original_model` with optional `min_diff_loss` as regularization loss.

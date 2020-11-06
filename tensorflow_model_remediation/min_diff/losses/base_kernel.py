@@ -19,6 +19,7 @@
 import abc
 from typing import Optional
 
+from tensorflow_model_remediation.common import docs
 from tensorflow_model_remediation.common import types
 import tensorflow as tf
 
@@ -90,7 +91,8 @@ class MinDiffKernel(abc.ABC):
     return self.call(x, y)
 
   @abc.abstractmethod
-  def call(self, x: types.TensorType, y: types.TensorType) -> types.TensorType:
+  @docs.do_not_doc_in_subclasses
+  def call(self, x: types.TensorType, y: types.TensorType):
     # pyformat: disable
     """Invokes the `MinDiffKernel` instance.
 
