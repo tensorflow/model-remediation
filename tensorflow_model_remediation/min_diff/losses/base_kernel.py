@@ -101,6 +101,10 @@ class MinDiffKernel(abc.ABC):
     This method contains the logic for computing the kernel. It must be
     implemented by subclasses.
 
+    Note: This method should not be called directly. To call a kernel on inputs,
+    always use the `__call__` method, i.e. `kernel(x, y)`, which relies on the
+    `call` method internally.
+
     Returns:
       `tf.Tensor` of shape `[N, M]`.
     """

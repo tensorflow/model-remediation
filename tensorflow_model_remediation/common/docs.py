@@ -40,6 +40,8 @@ def _no_op_decorator(obj):
 try:
   doc_private = doc_controls.doc_private
   do_not_doc_in_subclasses = doc_controls.do_not_doc_in_subclasses
+  doc_in_current_and_subclasses = doc_controls.doc_in_current_and_subclasses
 except AttributeError:
   doc_private = _no_op_decorator
   do_not_doc_in_subclasses = _no_op_decorator
+  doc_in_current_and_subclasses = _no_op_decorator

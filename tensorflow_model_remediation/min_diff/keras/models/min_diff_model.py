@@ -21,6 +21,7 @@ delegates its call method to another Model and adds a `min_diff_loss`
 during training and optionally during evaluation.
 """
 
+from tensorflow_model_remediation.common import docs
 from tensorflow_model_remediation.min_diff import losses
 from tensorflow_model_remediation.min_diff.keras import utils
 from tensorflow_model_remediation.min_diff.losses import loss_utils
@@ -50,7 +51,6 @@ class MinDiffModel(tf.keras.Model):
 
   `MinDiffModel` wraps the model passed in, `original_model`, and adds a
   component to the loss during training and optionally during evaluation.
-
 
   ### <a id=constructing_mindiffmodel></a>Construction
 
@@ -308,7 +308,7 @@ class MinDiffModel(tf.keras.Model):
     Arguments:
       min_diff_data: Tuple of length 2 or 3 as described below.
       training: Boolean indicating whether to run in training or inference mode.
-        See `Model.call` for details.
+        See `tf.keras.Model.call` for details.
 
 
     Like the input requirements described in `tf.keras.Model.fit`,
@@ -388,10 +388,8 @@ class MinDiffModel(tf.keras.Model):
 
     return min_diff_loss
 
+  @docs.doc_in_current_and_subclasses
   def call(self, inputs, training=None, mask=None):
-    # TODO(b/172281554): references to `Model.call` don't currently exist. We
-    # should also see whether this documentation should be on `__call__`
-    # instead.
     # pyformat: disable
     """Calls `original_model` with optional `min_diff_loss` as regularization loss.
 
@@ -399,13 +397,17 @@ class MinDiffModel(tf.keras.Model):
       inputs: Inputs to original_model, optionally containing `min_diff_data` as
         described below.
       training: Boolean indicating whether to run in training or inference mode.
-        See `Model.call` for details.
-      mask: Mask or list of masks as described in `Model.call`.
+        See `tf.keras.Model.call` for details.
+      mask: Mask or list of masks as described in `tf.keras.Model.call`.
 
-    This method should be used the same way as `Model.call`. Depending on
-    whether you are in train mode, `inputs` may need to include `min_diff_data`
-    (see `MinDiffModel.compute_min_diff_data` for details on what form that
-    needs to take).
+    Note: Like `tf.keras.Model.call`, this method should not be called directly.
+    To call a model on an input, always use the `__call__` method,
+    i.e. `model(inputs)`, which relies on the `call` method internally.
+
+    This method should be used the same way as `tf.keras.Model.call`. Depending
+    on whether you are in train mode, `inputs` may need to include
+    `min_diff_data` (see `MinDiffModel.compute_min_diff_data` for details on
+    what form that needs to take).
 
     - If `training=True`: `inputs` must contain `min_diff_data` (see details
       below).
@@ -437,7 +439,7 @@ class MinDiffModel(tf.keras.Model):
 
     Returns:
       A `Tensor` or nested structure of `Tensor`s according to the behavior
-      `original_model`. See `Model.call` for details.
+      `original_model`. See `tf.keras.Model.call` for details.
 
     Raises:
       ValueError: If `training` is set to `True` but `inputs` does not include

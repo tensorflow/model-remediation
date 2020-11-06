@@ -270,6 +270,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     return membership, predictions
 
   @abc.abstractmethod
+  @docs.doc_in_current_and_subclasses
   def call(self,
            membership: types.TensorType,
            predictions: types.TensorType,
@@ -288,6 +289,10 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
 
     This method contains the logic for calculating the loss. It must be
     implemented by subclasses.
+
+    Note: Like `tf.keras.losses.Loss.call`, this method should not be called
+    directly. To call a loss on inputs, always use the `__call__` method,
+    i.e. `loss(...)`, which relies on the `call` method internally.
 
     Returns:
       Scalar `min_diff_loss`.

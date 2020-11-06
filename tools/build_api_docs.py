@@ -32,10 +32,9 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("output_dir", "/tmp/min_diff_api",
                     "Where to output the docs")
 
-flags.DEFINE_string(
-    "code_url_prefix",
-    "https://github.com/tensorflow/model-remediation/tree/main/tensorflow_model_remediation/",
-    "The URL prefix for links to code.")
+flags.DEFINE_string("code_url_prefix",
+                    "https://github.com/tensorflow/model-remediation/tree/main/tensorflow_model_remediation/",
+                    "The URL prefix for links to code.")
 
 flags.DEFINE_bool("search_hints", True,
                   "Include metadata search hints in the generated files")
@@ -67,12 +66,7 @@ def execute(output_dir, code_url_prefix, search_hints, site_path):
     doc_controls.decorate_all_class_attributes(
         decorator=doc_controls.do_not_doc_in_subclasses,
         cls=cls,
-        skip=["__init__", "call"])
-
-  # TODO(b/172283126): Look into a better implementation of the below.
-  delattr(tf.keras.layers.Layer.call,
-          "_tf_docs_tools_for_subclass_implementers")
-  delattr(tf.keras.losses.Loss.call, "_tf_docs_tools_for_subclass_implementers")
+        skip=["__init__"])
 
   doc_generator = generate_lib.DocGenerator(
       root_title="TensorFlow Model Remediation",
