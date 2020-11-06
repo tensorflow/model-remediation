@@ -1,0 +1,7 @@
+toc:
+- title: Overview
+  path: /responsible_ai/model_remediation
+- title: Install
+  path: /responsible_ai/model_remediation/install
+- title: Usage requirements
+  path: /responsible_ai/model_remediation/usage_reqs

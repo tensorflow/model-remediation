@@ -1,35 +1,51 @@
-description: >
- Model Remediation: Min Diff
+book_path: /responsible_ai/_book.yaml
+project_path: /responsible_ai/_project.yaml
+title: Model Remediation
 landing_page:
   custom_css_path: /site-assets/css/style.css
+  nav: left
+  meta_tags:
+  - name: description
+    content: >
+      Min diff techniques for model remediation
   rows:
+  - classname: devsite-landing-row-100
   - heading: What is Model Remediation?
+    options:
+    - description-50
     items:
-    - classname: devsite-landing-row-50
-      description: >
-        Once you’ve performed disaggregated evaluation of a machine learning model’s performance,
+    - description: >
+        <p>
+        After performing disaggregated evaluation of a machine learning model’s performance,
         you might notice that your model is underperforming across certain slices of data. If
         unaddressed, this type of inequitable performance can lead to unfair outcomes. In practice,
-        we’ve observed two main classes of technical interventions for addressing this type of bias
+        there are two main classes of technical interventions for addressing this type of bias
         concern:
         <ul style="padding-left: 20px">
-          <li>Augmenting the training data by collecting more examples, generating synthetic data,
-          or adjusting the weights and sampling rates of different slices of data</li>
-          <li>Introducing loss functions, or constraints to remediate the model itself</li>
-      code_block: |
-        <pre class = "prettyprint">
-        import tensorflow as tf
-        import responsible-ai
+          <li>
+              Augmenting the training data by collecting more examples, generating synthetic data,
+              or adjusting the weights and sampling rates of different slices of data
+          </li>
+          <li>
+              Introducing loss functions, or constraints to remediate the model itself
+          </li>
+        </ul>
+        </p>
 
-        # This is a short code snippet that shows off your project.
-        # Launch a Colab notebook to run this example.
-        print("Hello, responsible-ai")
-        </pre>
-        {% dynamic if request.tld != 'cn' %}
-        <a class="colab-button" target="_blank"
-        href="https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials
-        /_index.ipynb">Run in a <span>Notebook</span></a>
-        {% dynamic endif %}
+    - code_block: |
+          <pre class = "prettyprint">
+          import tensorflow as tf
+          import responsible-ai
+
+          # This is a short code snippet that shows off your project.
+          # Launch a Colab notebook to run this example.
+          print("Hello, responsible-ai")
+          </pre>
+          {% dynamic if request.tld != 'cn' %}
+              <a class="colab-button" target="_blank"
+               href="https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials
+               /_index.ipynb">Run in a <span>Notebook</span></a>
+          {% dynamic endif %}
 
   - heading: What is Min Diff?
     items:
@@ -37,15 +53,15 @@ landing_page:
       description: >
         Min diff is a technique which applies a loss function that seeks to balance error rates
         across different slices of your data by penalizing disparities in performance across the
-        desired metric. Typically, one applies min diff when trying to minimize the difference in
+        desired metric. Typically, you apply min diff when trying to minimize the difference in
         either False Positive Rate (FPR) or False Negative Rate (FNR) for a slice of training data
         that belongs to a sensitive class when compared to the rest of the dataset.
   - heading: How does Min Diff work?
     items:
     - classname: devsite-landing-row-50
       description: >
-        Given two sets of examples from our dataset, split across a sensitive attribute, min diff
-        penalizes the model during training for any differences in the distribution of scores
+        Given two sets of examples from a dataset that are split across a sensitive attribute, min
+        diff penalizes the model during training for any differences in the distribution of scores
         between the two sets. The less distinguishable the two are based on example scores, the
         smaller the penalty that needs to be applied. The penalty is applied by adding a component
         to the loss which the model is training on, and can be thought of as a measurement of the
@@ -55,4 +71,4 @@ landing_page:
         Because this effectively adds an objective for the model to optimize over, this may come
         with tradeoffs with respect to performance on the original task. In practice min diff has
         been found to be effective while not deteriorating said performance beyond product needs.
-        For examples showing how to implement min diff, see [our guide](#).
+        For examples showing how to implement min diff, see the docs <a href= "">here</a>.
