@@ -27,7 +27,10 @@ class LaplaceKernel(base_kernel.MinDiffKernel):
   """Laplace kernel class.
 
   Arguments:
-    kernel_length: Length (sometimes also called 'width') of the kernel.
+    kernel_length: Length (sometimes also called 'width') of the kernel. The
+      choice for kernel length should be related to the range of inputs. The
+      smaller the input range, the smaller the kernel length likely needs to be
+      for best performance. It defaults to `0.1`.
     tile_input: Boolean indicating whether to tile inputs. See
       `losses.MinDiffKernel` for details.
 

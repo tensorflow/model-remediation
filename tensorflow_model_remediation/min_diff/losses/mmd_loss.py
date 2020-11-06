@@ -35,7 +35,9 @@ class MMDLoss(base_loss.MinDiffLoss):
       `'gauss'`
       (`min_diff.losses.GaussKernel`) or `'laplace'`
       (`min_diff.losses.LaplaceKernel`).
-    transform: Optional transform function to be applied to the predictions.
+    predictions_transform: Optional transform function to be applied to the
+      predictions. This can be used to smooth out the distributions or limit the
+      range of predictions.
     name: Name used for logging and tracking. Defaults to `'mmd_loss'`.
 
   The Maximum Mean Discrepancy (MMD) is a measure of the distance between the
@@ -52,13 +54,14 @@ class MMDLoss(base_loss.MinDiffLoss):
   """
   # pyformat: enable
 
-  def __init__(self,
-               kernel: base_kernel.MinDiffKernel = 'gauss',
-               transform: types.TensorTransformType = tf.sigmoid,
-               name: Optional[Text] = None):
+  def __init__(
+      self,
+      kernel: base_kernel.MinDiffKernel = 'gauss',
+      predictions_transform: Optional[types.TensorTransformType] = None,
+      name: Optional[Text] = None):
     """Initialize an instance of MMDLoss."""
     super(MMDLoss, self).__init__(
-        predictions_transform=transform,
+        predictions_transform=predictions_transform,
         predictions_kernel=kernel,
         name=name or 'mmd_loss')
 

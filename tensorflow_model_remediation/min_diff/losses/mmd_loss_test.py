@@ -33,7 +33,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertEqual(loss_fn.name, "custom_loss")
 
   def testGaussKernelNoWeights(self):
-    loss_fn = loss_lib.MMDLoss()
+    loss_fn = loss_lib.MMDLoss(predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
     predictions = tf.constant([[0.3], [0.1], [0.86], [0.06], [0.75]])
 
@@ -41,7 +41,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(1.083264, loss_value)
 
   def testGaussKernelNegativeCorrelationNoWeights(self):
-    loss_fn = loss_lib.MMDLoss()
+    loss_fn = loss_lib.MMDLoss(predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
     predictions = tf.constant([[0.12], [0.7], [0.2], [0.86], [0.32]])
 
@@ -49,7 +49,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(1.464054, loss_value)
 
   def testGaussKernelWithWeights(self):
-    loss_fn = loss_lib.MMDLoss()
+    loss_fn = loss_lib.MMDLoss(predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
     predictions = tf.constant([[0.3], [0.1], [0.86], [0.06], [0.75]])
     sample_weights = [[1.0], [2.0], [2.5], [1.2], [0.9]]
@@ -58,7 +58,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(1.293555, loss_value)
 
   def testGaussKernelNegativeCorrelationWithWeights(self):
-    loss_fn = loss_lib.MMDLoss()
+    loss_fn = loss_lib.MMDLoss(predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
     predictions = tf.constant([[0.12], [0.7], [0.2], [0.86], [0.32]])
     sample_weights = [[1.0], [2.0], [2.5], [1.2], [0.9]]
@@ -67,7 +67,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(1.481506, loss_value)
 
   def testGaussKernelSomeZeroWeights(self):
-    loss_fn = loss_lib.MMDLoss()
+    loss_fn = loss_lib.MMDLoss(predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0], [1.0], [0.0]])
     predictions = tf.constant([[0.3], [0.1], [0.86], [0.06], [0.75], [0.2],
                                [0.5]])
@@ -114,7 +114,7 @@ class MMDLossTest(tf.test.TestCase):
           sess.run(loss_value)
 
   def testGaussKernelMultiDimTensor(self):
-    loss_fn = loss_lib.MMDLoss()
+    loss_fn = loss_lib.MMDLoss(predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0], [1.0], [0.0]])
     predictions = tf.constant([[0.0, 0.5], [1.0, 0.0], [0.8, 0.0], [0.0, 0.8],
                                [0.75, 0.8], [0.2, 0.4], [0.5, 0.1]])
@@ -124,7 +124,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(0.262881, loss_value)
 
   def testLaplaceKernelNoWeights(self):
-    loss_fn = loss_lib.MMDLoss("laplace")
+    loss_fn = loss_lib.MMDLoss("laplace", predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
     predictions = tf.constant([[0.3], [0.1], [0.86], [0.06], [0.75]])
 
@@ -132,7 +132,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(0.970659, loss_value)
 
   def testLaplaceKernelNegativeCorrelationNoWeights(self):
-    loss_fn = loss_lib.MMDLoss("laplace")
+    loss_fn = loss_lib.MMDLoss("laplace", predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
     predictions = tf.constant([[0.12], [0.7], [0.2], [0.86], [0.32]])
 
@@ -140,7 +140,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(1.119343, loss_value)
 
   def testLaplaceKernelWithWeights(self):
-    loss_fn = loss_lib.MMDLoss("laplace")
+    loss_fn = loss_lib.MMDLoss("laplace", predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
     predictions = tf.constant([[0.3], [0.1], [0.86], [0.06], [0.75]])
     sample_weights = tf.constant([[1.0], [2.0], [2.5], [1.2], [0.9]])
@@ -149,7 +149,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(1.122741, loss_value)
 
   def testLaplaceKernelNegativeCorrelationWithWeights(self):
-    loss_fn = loss_lib.MMDLoss("laplace")
+    loss_fn = loss_lib.MMDLoss("laplace", predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
     predictions = tf.constant([[0.12], [0.7], [0.2], [0.86], [0.32]])
     sample_weights = tf.constant([[1.0], [2.0], [2.5], [1.2], [0.9]])
@@ -158,7 +158,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(1.159840, loss_value)
 
   def testLaplaceKernelSomeZeroWeights(self):
-    loss_fn = loss_lib.MMDLoss("laplace")
+    loss_fn = loss_lib.MMDLoss("laplace", predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0], [1.0], [0.0]])
     predictions = tf.constant([[0.3], [0.1], [0.86], [0.06], [0.75], [0.2],
                                [0.5]])
