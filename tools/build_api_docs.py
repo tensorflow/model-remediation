@@ -19,7 +19,7 @@ import os
 from absl import app
 from absl import flags
 
-from tensorflow_model_remediation import min_diff
+import tensorflow_model_remediation
 
 import tensorflow as tf
 
@@ -29,7 +29,7 @@ from tensorflow_docs.api_generator import public_api
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("output_dir", "/tmp/min_diff_api",
+flags.DEFINE_string("output_dir", "/tmp/model_remediation_api",
                     "Where to output the docs")
 
 flags.DEFINE_string("code_url_prefix",
@@ -40,7 +40,7 @@ flags.DEFINE_bool("search_hints", True,
                   "Include metadata search hints in the generated files")
 
 flags.DEFINE_string("site_path",
-                    "responsible-ai/remediation/min_diff/api_docs/python",
+                    "responsible-ai/model_remediation/api_docs/python",
                     "Path prefix in the _toc.yaml")
 
 
@@ -62,16 +62,23 @@ def execute(output_dir, code_url_prefix, search_hints, site_path):
         skip=["__init__", "call"])
 
   # Hide `MinDiffLoss` and `MinDiffKernel` __call__ method.
-  for cls in [min_diff.losses.MinDiffLoss, min_diff.losses.MinDiffKernel]:
+  for cls in [
+      model_remediation.min_diff.losses.MinDiffLoss,
+      model_remediation.min_diff.losses.MinDiffKernel
+  ]:
     doc_controls.decorate_all_class_attributes(
         decorator=doc_controls.do_not_doc_in_subclasses,
         cls=cls,
         skip=["__init__"])
 
+  # Delete common module when documenting. There is nothing there for users
+  # quite yet.
+  del model_remediation.common
+
   doc_generator = generate_lib.DocGenerator(
       root_title="TensorFlow Model Remediation",
-      py_modules=[("min_diff", min_diff)],
-      base_dir=os.path.dirname(min_diff.__file__),
+      py_modules=[("model_remediation", model_remediation)],
+      base_dir=os.path.dirname(model_remediation.__file__),
       search_hints=search_hints,
       code_url_prefix=code_url_prefix,
       site_path=site_path,
