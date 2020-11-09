@@ -119,7 +119,7 @@ def get_eval_results(model_location,
      metrics {class_name: "Accuracy"}
      metrics {
         class_name: "FairnessIndicators"
-        config: '{"thresholds": [0.35, 0.375, 0.4, 0.425, 0.45, 0.475, 0.5, 0.525, 0.55]}'
+        config: '{"thresholds": [0.4, 0.4125, 0.425, 0.4375, 0.45, 0.4675, 0.475, 0.4875, 0.5]}'
      }
    }
    slicing_specs {
