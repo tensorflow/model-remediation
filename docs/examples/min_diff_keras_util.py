@@ -14,17 +14,6 @@
 # limitations under the License.
 
 """Util methods for the min diff keras colab."""
-
-import os
-import os.path
-import tempfile
-
-import pandas as pd
-import tensorflow.compat.v1 as tf
-import tensorflow_hub as hub
-import tensorflow_model_analysis as tfma
-from google.protobuf import text_format
-
 TEXT_FEATURE = 'comment_text'
 LABEL = 'toxicity'
 

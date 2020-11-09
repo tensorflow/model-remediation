@@ -21,7 +21,7 @@ import tempfile
 import unittest.mock as mock
 
 from tensorflow_model_remediation.docs.examples import min_diff_keras_util
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 
 
 class UtilTest(tf.test.TestCase):
@@ -130,7 +130,7 @@ class UtilTest(tf.test.TestCase):
   @mock.patch(
       'model_remediation.docs.examples.min_diff_keras_util._create_embedding_layer',
       autospec=True)
-  @mock.patch('tensorflow.compat.v1.keras.utils.get_file', autospec=True)
+  @mock.patch('tensorflow.keras.utils.get_file', autospec=True)
   def test_download_and_process_civil_comments_data_and_create_model(
       self, mock_get_file, mock__create_embedding_layer):
 
@@ -171,5 +171,4 @@ class UtilTest(tf.test.TestCase):
 
 
 if __name__ == '__main__':
-  tf.enable_eager_execution()
   tf.test.main()
