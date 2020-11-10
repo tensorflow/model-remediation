@@ -20,7 +20,6 @@ from typing import Optional, Text
 
 from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses import base_loss
-from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 import tensorflow as tf
 
 
@@ -30,11 +29,12 @@ class MMDLoss(base_loss.MinDiffLoss):
   """Maximum Mean Discrepency between predictions on two groups of examples.
 
   Arguments:
-    kernel: `losses.MinDiffKernel` instance to be applied on the predictions.
-      Defaults to `'gauss'` and it is generally recommended that this be either
-      `'gauss'`
-      (`min_diff.losses.GaussKernel`) or `'laplace'`
-      (`min_diff.losses.LaplaceKernel`).
+    kernel: String (name of kernel) or `losses.MinDiffKernel` instance to be
+      applied on the predictions. Defaults to `'gaussian'` and it is recommended
+      that this be either
+      `'gaussian'`
+      (`min_diff.losses.GaussianKernel`) or `'laplacian'`
+      (`min_diff.losses.LaplacianKernel`).
     predictions_transform: Optional transform function to be applied to the
       predictions. This can be used to smooth out the distributions or limit the
       range of predictions.
@@ -54,22 +54,20 @@ class MMDLoss(base_loss.MinDiffLoss):
   """
   # pyformat: enable
 
-  def __init__(
-      self,
-      kernel: base_kernel.MinDiffKernel = 'gauss',
-      predictions_transform: Optional[types.TensorTransformType] = None,
-      name: Optional[Text] = None):
+  def __init__(self,
+               kernel='gaussian',
+               predictions_transform=None,
+               name: Optional[Text] = None):
     """Initialize an instance of MMDLoss."""
     super(MMDLoss, self).__init__(
         predictions_transform=predictions_transform,
         predictions_kernel=kernel,
         name=name or 'mmd_loss')
 
-  def call(
-      self,
-      membership: types.TensorType,
-      predictions: types.TensorType,
-      sample_weight: Optional[types.TensorType] = None) -> types.TensorType:
+  def call(self,
+           membership: types.TensorType,
+           predictions: types.TensorType,
+           sample_weight: Optional[types.TensorType] = None):
     """Computes MMD the loss value."""
 
     membership, predictions, normed_weights = self._preprocess_inputs(
