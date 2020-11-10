@@ -19,9 +19,9 @@ from tensorflow_model_remediation.min_diff.losses import laplace_kernel
 import tensorflow as tf
 
 
-class LaplaceKernelTest(tf.test.TestCase):
+class LaplacianKernelTest(tf.test.TestCase):
 
-  def testLaplaceKernel(self):
+  def testLaplacianKernel(self):
     # Under certain conditions, the kernel output resembles the identity
     # (within the tolerance of the checks).
     # Specifically, this is true when the minimum distance, d, between any two
@@ -38,7 +38,7 @@ class LaplaceKernelTest(tf.test.TestCase):
     # input). When we do this, we expect the output to be close to the identity.
 
     for kernel_length in [0.05, 0.075, 0.1]:
-      laplace_kernel_fn = laplace_kernel.LaplaceKernel(kernel_length)
+      laplace_kernel_fn = laplace_kernel.LaplacianKernel(kernel_length)
 
       kernel_val = laplace_kernel_fn(tf.constant([[2.0], [0.0]]))
       self.assertAllClose(kernel_val, tf.eye(2))

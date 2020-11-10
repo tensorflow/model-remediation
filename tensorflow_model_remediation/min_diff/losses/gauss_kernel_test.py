@@ -19,9 +19,9 @@ from tensorflow_model_remediation.min_diff.losses import gauss_kernel
 import tensorflow as tf
 
 
-class GaussKernelTest(tf.test.TestCase):
+class GaussianKernelTest(tf.test.TestCase):
 
-  def testGaussKernel(self):
+  def testGaussianKernel(self):
     # Under certain conditions, the kernel output resembles the identity
     # (within the tolerance of the checks).
     # Specifically, this is true when the minimum distance, d, between any two
@@ -37,7 +37,7 @@ class GaussKernelTest(tf.test.TestCase):
     # element is at least 0.2 greater or smaller than every other element in the
     # input). When we do this, we expect the output to be close to the identity.
     for kernel_length in [0.05, 0.075, 0.1]:
-      gauss_kernel_fn = gauss_kernel.GaussKernel(kernel_length)
+      gauss_kernel_fn = gauss_kernel.GaussianKernel(kernel_length)
       kernel_val = gauss_kernel_fn(tf.constant([[1.0], [0.0]]))
       self.assertAllClose(kernel_val, tf.eye(2))
 

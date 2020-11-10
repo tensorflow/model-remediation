@@ -28,28 +28,28 @@ class GetMinDiffKernelTest(tf.test.TestCase):
     kernel = utils._get_kernel(None)
     self.assertIsNone(kernel)
 
-  def testForGaussKernel(self):
+  def testForGaussianKernel(self):
     kernel = utils._get_kernel('gauss')
-    self.assertIsInstance(kernel, gauss_kernel.GaussKernel)
+    self.assertIsInstance(kernel, gauss_kernel.GaussianKernel)
     kernel = utils._get_kernel('GauSs')  # Strangely capitalized.
-    self.assertIsInstance(kernel, gauss_kernel.GaussKernel)
+    self.assertIsInstance(kernel, gauss_kernel.GaussianKernel)
     kernel = utils._get_kernel('gausskernel')
-    self.assertIsInstance(kernel, gauss_kernel.GaussKernel)
+    self.assertIsInstance(kernel, gauss_kernel.GaussianKernel)
     kernel_length = 3
-    kernel = utils._get_kernel(gauss_kernel.GaussKernel(kernel_length))
-    self.assertIsInstance(kernel, gauss_kernel.GaussKernel)
+    kernel = utils._get_kernel(gauss_kernel.GaussianKernel(kernel_length))
+    self.assertIsInstance(kernel, gauss_kernel.GaussianKernel)
     self.assertEqual(kernel.kernel_length, kernel_length)
 
-  def testForLaplaceKernel(self):
+  def testForLaplacianKernel(self):
     kernel = utils._get_kernel('laplace')
-    self.assertIsInstance(kernel, laplace_kernel.LaplaceKernel)
+    self.assertIsInstance(kernel, laplace_kernel.LaplacianKernel)
     kernel = utils._get_kernel('laplaceKernel')
-    self.assertIsInstance(kernel, laplace_kernel.LaplaceKernel)
-    kernel = utils._get_kernel(laplace_kernel.LaplaceKernel())
-    self.assertIsInstance(kernel, laplace_kernel.LaplaceKernel)
+    self.assertIsInstance(kernel, laplace_kernel.LaplacianKernel)
+    kernel = utils._get_kernel(laplace_kernel.LaplacianKernel())
+    self.assertIsInstance(kernel, laplace_kernel.LaplacianKernel)
     kernel_length = 3
-    kernel = utils._get_kernel(laplace_kernel.LaplaceKernel(kernel_length))
-    self.assertIsInstance(kernel, laplace_kernel.LaplaceKernel)
+    kernel = utils._get_kernel(laplace_kernel.LaplacianKernel(kernel_length))
+    self.assertIsInstance(kernel, laplace_kernel.LaplacianKernel)
     self.assertEqual(kernel.kernel_length, kernel_length)
 
 

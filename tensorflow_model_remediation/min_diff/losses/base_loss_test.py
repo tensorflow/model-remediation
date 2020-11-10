@@ -124,15 +124,16 @@ class MinDiffLossTest(tf.test.TestCase):
 
   def testkernelAttributes(self):
     loss = CustomLoss(membership_kernel='gauss', predictions_kernel='laplace')
-    self.assertIsInstance(loss.membership_kernel, gauss_kernel.GaussKernel)
-    self.assertIsInstance(loss.predictions_kernel, laplace_kernel.LaplaceKernel)
+    self.assertIsInstance(loss.membership_kernel, gauss_kernel.GaussianKernel)
+    self.assertIsInstance(loss.predictions_kernel,
+                          laplace_kernel.LaplacianKernel)
 
-    kernel = gauss_kernel.GaussKernel()
+    kernel = gauss_kernel.GaussianKernel()
     loss = CustomLoss(predictions_kernel=kernel)
     self.assertIs(loss.predictions_kernel, kernel)
     self.assertIsNone(loss.membership_kernel)
 
-    kernel = laplace_kernel.LaplaceKernel()
+    kernel = laplace_kernel.LaplacianKernel()
     loss = CustomLoss(membership_kernel=kernel)
     self.assertIs(loss.membership_kernel, kernel)
     self.assertIsNone(loss.predictions_kernel)

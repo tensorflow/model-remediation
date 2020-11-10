@@ -24,10 +24,10 @@ from tensorflow_model_remediation.min_diff.losses import laplace_kernel
 import six
 
 _KERNELS_DICT = {
-    'gauss': gauss_kernel.GaussKernel,
-    'gausskernel': gauss_kernel.GaussKernel,
-    'laplace': laplace_kernel.LaplaceKernel,
-    'laplacekernel': laplace_kernel.LaplaceKernel,
+    'gauss': gauss_kernel.GaussianKernel,
+    'gausskernel': gauss_kernel.GaussianKernel,
+    'laplace': laplace_kernel.LaplacianKernel,
+    'laplacekernel': laplace_kernel.LaplacianKernel,
 }
 
 

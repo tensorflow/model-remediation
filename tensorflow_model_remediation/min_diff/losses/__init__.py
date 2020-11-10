@@ -24,5 +24,5 @@ from tensorflow_model_remediation.min_diff.losses.mmd_loss import MMDLoss
 
 # Kernels
 from tensorflow_model_remediation.min_diff.losses.base_kernel import MinDiffKernel
-from tensorflow_model_remediation.min_diff.losses.gauss_kernel import GaussKernel
-from tensorflow_model_remediation.min_diff.losses.laplace_kernel import LaplaceKernel
+from tensorflow_model_remediation.min_diff.losses.gauss_kernel import GaussianKernel
+from tensorflow_model_remediation.min_diff.losses.laplace_kernel import LaplacianKernel

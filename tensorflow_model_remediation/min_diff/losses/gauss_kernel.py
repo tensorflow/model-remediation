@@ -14,14 +14,14 @@
 # limitations under the License.
 
 # Lint as: python3
-"""Implementation of GaussKernel for min diff."""
+"""Implementation of GaussianKernel for min diff."""
 
 from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses import base_kernel
 import tensorflow as tf
 
 
-class GaussKernel(base_kernel.MinDiffKernel):
+class GaussianKernel(base_kernel.MinDiffKernel):
   # pylint: disable=g-classes-have-attributes
   # pyformat: disable
   """Gauss kernel class.
@@ -39,7 +39,7 @@ class GaussKernel(base_kernel.MinDiffKernel):
   # pyformat: enable
 
   def __init__(self, kernel_length: complex = 0.1, tile_input: bool = True):
-    super(GaussKernel, self).__init__(tile_input)
+    super(GaussianKernel, self).__init__(tile_input)
     self.kernel_length = kernel_length
 
   def call(self, x: types.TensorType, y: types.TensorType) -> types.TensorType:
