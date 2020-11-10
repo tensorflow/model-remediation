@@ -18,16 +18,16 @@
 
 from typing import Text, Union
 
-from tensorflow_model_remediation.min_diff.losses import base_kernel
-from tensorflow_model_remediation.min_diff.losses import gauss_kernel
-from tensorflow_model_remediation.min_diff.losses import laplace_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
 import six
 
 _KERNELS_DICT = {
-    'gauss': gauss_kernel.GaussianKernel,
-    'gausskernel': gauss_kernel.GaussianKernel,
-    'laplace': laplace_kernel.LaplacianKernel,
-    'laplacekernel': laplace_kernel.LaplacianKernel,
+    'gauss': gaussian_kernel.GaussianKernel,
+    'gausskernel': gaussian_kernel.GaussianKernel,
+    'laplace': laplacian_kernel.LaplacianKernel,
+    'laplacekernel': laplacian_kernel.LaplacianKernel,
 }
 
 

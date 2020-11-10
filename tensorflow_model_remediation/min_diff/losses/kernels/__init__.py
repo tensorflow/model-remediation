@@ -13,18 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Public API for min diff losses."""
+"""Public API for min diff kernels."""
 
 # pylint: disable=g-bad-import-order
 
-# Losses
-from tensorflow_model_remediation.min_diff.losses.absolute_correlation_loss import AbsoluteCorrelationLoss
-from tensorflow_model_remediation.min_diff.losses.base_loss import MinDiffLoss
-from tensorflow_model_remediation.min_diff.losses.mmd_loss import MMDLoss
-
 # Kernels
-from tensorflow_model_remediation.min_diff.losses import kernels
-
-MinDiffKernel = kernels.MinDiffKernel
-GaussianKernel = kernels.GaussianKernel
-LaplacianKernel = kernels.LaplacianKernel
+from tensorflow_model_remediation.min_diff.losses.kernels.base_kernel import MinDiffKernel
+from tensorflow_model_remediation.min_diff.losses.kernels.gaussian_kernel import GaussianKernel
+from tensorflow_model_remediation.min_diff.losses.kernels.laplacian_kernel import LaplacianKernel

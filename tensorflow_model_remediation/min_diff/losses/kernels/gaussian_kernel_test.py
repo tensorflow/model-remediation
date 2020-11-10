@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test gauss_kernel module."""
+"""Test gaussian_kernel module."""
 
-from tensorflow_model_remediation.min_diff.losses import gauss_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 import tensorflow as tf
 
 
@@ -37,30 +37,30 @@ class GaussianKernelTest(tf.test.TestCase):
     # element is at least 0.2 greater or smaller than every other element in the
     # input). When we do this, we expect the output to be close to the identity.
     for kernel_length in [0.05, 0.075, 0.1]:
-      gauss_kernel_fn = gauss_kernel.GaussianKernel(kernel_length)
-      kernel_val = gauss_kernel_fn(tf.constant([[1.0], [0.0]]))
+      gaussian_kernel_fn = gaussian_kernel.GaussianKernel(kernel_length)
+      kernel_val = gaussian_kernel_fn(tf.constant([[1.0], [0.0]]))
       self.assertAllClose(kernel_val, tf.eye(2))
 
-      kernel_val = gauss_kernel_fn(tf.constant([[1.0], [2.0], [3.0]]))
+      kernel_val = gaussian_kernel_fn(tf.constant([[1.0], [2.0], [3.0]]))
       self.assertAllClose(kernel_val, tf.eye(3))
 
-      kernel_val = gauss_kernel_fn(
+      kernel_val = gaussian_kernel_fn(
           tf.constant([[0.1, 0.3], [0.5, 0.7], [0.9, 1.1]]))
       self.assertAllClose(kernel_val, tf.eye(3))
 
       # Vector where all elements are equal should result in matrix of all 1s.
       for val in [0.2, 1.0, 2.79]:  # Arbitrary values.
-        kernel_val = gauss_kernel_fn(tf.constant([[val, val], [val, val]]))
+        kernel_val = gaussian_kernel_fn(tf.constant([[val, val], [val, val]]))
         self.assertAllClose(kernel_val, tf.ones((2, 2)))
 
       # If tensors are equal, it should be the same as single tensor.
       # Note that we pick d < 0.1 so that the result is not the identity.
       tensor = tf.constant([[1.0], [1.01]])
-      single_kernel_val = gauss_kernel_fn(tensor)
+      single_kernel_val = gaussian_kernel_fn(tensor)
       # Assert that the result is nontrivial (not the identity).
       self.assertNotAllClose(tf.eye(2), single_kernel_val)
 
-      double_kernel_val = gauss_kernel_fn(tensor, tensor)
+      double_kernel_val = gaussian_kernel_fn(tensor, tensor)
       self.assertAllClose(single_kernel_val, double_kernel_val)
 
       # If the delta is the same, then the result should be the same.
@@ -68,11 +68,11 @@ class GaussianKernelTest(tf.test.TestCase):
       tensor1 = tf.constant([[1.0], [2.003]])
       tensor2 = tf.constant([[1.0], [5.503]])
       delta = tf.constant([[0.0], [0.01]])
-      kernel_val1 = gauss_kernel_fn(tensor1, tensor1 + delta)
+      kernel_val1 = gaussian_kernel_fn(tensor1, tensor1 + delta)
       # Assert that the result is nontrivial (not the identity).
       self.assertNotAllClose(tf.eye(2), kernel_val1)
 
-      kernel_val2 = gauss_kernel_fn(tensor2, tensor2 + delta)
+      kernel_val2 = gaussian_kernel_fn(tensor2, tensor2 + delta)
       self.assertAllClose(kernel_val1, kernel_val2)
 
 

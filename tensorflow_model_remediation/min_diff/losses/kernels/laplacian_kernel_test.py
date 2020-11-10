@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test laplace_kernel module."""
+"""Test laplacian_kernel module."""
 
-from tensorflow_model_remediation.min_diff.losses import laplace_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
 import tensorflow as tf
 
 
@@ -38,32 +38,32 @@ class LaplacianKernelTest(tf.test.TestCase):
     # input). When we do this, we expect the output to be close to the identity.
 
     for kernel_length in [0.05, 0.075, 0.1]:
-      laplace_kernel_fn = laplace_kernel.LaplacianKernel(kernel_length)
+      laplacian_kernel_fn = laplacian_kernel.LaplacianKernel(kernel_length)
 
-      kernel_val = laplace_kernel_fn(tf.constant([[2.0], [0.0]]))
+      kernel_val = laplacian_kernel_fn(tf.constant([[2.0], [0.0]]))
       self.assertAllClose(kernel_val, tf.eye(2))
 
-      kernel_val = laplace_kernel_fn(tf.constant([[1.0], [8.0], [3.0]]))
+      kernel_val = laplacian_kernel_fn(tf.constant([[1.0], [8.0], [3.0]]))
       self.assertAllClose(kernel_val, tf.eye(3))
 
-      kernel_val = laplace_kernel_fn(
+      kernel_val = laplacian_kernel_fn(
           tf.constant([[1.0, 3.0], [5.0, 7.0], [9.0, 11.0]]))
       self.assertAllClose(kernel_val, tf.eye(3))
 
       # Vector where all elements are equal should result in matrix of all 1s.
       for val in [0.2, 1.0, 2.79]:  # Arbitrary values.
-        kernel_val = laplace_kernel_fn(tf.constant([[val, val], [val, val]]))
+        kernel_val = laplacian_kernel_fn(tf.constant([[val, val], [val, val]]))
         # self.assertAllClose(kernel_val, tf.eye(3))
         self.assertAllClose(kernel_val, [[1.0, 1.0], [1.0, 1.0]])
 
       # If the two tensors are equal, it should be the same as a single tensor.
       # Note that we pick d < 1 so that the result is not the identity.
       tensor = tf.constant([[1.0], [1.01]])
-      single_kernel_val = laplace_kernel_fn(tensor)
+      single_kernel_val = laplacian_kernel_fn(tensor)
       # Assert that the result is nontrivial (not the identity).
       self.assertNotAllClose(tf.eye(2), single_kernel_val)
 
-      double_kernel_val = laplace_kernel_fn(tensor, tensor)
+      double_kernel_val = laplacian_kernel_fn(tensor, tensor)
       self.assertAllClose(single_kernel_val, double_kernel_val)
       self.assertIsNot(single_kernel_val, double_kernel_val)
 
@@ -72,11 +72,11 @@ class LaplacianKernelTest(tf.test.TestCase):
       tensor1 = tf.constant([[1.0], [7.0]])
       tensor2 = tf.constant([[1.0], [5.3]])
       delta = tf.constant([[0.0], [0.2]])
-      kernel_val1 = laplace_kernel_fn(tensor1, tensor1 + delta)
+      kernel_val1 = laplacian_kernel_fn(tensor1, tensor1 + delta)
       # Assert that the result is nontrivial (not the identity).
       self.assertNotAllClose(tf.eye(2), kernel_val1)
 
-      kernel_val2 = laplace_kernel_fn(tensor2, tensor2 + delta)
+      kernel_val2 = laplacian_kernel_fn(tensor2, tensor2 + delta)
       self.assertAllClose(kernel_val1, kernel_val2)
 
 

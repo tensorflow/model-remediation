@@ -15,8 +15,8 @@
 
 """Test mmd_loss module."""
 
-from tensorflow_model_remediation.min_diff.losses import gauss_kernel
 from tensorflow_model_remediation.min_diff.losses import mmd_loss as loss_lib
+from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 import tensorflow as tf
 
 
@@ -169,7 +169,7 @@ class MMDLossTest(tf.test.TestCase):
     self.assertAllClose(1.122741, loss_value)
 
   def testRaisesExpectedErrors(self):
-    kernel = gauss_kernel.GaussianKernel()
+    kernel = gaussian_kernel.GaussianKernel()
     loss_lib.MMDLoss(kernel)
     bad_kernel = lambda x: kernel(x)  # pylint:disable=unnecessary-lambda
     with self.assertRaisesRegex(

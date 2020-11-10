@@ -15,10 +15,10 @@
 
 """Test base_loss module."""
 
-from tensorflow_model_remediation.min_diff.losses import base_kernel
 from tensorflow_model_remediation.min_diff.losses import base_loss
-from tensorflow_model_remediation.min_diff.losses import gauss_kernel
-from tensorflow_model_remediation.min_diff.losses import laplace_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
 import tensorflow as tf
 
 
@@ -124,16 +124,17 @@ class MinDiffLossTest(tf.test.TestCase):
 
   def testkernelAttributes(self):
     loss = CustomLoss(membership_kernel='gauss', predictions_kernel='laplace')
-    self.assertIsInstance(loss.membership_kernel, gauss_kernel.GaussianKernel)
+    self.assertIsInstance(loss.membership_kernel,
+                          gaussian_kernel.GaussianKernel)
     self.assertIsInstance(loss.predictions_kernel,
-                          laplace_kernel.LaplacianKernel)
+                          laplacian_kernel.LaplacianKernel)
 
-    kernel = gauss_kernel.GaussianKernel()
+    kernel = gaussian_kernel.GaussianKernel()
     loss = CustomLoss(predictions_kernel=kernel)
     self.assertIs(loss.predictions_kernel, kernel)
     self.assertIsNone(loss.membership_kernel)
 
-    kernel = laplace_kernel.LaplacianKernel()
+    kernel = laplacian_kernel.LaplacianKernel()
     loss = CustomLoss(membership_kernel=kernel)
     self.assertIs(loss.membership_kernel, kernel)
     self.assertIsNone(loss.predictions_kernel)

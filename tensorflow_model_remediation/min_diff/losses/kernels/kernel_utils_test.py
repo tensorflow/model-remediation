@@ -15,10 +15,10 @@
 
 """Test kernel_utils module."""
 
-from tensorflow_model_remediation.min_diff.losses import base_kernel
-from tensorflow_model_remediation.min_diff.losses import gauss_kernel
-from tensorflow_model_remediation.min_diff.losses import kernel_utils as utils
-from tensorflow_model_remediation.min_diff.losses import laplace_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import kernel_utils as utils
+from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
 import tensorflow as tf
 
 
@@ -30,26 +30,26 @@ class GetMinDiffKernelTest(tf.test.TestCase):
 
   def testForGaussianKernel(self):
     kernel = utils._get_kernel('gauss')
-    self.assertIsInstance(kernel, gauss_kernel.GaussianKernel)
+    self.assertIsInstance(kernel, gaussian_kernel.GaussianKernel)
     kernel = utils._get_kernel('GauSs')  # Strangely capitalized.
-    self.assertIsInstance(kernel, gauss_kernel.GaussianKernel)
+    self.assertIsInstance(kernel, gaussian_kernel.GaussianKernel)
     kernel = utils._get_kernel('gausskernel')
-    self.assertIsInstance(kernel, gauss_kernel.GaussianKernel)
+    self.assertIsInstance(kernel, gaussian_kernel.GaussianKernel)
     kernel_length = 3
-    kernel = utils._get_kernel(gauss_kernel.GaussianKernel(kernel_length))
-    self.assertIsInstance(kernel, gauss_kernel.GaussianKernel)
+    kernel = utils._get_kernel(gaussian_kernel.GaussianKernel(kernel_length))
+    self.assertIsInstance(kernel, gaussian_kernel.GaussianKernel)
     self.assertEqual(kernel.kernel_length, kernel_length)
 
   def testForLaplacianKernel(self):
     kernel = utils._get_kernel('laplace')
-    self.assertIsInstance(kernel, laplace_kernel.LaplacianKernel)
+    self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
     kernel = utils._get_kernel('laplaceKernel')
-    self.assertIsInstance(kernel, laplace_kernel.LaplacianKernel)
-    kernel = utils._get_kernel(laplace_kernel.LaplacianKernel())
-    self.assertIsInstance(kernel, laplace_kernel.LaplacianKernel)
+    self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
+    kernel = utils._get_kernel(laplacian_kernel.LaplacianKernel())
+    self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
     kernel_length = 3
-    kernel = utils._get_kernel(laplace_kernel.LaplacianKernel(kernel_length))
-    self.assertIsInstance(kernel, laplace_kernel.LaplacianKernel)
+    kernel = utils._get_kernel(laplacian_kernel.LaplacianKernel(kernel_length))
+    self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
     self.assertEqual(kernel.kernel_length, kernel_length)
 
 
