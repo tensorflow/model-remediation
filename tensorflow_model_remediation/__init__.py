@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Init module for Model Remediation."""
+"""Public API for TensorFlow Model Remediation."""
 
 from tensorflow_model_remediation import common
 from tensorflow_model_remediation import min_diff
