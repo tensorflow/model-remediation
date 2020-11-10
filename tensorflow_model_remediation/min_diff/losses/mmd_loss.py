@@ -38,6 +38,13 @@ class MMDLoss(base_loss.MinDiffLoss):
     predictions_transform: Optional transform function to be applied to the
       predictions. This can be used to smooth out the distributions or limit the
       range of predictions.
+
+      The choice of whether to apply a transform to the predictions is task and
+      data dependent. For example, for classifiers, it might make sense to apply
+      a `tf.sigmoid` transform to the predictions (if this is not done already)
+      so that MMD is calculated in probability space rather than on raw
+      predictions. In some cases, such as regression, not having any transform
+      is more likely to yield successful results.
     name: Name used for logging and tracking. Defaults to `'mmd_loss'`.
 
   The Maximum Mean Discrepancy (MMD) is a measure of the distance between the

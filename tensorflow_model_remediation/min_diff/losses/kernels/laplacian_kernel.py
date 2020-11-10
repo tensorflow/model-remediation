@@ -24,17 +24,27 @@ import tensorflow as tf
 class LaplacianKernel(base_kernel.MinDiffKernel):
   # pylint: disable=g-classes-have-attributes
   # pyformat: disable
-  """Laplace kernel class.
+  """Laplacian kernel class.
 
   Arguments:
-    kernel_length: Length (sometimes also called 'width') of the kernel. The
-      choice for kernel length should be related to the range of inputs. The
-      smaller the input range, the smaller the kernel length likely needs to be
-      for best performance. It defaults to `0.1`.
+    kernel_length: Length (sometimes also called 'width') of the kernel.
+      Defaults to `0.1`. This parameter essentially describes how far apart
+      points can be and still affect each other.
+
+      The choice for kernel length should be influenced by the average distance
+      of inputs. The smaller the distance, the smaller the kernel length likely
+      needs to be for best performance. In general, a good first guess is the
+      standard deviation of your predictions.
+
+      Note: A kernel length that is too large will result in losing most of the
+      kernel's non-linearity making it much less effective. A kernel length
+      that is too small will make the kernel highly sensitive to input noise
+      potentially leading to unstable results.
     **kwargs: Named parameters that will be passed directly to the base
       class' `__init__` function.
 
-  See [paper](https://arxiv.org/abs/1910.11779) for reference.
+  See [paper](https://arxiv.org/abs/1910.11779) for reference on how it can be
+  used in MinDiff.
   """
   # pyformat: enable
 
