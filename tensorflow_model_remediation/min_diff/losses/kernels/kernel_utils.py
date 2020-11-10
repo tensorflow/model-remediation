@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Lint as: python3
-"""Utils for min diff kernels."""
+"""Utils for MinDiff kernels."""
 
 from typing import Text, Union
 

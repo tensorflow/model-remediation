@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Lint as: python3
-"""Model module for min diff Keras integration.
+"""Model module for MinDiff Keras integration.
 
 This Module provides the implementation of a MinDiffModel, a Model that
 delegates its call method to another Model and adds a `min_diff_loss`
@@ -43,7 +43,7 @@ class MinDiffModel(tf.keras.Model):
       in training.
     predictions_transform: Optional if the output of `original_model` is a
       `tf.Tensor`. Function that transforms the output of `original_model` after
-      it is called on min diff examples. The resulting predictions tensor is
+      it is called on MinDiff examples. The resulting predictions tensor is
       what will be passed in to the `losses.MinDiffLoss`.
     **kwargs: Named parameters that will be passed directly to the base
       class' `__init__` function.
@@ -170,9 +170,9 @@ class MinDiffModel(tf.keras.Model):
 
   @property
   def predictions_transform(self):
-    """Function to be applied on min diff predictions before calculating loss.
+    """Function to be applied on MinDiff predictions before calculating loss.
 
-    Min diff predictions are the output of `original_model` on the min diff
+    MinDiff predictions are the output of `original_model` on the MinDiff
     examples (see `compute_min_diff_loss` for details). These might not
     initially be a `tf.Tensor`, for example if the model is multi-output. If
     this is the case, the predictions need to be converted into a `tf.Tensor`.
@@ -181,7 +181,7 @@ class MinDiffModel(tf.keras.Model):
     some way.
 
     ```
-    # Pick out a specific output to use for min diff.
+    # Pick out a specific output to use for MinDiff.
     transform = lambda predictions: predictions["output2"]
 
     model = MinDiffModel(..., predictions_transform=transform)
@@ -203,7 +203,7 @@ class MinDiffModel(tf.keras.Model):
     model.predictions_transform([1, 2, 3])  # [1, 2, 3]
     ```
 
-    The result of applying `predictions_transform` on the min diff predictions
+    The result of applying `predictions_transform` on the MinDiff predictions
     must be a `tf.Tensor`. The `min_diff_loss` will be calculated on these
     results.
     """
@@ -322,22 +322,22 @@ class MinDiffModel(tf.keras.Model):
     ```
     The components are defined as follows:
 
-    - `min_diff_x`: inputs to `original_model` to get the corresponding min diff
+    - `min_diff_x`: inputs to `original_model` to get the corresponding MinDiff
       predictions.
     - `min_diff_membership`: numerical [batch_size, 1] `Tensor` indicating which
       group each example comes from (marked as `0.0` or `1.0`).
     - `min_diff_sample_weight`: Optional weight `Tensor`. The weights will be
       applied to the examples during the `min_diff_loss` calculation.
 
-    The `min_diff_loss` is ultimately calculated from the min diff
+    The `min_diff_loss` is ultimately calculated from the MinDiff
     predictions which are evaluated in the following way:
 
     ```
     ...  # In compute_min_diff_loss call.
 
-    min_diff_x = ...  # Single batch of min diff examples.
+    min_diff_x = ...  # Single batch of MinDiff examples.
 
-    # Get predictions for min diff examples.
+    # Get predictions for MinDiff examples.
     min_diff_predictions = self.original_model(min_diff_x, training=training)
     # Transform the predictions if needed. By default this is the identity.
     min_diff_predictions = self.predictions_transform(min_diff_predictions)
@@ -355,7 +355,7 @@ class MinDiffModel(tf.keras.Model):
         tf.keras.utils.unpack_x_y_sample_weight(min_diff_data))
 
     predictions = self.original_model.call(x, training=training)
-    # Clear any losses added when calling the original model on the min diff
+    # Clear any losses added when calling the original model on the MinDiff
     # examples. The right losses, if any, will be added when the original_model
     # is called on the original inputs.
     self._clear_losses()
@@ -363,7 +363,7 @@ class MinDiffModel(tf.keras.Model):
     predictions = self.predictions_transform(predictions)  # pylint: disable=not-callable
     if not isinstance(predictions, tf.Tensor):
       err_msg = (
-          "Min diff `predictions` meant for calculating the `min_diff_loss`"
+          "MinDiff `predictions` meant for calculating the `min_diff_loss`"
           "must be a Tensor, given: {}\n".format(predictions))
       if self._predictions_transform is None:
         err_msg += (
@@ -471,7 +471,7 @@ class MinDiffModel(tf.keras.Model):
     """Exports the model as described in `tf.keras.Model.save`.
 
     You may want to use this if you want to continue training your model with
-    min diff after having loaded it. If you want to use the loaded model purely
+    MinDiff after having loaded it. If you want to use the loaded model purely
     for inference, you will likely want to use
     `MinDiffModel.save_original_model` instead.
 
@@ -499,7 +499,7 @@ class MinDiffModel(tf.keras.Model):
 
     Note: A model loaded from the output of `MinDiffModel.save_original_model`
     will be an instance of the same type as `original_model`, not
-    `MinDiffModel`. This means that if you want to train it more with min diff,
+    `MinDiffModel`. This means that if you want to train it more with MinDiff,
     you will need to rewrap it with `MinDiffModel`.
     """
     return self.original_model.save(*args, **kwargs)

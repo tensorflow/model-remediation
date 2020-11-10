@@ -21,7 +21,7 @@ landing_page:
   meta_tags:
   - name: description
     content: >
-      Min diff techniques for model remediation
+      MinDiff techniques for model remediation
   rows:
   - classname: devsite-landing-row-100
   - heading: What is Model Remediation?
@@ -61,16 +61,16 @@ landing_page:
                /_index.ipynb">Run in a <span>Notebook</span></a>
           {% dynamic endif %}
 
-  - heading: What is Min Diff?
+  - heading: What is MinDiff?
     items:
     - classname: devsite-landing-row-50
       description: >
-        Min diff is a technique which applies a loss function that seeks to balance error rates
+        MinDiff is a technique which applies a loss function that seeks to balance error rates
         across different slices of your data by penalizing disparities in performance across the
-        desired metric. Typically, you apply min diff when trying to minimize the difference in
+        desired metric. Typically, you apply MinDiff when trying to minimize the difference in
         either False Positive Rate (FPR) or False Negative Rate (FNR) for a slice of training data
         that belongs to a sensitive class when compared to the rest of the dataset.
-  - heading: How does Min Diff work?
+  - heading: How does MinDiff work?
     items:
     - classname: devsite-landing-row-50
       description: >
@@ -83,6 +83,6 @@ landing_page:
         distributions, causing them to converge.
 
         Because this effectively adds an objective for the model to optimize over, this may come
-        with tradeoffs with respect to performance on the original task. In practice min diff has
+        with tradeoffs with respect to performance on the original task. In practice MinDiff has
         been found to be effective while not deteriorating said performance beyond product needs.
-        For examples showing how to implement min diff, see the docs <a href= "">here</a>.
+        For examples showing how to implement MinDiff, see the docs <a href= "">here</a>.

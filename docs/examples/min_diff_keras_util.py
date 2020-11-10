@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Util methods for the min diff keras colab."""
+"""Util methods for the MinDiff keras colab."""
 TEXT_FEATURE = 'comment_text'
 LABEL = 'toxicity'
 

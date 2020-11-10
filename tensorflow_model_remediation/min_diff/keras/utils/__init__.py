@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utility functions and classes for integrating min diff."""
+"""Utility functions and classes for integrating MinDiff."""
 
 from tensorflow_model_remediation.min_diff.keras.utils.input_utils import MinDiffPackedInputs
 from tensorflow_model_remediation.min_diff.keras.utils.input_utils import pack_min_diff_data

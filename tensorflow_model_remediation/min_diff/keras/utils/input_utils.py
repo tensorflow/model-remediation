@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Lint as: python3
-"""Input utils module for min diff Keras integration.
+"""Input utils module for MinDiff Keras integration.
 
 This module provides default implementations for packing and unpacking min_diff
 data into or from an input dataset.
@@ -32,12 +32,12 @@ class MinDiffPackedInputs(
   """Named tuple containing both `original_inputs` and `min_diff_data`.
 
   `MinDiffModel` default implementations and `utils.(un)pack_*` functions use
-  this class to pack and unpack the separate components required for min diff
+  this class to pack and unpack the separate components required for MinDiff
   and regular training.
 
   Attributes:
     original_inputs: Batch of inputs that would originally (i.e. without
-      applying min diff) be passed in to a model's `Model.call` method. This
+      applying MinDiff) be passed in to a model's `Model.call` method. This
       corresponds to the `x` component described in `tf.keras.Model.fit`.
     min_diff_data: Batch of supplemental data to be used to calculate the
       `min_diff_loss`.

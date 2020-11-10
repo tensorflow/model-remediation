@@ -1,4 +1,4 @@
-# Model Remediation Library
+# TensorFlow Model Remediation
 
 Model Remediation is a library that provides solutions for machine learning
 practitioners working to create and train models in a way that reduces or
@@ -24,15 +24,15 @@ import tensorflow as tf
 # Start with a given Keras model.
 original_model = util.create_keras_sequential_model()
 
-# Set the strenth of min diff and a given loss.
+# Set the strenth of MinDiff and a given loss.
 min_diff_strength = 1.0
 min_diff_loss = md.losses.MMDLoss()
 
-# Create a min diff model.
+# Create a MinDiff model.
 min_diff_model = md.keras.MinDiffModel(
     original_model, min_diff_loss, min_diff_strength)
 
-# Compile the min diff model as you normally would do with Keras.
+# Compile the MinDiff model as you normally would do with Keras.
 min_diff_model.compile(...)
 
 ```

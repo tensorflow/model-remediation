@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Public API for min diff losses."""
+"""Public API for MinDiff losses."""
 
 # pylint: disable=g-bad-import-order
 
