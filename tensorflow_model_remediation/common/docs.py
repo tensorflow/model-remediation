@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Documentation utils for the website.
+"""Documentation utils for the tensorflow.org website.
 
 Note: To be detected, doc decorators should be applied between descriptors
 and other decorators.
@@ -22,7 +22,7 @@ and other decorators.
 class A:
 
   @staticmethod
-  @tfds.core.utils.docs.deprecated
+  @tensorflow_model_remediation.common.docs.doc_private
   @other_decorator
   def f():
     pass
