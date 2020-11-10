@@ -17,11 +17,10 @@
 """Implementation of MinDiffLoss base class."""
 
 import abc
-from typing import Optional, Text, Tuple, Union
+from typing import Optional, Text, Tuple
 
 from tensorflow_model_remediation.common import docs
 from tensorflow_model_remediation.common import types
-from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import kernel_utils
 import tensorflow as tf
 
@@ -34,18 +33,18 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
   Inherits from: `tf.keras.losses.Loss`
 
   Arguments:
-    membership_transform: Transform function used on
-      `membership`. If `None` is passed in then the `membership` tensor is left
-      as is.
+    membership_transform: Transform function used on `membership`. If `None` is
+      passed in then `membership` is left as is. The function must return a
+      `tf.Tensor`.
     predictions_transform: Transform function used on `predictions`. If `None`
-      is passed in then `predictions` is left as is.
-    membership_kernel: `min_diff.losses.MinDiffKernel` to be applied on
-      `membership`. If `None` is passed in, then `membership` is left untouched
-      when applying kernels.
-    predictions_kernel: `min_diff.losses.MinDiffKernel` to be applied on
-      `predictions`. If `None` is passed in, then `predictions` is left
-      untouched when applying kernels.
-    summarize_loss: Boolean indicating whether to track the `min_diff_loss`.
+      is passed in then `predictions` is left as is. The function must return
+      a `tf.Tensor`.
+    membership_kernel: String (name of kernel) or
+      `min_diff.losses.MinDiffKernel` to be applied on `membership`. If `None`
+      is passed in, then `membership` is left untouched when applying kernels.
+    predictions_kernel: String (name of kernel) or
+      `min_diff.losses.MinDiffKernel` to be applied on `predictions`. If `None`
+      is passed in, then `predictions` is left untouched when applying kernels.
     name: Name used for logging and tracking.
 
   To be implemented by subclasses:
@@ -72,13 +71,12 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
   """
   # pyformat: enable
 
-  def __init__(
-      self,
-      membership_transform: Optional[types.TensorTransformType] = None,
-      predictions_transform: Optional[types.TensorTransformType] = None,
-      membership_kernel: Optional[base_kernel.MinDiffKernel] = None,
-      predictions_kernel: Optional[base_kernel.MinDiffKernel] = None,
-      name: Optional[Text] = None):
+  def __init__(self,
+               membership_transform=None,
+               predictions_transform=None,
+               membership_kernel=None,
+               predictions_kernel=None,
+               name: Optional[Text] = None):
     # pylint: disable=g-doc-args
     """Initialize `MinDiffLoss` instance.
 
@@ -100,12 +98,10 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     self.predictions_kernel = kernel_utils._get_kernel(predictions_kernel,
                                                        'predictions_kernel')
 
-  def __call__(
-      self,
-      membership: types.TensorType,
-      predictions: types.TensorType,
-      sample_weight: Optional[types.TensorType] = None
-  ) -> Union[complex, types.TensorType]:
+  def __call__(self,
+               membership: types.TensorType,
+               predictions: types.TensorType,
+               sample_weight: Optional[types.TensorType] = None):
     """Invokes the `MinDiffLoss` instance.
 
     Args:
@@ -117,7 +113,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
         with the appropriate shape is used.
 
     Returns:
-      Scalar or a Tensor of min diff loss.
+      Scalar `min_diff_loss`.
     """
     with tf.name_scope(self.name):
       loss = self.call(membership, predictions, sample_weight)
