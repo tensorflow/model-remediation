@@ -31,7 +31,7 @@ import tensorflow as tf
 class MinDiffModel(tf.keras.Model):
   # pyformat: disable
   # pylint: disable=g-classes-have-attributes
-  """`MinDiffModel` adds a loss component to another model during training.
+  """Model that adds a loss component to another model during training.
 
   Inherits from: `tf.keras.Model`
 
