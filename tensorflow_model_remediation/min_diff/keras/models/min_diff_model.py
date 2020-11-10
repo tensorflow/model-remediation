@@ -22,7 +22,6 @@ during training and optionally during evaluation.
 """
 
 from tensorflow_model_remediation.common import docs
-from tensorflow_model_remediation.min_diff import losses
 from tensorflow_model_remediation.min_diff.keras import utils
 from tensorflow_model_remediation.min_diff.losses import loss_utils
 import tensorflow as tf
@@ -38,14 +37,14 @@ class MinDiffModel(tf.keras.Model):
   Arguments:
     original_model: Instance of `tf.keras.Model` that will be trained with the
       additional `min_diff_loss`.
-    loss: Instance of `min_diff.losses.MinDiffLoss` that will be used to
-      calculate the `min_diff_loss`.
+    loss: String (name of loss) or `min_diff.losses.MinDiffLoss` instance that
+      will be used to calculate the `min_diff_loss`.
     loss_weight: Scalar applied to the `min_diff_loss` before being included
       in training.
     predictions_transform: Optional if the output of `original_model` is a
-      Tensor. Function that transforms the output of `original_model` after
-      it is called on min diff examples. The resulting predictions `Tensor`
-      is what will be passed in to the `losses.MinDiffLoss`.
+      `tf.Tensor`. Function that transforms the output of `original_model` after
+      it is called on min diff examples. The resulting predictions tensor is
+      what will be passed in to the `losses.MinDiffLoss`.
     **kwargs: Named parameters that will be passed directly to the base
       class' `__init__` function.
 
@@ -136,7 +135,7 @@ class MinDiffModel(tf.keras.Model):
 
   def __init__(self,
                original_model: tf.keras.Model,
-               loss: losses.MinDiffLoss,
+               loss,
                loss_weight: complex = 1.0,
                predictions_transform=None,
                **kwargs):
@@ -348,7 +347,8 @@ class MinDiffModel(tf.keras.Model):
       `min_diff_loss` calculated from `min_diff_data`.
 
     Raises:
-      ValueError: If the transformed `min_diff_predictions`  is not a `Tensor`.
+      ValueError: If the transformed `min_diff_predictions`  is not a
+        `tf.Tensor`.
     """
     # pyformat: enable
     x, membership, sample_weight = (
@@ -438,8 +438,8 @@ class MinDiffModel(tf.keras.Model):
 
 
     Returns:
-      A `Tensor` or nested structure of `Tensor`s according to the behavior
-      `original_model`. See `tf.keras.Model.call` for details.
+      A `tf.Tensor` or nested structure of `tf.Tensor`s according to the
+      behavior `original_model`. See `tf.keras.Model.call` for details.
 
     Raises:
       ValueError: If `training` is set to `True` but `inputs` does not include
