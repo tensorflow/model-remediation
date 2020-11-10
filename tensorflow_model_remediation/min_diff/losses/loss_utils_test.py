@@ -29,11 +29,11 @@ class GetMinDiffLossTest(tf.test.TestCase):
     self.assertIsNone(loss)
 
   def testForAbsoluteCorrelationLoss(self):
-    loss = utils._get_loss('abscorr')
+    loss = utils._get_loss('abs_corr')
     self.assertIsInstance(loss, abscorrloss.AbsoluteCorrelationLoss)
-    loss = utils._get_loss('abScoRr')  # Strangely capitalized.
+    loss = utils._get_loss('abS_coRr')  # Strangely capitalized.
     self.assertIsInstance(loss, abscorrloss.AbsoluteCorrelationLoss)
-    loss = utils._get_loss('abscorrloss')  # Other accepted name.
+    loss = utils._get_loss('abs_corr_loss')  # Other accepted name.
     self.assertIsInstance(loss, abscorrloss.AbsoluteCorrelationLoss)
     loss = utils._get_loss('absolute_correlation')  # Other accepted name.
     self.assertIsInstance(loss, abscorrloss.AbsoluteCorrelationLoss)
@@ -55,7 +55,6 @@ class GetMinDiffLossTest(tf.test.TestCase):
     loss = utils._get_loss(mmd_loss.MMDLoss(name=loss_name))
     self.assertIsInstance(loss, mmd_loss.MMDLoss)
     self.assertEqual(loss.name, loss_name)
-
 
   def testForCustomLoss(self):
 

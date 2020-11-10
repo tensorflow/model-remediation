@@ -18,20 +18,25 @@
 
 from typing import Text, Union
 
-from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as abscorrloss
+from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as abs_corr_loss
 from tensorflow_model_remediation.min_diff.losses import base_loss
 from tensorflow_model_remediation.min_diff.losses import mmd_loss
 
 import six
 
-_LOSSES_DICT = {
-    'abscorr': abscorrloss.AbsoluteCorrelationLoss,
-    'abscorrloss': abscorrloss.AbsoluteCorrelationLoss,
-    'absolute_correlation': abscorrloss.AbsoluteCorrelationLoss,
-    'absolute_correlation_loss': abscorrloss.AbsoluteCorrelationLoss,
-    'mmd': mmd_loss.MMDLoss,
-    'mmd_loss': mmd_loss.MMDLoss,
-}
+_STRING_TO_LOSS_DICT = {}
+
+
+def _register_loss_names(loss_class, names):
+  for name in names:
+    _STRING_TO_LOSS_DICT[name] = loss_class
+    if not name.endswith('_loss'):
+      _STRING_TO_LOSS_DICT[name + '_loss'] = loss_class
+
+
+_register_loss_names(abs_corr_loss.AbsoluteCorrelationLoss,
+                     ['abs_corr', 'absolute_correlation'])
+_register_loss_names(mmd_loss.MMDLoss, ['mmd', 'maximum_mean_discrepancy'])
 
 
 def _get_loss(loss: Union[base_loss.MinDiffLoss, Text],
@@ -61,11 +66,11 @@ def _get_loss(loss: Union[base_loss.MinDiffLoss, Text],
     return loss
   if isinstance(loss, six.string_types):
     lower_case_loss = loss.lower()
-    if lower_case_loss in _LOSSES_DICT:
-      return _LOSSES_DICT[lower_case_loss]()
+    if lower_case_loss in _STRING_TO_LOSS_DICT:
+      return _STRING_TO_LOSS_DICT[lower_case_loss]()
     raise ValueError('If {} is a string, it must be a (case-insensitive) '
                      'match for one of the following supported values: {}. '
-                     'given: {}'.format(loss_var_name, _LOSSES_DICT.keys(),
-                                        loss))
+                     'given: {}'.format(loss_var_name,
+                                        _STRING_TO_LOSS_DICT.keys(), loss))
   raise TypeError('{} must be either of type MinDiffLoss or string, given: '
                   '{} (type: {})'.format(loss_var_name, loss, type(loss)))

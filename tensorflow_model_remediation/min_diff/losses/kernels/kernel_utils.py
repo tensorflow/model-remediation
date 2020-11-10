@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Lint as: python3
-"""Utils for min diff losses."""
+"""Utils for min diff kernels."""
 
 from typing import Text, Union
 
@@ -23,12 +23,19 @@ from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
 import six
 
-_KERNELS_DICT = {
-    'gauss': gaussian_kernel.GaussianKernel,
-    'gausskernel': gaussian_kernel.GaussianKernel,
-    'laplace': laplacian_kernel.LaplacianKernel,
-    'laplacekernel': laplacian_kernel.LaplacianKernel,
-}
+_STRING_TO_KERNEL_DICT = {}
+
+
+def _register_kernel_names(kernel_class, names):
+  for name in names:
+    _STRING_TO_KERNEL_DICT[name] = kernel_class
+    if not name.endswith('_kernel'):
+      _STRING_TO_KERNEL_DICT[name + '_kernel'] = kernel_class
+
+
+_register_kernel_names(gaussian_kernel.GaussianKernel, ['gauss', 'gaussian'])
+_register_kernel_names(laplacian_kernel.LaplacianKernel,
+                       ['laplace', 'laplacian'])
 
 
 def _get_kernel(kernel: Union[base_kernel.MinDiffKernel, Text],
@@ -54,11 +61,11 @@ def _get_kernel(kernel: Union[base_kernel.MinDiffKernel, Text],
     return kernel
   if isinstance(kernel, six.string_types):
     lower_case_kernel = kernel.lower()
-    if lower_case_kernel in _KERNELS_DICT:
-      return _KERNELS_DICT[lower_case_kernel]()
+    if lower_case_kernel in _STRING_TO_KERNEL_DICT:
+      return _STRING_TO_KERNEL_DICT[lower_case_kernel]()
     raise ValueError('If {} is a string, it must be a (case-insensitive) '
                      'match for one of the following supported values: {}. '
-                     'given: {}'.format(kernel_var_name, _KERNELS_DICT.keys(),
-                                        kernel))
+                     'given: {}'.format(kernel_var_name,
+                                        _STRING_TO_KERNEL_DICT.keys(), kernel))
   raise TypeError('{} must be either of type MinDiffKernel or string, given: '
                   '{} (type: {})'.format(kernel_var_name, kernel, type(kernel)))

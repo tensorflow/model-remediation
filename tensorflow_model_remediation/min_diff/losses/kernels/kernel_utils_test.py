@@ -33,7 +33,11 @@ class GetMinDiffKernelTest(tf.test.TestCase):
     self.assertIsInstance(kernel, gaussian_kernel.GaussianKernel)
     kernel = utils._get_kernel('GauSs')  # Strangely capitalized.
     self.assertIsInstance(kernel, gaussian_kernel.GaussianKernel)
-    kernel = utils._get_kernel('gausskernel')
+    kernel = utils._get_kernel('gauss_kernel')
+    self.assertIsInstance(kernel, gaussian_kernel.GaussianKernel)
+    kernel = utils._get_kernel('gaussian')
+    self.assertIsInstance(kernel, gaussian_kernel.GaussianKernel)
+    kernel = utils._get_kernel('gaussian_kernel')
     self.assertIsInstance(kernel, gaussian_kernel.GaussianKernel)
     kernel_length = 3
     kernel = utils._get_kernel(gaussian_kernel.GaussianKernel(kernel_length))
@@ -43,7 +47,11 @@ class GetMinDiffKernelTest(tf.test.TestCase):
   def testForLaplacianKernel(self):
     kernel = utils._get_kernel('laplace')
     self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
-    kernel = utils._get_kernel('laplaceKernel')
+    kernel = utils._get_kernel('laplace_Kernel')
+    self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
+    kernel = utils._get_kernel('laplacian')
+    self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
+    kernel = utils._get_kernel('laplacian_kernel')
     self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
     kernel = utils._get_kernel(laplacian_kernel.LaplacianKernel())
     self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
@@ -51,7 +59,6 @@ class GetMinDiffKernelTest(tf.test.TestCase):
     kernel = utils._get_kernel(laplacian_kernel.LaplacianKernel(kernel_length))
     self.assertIsInstance(kernel, laplacian_kernel.LaplacianKernel)
     self.assertEqual(kernel.kernel_length, kernel_length)
-
 
   def testForCustomKernel(self):
 
