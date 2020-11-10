@@ -31,15 +31,15 @@ class GaussianKernel(base_kernel.MinDiffKernel):
       choice for kernel length should be related to the range of inputs. The
       smaller the input range, the smaller the kernel length likely needs to be
       for best performance. It defaults to `0.1`.
-    tile_input: Boolean indicating whether to tile inputs. See
-      `losses.MinDiffKernel` for details.
+    **kwargs: Named parameters that will be passed directly to the base
+      class' `__init__` function.
 
   See [paper](https://arxiv.org/abs/1910.11779) for reference.
   """
   # pyformat: enable
 
-  def __init__(self, kernel_length: complex = 0.1, tile_input: bool = True):
-    super(GaussianKernel, self).__init__(tile_input)
+  def __init__(self, kernel_length: complex = 0.1, **kwargs):
+    super(GaussianKernel, self).__init__(**kwargs)
     self.kernel_length = kernel_length
 
   def call(self, x: types.TensorType, y: types.TensorType) -> types.TensorType:
