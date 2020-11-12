@@ -143,15 +143,18 @@ class MinDiffModelTest(tf.test.TestCase):
 
     # Training unset.
     _ = model.compute_min_diff_loss(self.min_diff_data)
-    original_model.call.assert_called_once_with(self.min_diff_x, training=None)
+    original_model.call.assert_called_once_with(
+        self.min_diff_x, training=None, mask=None)
     model._loss.assert_called_once_with(
         predictions=pred_mock, membership=self.min_diff_mem, sample_weight=None)
 
     # Training set to True.
     original_model.call.reset_mock()
     model._loss.reset_mock()
-    _ = model.compute_min_diff_loss(self.min_diff_weighted_data, training=True)
-    original_model.call.assert_called_once_with(self.min_diff_x, training=True)
+    _ = model.compute_min_diff_loss(
+        self.min_diff_weighted_data, training=True, mask="mask")
+    original_model.call.assert_called_once_with(
+        self.min_diff_x, training=True, mask="mask")
     model._loss.assert_called_once_with(
         predictions=pred_mock,
         membership=self.min_diff_mem,
@@ -167,7 +170,8 @@ class MinDiffModelTest(tf.test.TestCase):
 
     # Assert correct inference call and calculated loss.
     loss = model.compute_min_diff_loss(self.min_diff_data, training=True)
-    original_model.call.assert_called_once_with(self.min_diff_x, training=True)
+    original_model.call.assert_called_once_with(
+        self.min_diff_x, training=True, mask=None)
     self.assertAllClose(loss, _loss_fn(predictions, self.min_diff_mem))
 
   def testComputeMinDiffLossWithWeights(self):
@@ -181,7 +185,8 @@ class MinDiffModelTest(tf.test.TestCase):
     # Assert correct inference call and calculated loss.
     loss = model.compute_min_diff_loss(
         self.min_diff_weighted_data, training=True)
-    original_model.call.assert_called_once_with(self.min_diff_x, training=True)
+    original_model.call.assert_called_once_with(
+        self.min_diff_x, training=True, mask=None)
     self.assertAllClose(
         loss, _loss_fn(predictions, self.min_diff_mem, self.min_diff_w))
 
@@ -262,6 +267,57 @@ class MinDiffModelTest(tf.test.TestCase):
     with self.assertRaisesRegex(ValueError,
                                 "must contain MinDiffData during training"):
       _ = model(self.x, training=True)
+
+  def testCustomModelWithoutMaskInCallSignature(self):
+
+    mock_call = mock.MagicMock(return_value=tf.constant(1.0))
+
+    class CustomModel1(tf.keras.Model):
+
+      def call(self, inputs, training=None):
+        # Use mock to track call.
+        return mock_call(inputs, training=training)
+
+    original_model = CustomModel1()
+
+    model = min_diff_model.MinDiffModel(original_model, DummyLoss())
+
+    # Assert different call signature doesn't break and still receives the right
+    # value.
+    _ = model.compute_min_diff_loss(self.min_diff_data, training=True)
+    mock_call.assert_called_once_with(self.min_diff_x, training=True)
+
+    # Assert different call signature doesn't break and still receives the right
+    # value.
+    mock_call.reset_mock()
+    _ = model(self.x, training=False)
+    mock_call.assert_called_once_with(self.x, training=False)
+
+  def testCustomModelWithoutTrainingInCallSignature(self):
+
+    mock_call = mock.MagicMock(return_value=tf.constant(1.0))
+
+    class CustomModel1(tf.keras.Model):
+
+      def call(self, inputs, mask=None):
+        # Use mock to track call.
+        return mock_call(inputs, mask=mask)
+
+    original_model = CustomModel1()
+
+    model = min_diff_model.MinDiffModel(original_model, DummyLoss())
+
+    # Assert different call signature doesn't break and still receives the right
+    # value.
+    _ = model.compute_min_diff_loss(
+        self.min_diff_data, training=True, mask=False)
+    mock_call.assert_called_once_with(self.min_diff_x, mask=False)
+
+    # Assert different call signature doesn't break and still receives the right
+    # value.
+    mock_call.reset_mock()
+    _ = model(self.x, training=False, mask=False)
+    mock_call.assert_called_once_with(self.x, mask=False)
 
   def testOverwritingUnpackingFunctions(self):
     original_model = tf.keras.Sequential()

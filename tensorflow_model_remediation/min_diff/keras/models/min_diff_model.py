@@ -220,6 +220,16 @@ class MinDiffModel(tf.keras.Model):
     """
     return self._original_model
 
+  def _call_original_model(self, inputs, training=None, mask=None):
+    """Calls the original model with appropriate args."""
+    # pylint: disable=protected-access
+    arg_tuples = [("training", training,
+                   self.original_model._expects_training_arg),
+                  ("mask", mask, self.original_model._expects_mask_arg)]
+
+    kwargs = {name: value for name, value, expected in arg_tuples if expected}
+    return self.original_model(inputs, **kwargs)
+
   def unpack_original_inputs(self, inputs):
     # pyformat: disable
     """Extracts original_inputs from `inputs`.
@@ -300,7 +310,7 @@ class MinDiffModel(tf.keras.Model):
     # pyformat: enable
     return utils.unpack_min_diff_data(inputs)
 
-  def compute_min_diff_loss(self, min_diff_data, training=None):
+  def compute_min_diff_loss(self, min_diff_data, training=None, mask=None):
     # pyformat: disable
     """Computes and returns the `min_diff_loss` corresponding to `min_diff_data`.
 
@@ -308,6 +318,7 @@ class MinDiffModel(tf.keras.Model):
       min_diff_data: Tuple of length 2 or 3 as described below.
       training: Boolean indicating whether to run in training or inference mode.
         See `tf.keras.Model.call` for details.
+      mask: Mask or list of masks as described in `tf.keras.Model.call`.
 
 
     Like the input requirements described in `tf.keras.Model.fit`,
@@ -354,7 +365,7 @@ class MinDiffModel(tf.keras.Model):
     x, membership, sample_weight = (
         tf.keras.utils.unpack_x_y_sample_weight(min_diff_data))
 
-    predictions = self.original_model.call(x, training=training)
+    predictions = self._call_original_model(x, training=training, mask=mask)
     # Clear any losses added when calling the original model on the MinDiff
     # examples. The right losses, if any, will be added when the original_model
     # is called on the original inputs.
@@ -460,7 +471,7 @@ class MinDiffModel(tf.keras.Model):
           min_diff_data, training=training)
       self.add_loss(min_diff_loss)
 
-    return self.original_model.call(
+    return self._call_original_model(
         original_inputs, training=training, mask=mask)
 
   # We are overriding this solely to provide complete documentation on the
