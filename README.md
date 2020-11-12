@@ -9,32 +9,31 @@ eliminates user harm resulting from underlying performance biases.
 ## Documentation
 
 To install and use Model Remediation, start with our
-[**getting started guide**](https://www.tensorflow.org/responible-ai/model_remediation) and try
+[**getting started guide**](https://www.tensorflow.org/responsible_ai/model_remediation) and try
 it interactively in a
-[Colab notebook](https://colab.research.google.com/github/tensorflow/model_remediation/docs/examples/min_diff_keras.ipynb).
+[Colab notebook](https://github.com/tensorflow/model-remediation/blob/master/docs/examples/min_diff_keras.ipynb).
 
 To get started with Model Remediation:
 
 ```python
 # !pip install tensorflow-model-remediation
 from fairness_indicators.examples import util
-import model_remediation.min_diff as md
+from tensorflow_model_remediation import min_diff
 import tensorflow as tf
 
 # Start with a given Keras model.
 original_model = util.create_keras_sequential_model()
 
 # Set the strenth of MinDiff and a given loss.
-min_diff_strength = 1.0
-min_diff_loss = md.losses.MMDLoss()
+min_diff_weight = 1.0
+min_diff_loss = min_diff.losses.MMDLoss()
 
 # Create a MinDiff model.
-min_diff_model = md.keras.MinDiffModel(
+min_diff_model = min_diff.keras.MinDiffModel(
     original_model, min_diff_loss, min_diff_strength)
 
 # Compile the MinDiff model as you normally would do with Keras.
 min_diff_model.compile(...)
-
 ```
 
 #### *Disclaimers*
