@@ -70,6 +70,10 @@ def execute(output_dir, code_url_prefix, search_hints, site_path):
         cls=cls,
         skip=["__init__"])
 
+  # Get around the decorator on Layer.call
+  delattr(tf.keras.layers.Layer.call,
+          "_tf_docs_tools_for_subclass_implementers")
+
   # Delete common module when documenting. There is nothing there for users
   # quite yet.
   del tfmr.common
