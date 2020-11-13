@@ -13,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Public API for MinDiff common."""
+"""API for MinDiff common."""
 
 from tensorflow_model_remediation.common import docs

@@ -166,7 +166,7 @@ class UtilTest(tf.test.TestCase):
     self.assertTrue(result[0][0] < 1 and result[0][0] > 0)
 
   def test_get_eval_results(self):
-    # TODO(b/172260507): Add testing.
+    # TODO: Add testing.
     pass
 
 

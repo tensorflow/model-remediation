@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Public API for MinDiff kernels."""
+"""API for MinDiff kernels."""
 
-# pylint: disable=g-bad-import-order
 
 # Kernels
 from tensorflow_model_remediation.min_diff.losses.kernels.base_kernel import MinDiffKernel

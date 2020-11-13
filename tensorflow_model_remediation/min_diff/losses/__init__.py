@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Public API for MinDiff losses."""
+"""API for MinDiff losses."""
 
-# pylint: disable=g-bad-import-order
 
 # Losses
 from tensorflow_model_remediation.min_diff.losses.absolute_correlation_loss import AbsoluteCorrelationLoss

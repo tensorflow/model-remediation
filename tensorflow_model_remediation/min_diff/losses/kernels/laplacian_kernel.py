@@ -22,9 +22,7 @@ import tensorflow as tf
 
 
 class LaplacianKernel(base_kernel.MinDiffKernel):
-  # pylint: disable=g-classes-have-attributes
-  # pyformat: disable
-  """Laplacian kernel class.
+      """Laplacian kernel class.
 
   Arguments:
     kernel_length: Length (sometimes also called 'width') of the kernel.
@@ -46,8 +44,7 @@ class LaplacianKernel(base_kernel.MinDiffKernel):
   See [paper](https://arxiv.org/abs/1910.11779) for reference on how it can be
   used in MinDiff.
   """
-  # pyformat: enable
-
+  
   def __init__(self, kernel_length: complex = 0.1, **kwargs):
     super(LaplacianKernel, self).__init__(**kwargs)
     self.kernel_length = kernel_length

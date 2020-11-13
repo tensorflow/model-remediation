@@ -22,9 +22,7 @@ import tensorflow as tf
 
 
 class GaussianKernel(base_kernel.MinDiffKernel):
-  # pylint: disable=g-classes-have-attributes
-  # pyformat: disable
-  """Gaussian kernel class.
+      """Gaussian kernel class.
 
   The Gaussian kernel is a mathematical tool that approximates a given
   distribution as a sum of gaussian distributions. This is particularly useful
@@ -50,8 +48,7 @@ class GaussianKernel(base_kernel.MinDiffKernel):
   See [paper](https://arxiv.org/abs/1910.11779) for reference on how it can be
   used in MinDiff.
   """
-  # pyformat: enable
-
+  
   def __init__(self, kernel_length: complex = 0.1, **kwargs):
     super(GaussianKernel, self).__init__(**kwargs)
     self.kernel_length = kernel_length

@@ -47,8 +47,7 @@ class MinDiffPackedInputs(
 def pack_min_diff_data(
     original_dataset: tf.data.Dataset, sensitive_group_dataset: tf.data.Dataset,
     nonsensitive_group_dataset: tf.data.Dataset) -> tf.data.Dataset:
-  # pyformat: disable
-  """Packs `min_diff_data` with the `x` component of the original dataset.
+    """Packs `min_diff_data` with the `x` component of the original dataset.
 
   Arguments:
     original_dataset: `tf.data.Dataset` that was used before applying min
@@ -113,13 +112,12 @@ def pack_min_diff_data(
     A `tf.data.Dataset` whose output is a tuple of (`packed_inputs`, `y`,
     `sample_weight`).
   """
-  # pyformat: enable
-
+  
   dataset = tf.data.Dataset.zip(
       (original_dataset, sensitive_group_dataset.repeat(),
        nonsensitive_group_dataset.repeat()))
 
-  # TODO(b/172270682): Should we conserve the length of the tuples returned?
+  # TODO: Should we conserve the length of the tuples returned?
   #                    Right now we always return a tuple of length 3 (with None
   #                    if things are missing).
   def _map_fn(original_batch, sensitive_batch, nonsensitive_batch):
@@ -133,7 +131,7 @@ def pack_min_diff_data(
 
     # original_x, sensitive_x and nonsensitive_x all must have the same
     # structure.
-    # TODO(b/172271305): Should we assert that Tensor shapes are the same (other
+    # TODO: Should we assert that Tensor shapes are the same (other
     #                    than number of examples).
     tf.nest.assert_same_structure(original_x, sensitive_x)
     tf.nest.assert_same_structure(sensitive_x, nonsensitive_x)

@@ -25,9 +25,7 @@ import tensorflow as tf
 
 
 class MinDiffKernel(abc.ABC):
-  # pylint: disable=g-classes-have-attributes
-  # pyformat: disable
-  """MinDiffKernel abstract base class.
+      """MinDiffKernel abstract base class.
 
   Arguments:
     tile_input: Boolean indicating whether to tile inputs before computing the
@@ -53,16 +51,14 @@ class MinDiffKernel(abc.ABC):
   them to be: `[N, ?, D]` and `[?, M, D]` where `tf` broadcasting will ensure
   that the operations between them work.
   """
-  # pyformat: enable
-
+  
   def __init__(self, tile_input: bool = True):
     self.tile_input = tile_input
 
   def __call__(self,
                x: types.TensorType,
                y: Optional[types.TensorType] = None) -> types.TensorType:
-    # pyformat: disable
-    """Invokes the kernel instance.
+        """Invokes the kernel instance.
 
     Arguments:
       x: `tf.Tensor` of shape `[N, D]` (if tiling input) or `[N, M, D]` (if not
@@ -82,8 +78,7 @@ class MinDiffKernel(abc.ABC):
     Returns:
       `tf.Tensor` of shape `[N, M]`.
     """
-    # pyformat: enable
-    if y is None:
+        if y is None:
       y = x
     if self.tile_input:
       x = x[:, tf.newaxis, :]
@@ -93,8 +88,7 @@ class MinDiffKernel(abc.ABC):
   @abc.abstractmethod
   @docs.do_not_doc_in_subclasses
   def call(self, x: types.TensorType, y: types.TensorType):
-    # pyformat: disable
-    """Invokes the `MinDiffKernel` instance.
+        """Invokes the `MinDiffKernel` instance.
 
     Arguments:
       x: `tf.Tensor` of shape `[N, M, D]`.
@@ -110,5 +104,4 @@ class MinDiffKernel(abc.ABC):
     Returns:
       `tf.Tensor` of shape `[N, M]`.
     """
-    # pyformat: enable
-    NotImplementedError('Must be implemented in subclasses')
+        NotImplementedError('Must be implemented in subclasses')

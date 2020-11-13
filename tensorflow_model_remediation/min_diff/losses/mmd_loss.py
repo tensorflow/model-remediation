@@ -24,9 +24,7 @@ import tensorflow as tf
 
 
 class MMDLoss(base_loss.MinDiffLoss):
-  # pylint: disable=g-classes-have-attributes
-  # pyformat: disable
-  """Maximum Mean Discrepency between predictions on two groups of examples.
+      """Maximum Mean Discrepency between predictions on two groups of examples.
 
   Arguments:
     kernel: String (name of kernel) or `losses.MinDiffKernel` instance to be
@@ -59,8 +57,7 @@ class MMDLoss(base_loss.MinDiffLoss):
   For more details, see the
   [paper](http://papers.nips.cc/paper/3110-a-kernel-method-for-the-two-sample-problem.pdf).
   """
-  # pyformat: enable
-
+  
   def __init__(self,
                kernel='gaussian',
                predictions_transform=None,

@@ -346,7 +346,7 @@ class MinDiffModelTest(tf.test.TestCase):
     model.compute_min_diff_loss.assert_called_once_with(
         "x_min_diff_data", training=None)
 
-  # TODO(b/172271717): consider testing actual output. This is not currently
+  # TODO: consider testing actual output. This is not currently
   # done because the disproportionate amount of complexity this would add.
   def testSingleOutputModel(self):
     original_model = tf.keras.Sequential(
@@ -569,7 +569,7 @@ class MinDiffModelTest(tf.test.TestCase):
 
       loaded_model = tf.keras.models.load_model(path)
 
-    # TODO(b/172271804): see whether this is something that should be fixed.
+    # TODO: see whether this is something that should be fixed.
     # The assertion below currently breaks. the loaded model is an instance of
     # `...keras.saving.saved_model.load.MinDiffModel` which must dynamically
     # created when the model is saved.
