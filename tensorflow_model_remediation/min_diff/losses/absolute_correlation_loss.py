@@ -23,8 +23,9 @@ import tensorflow as tf
 
 
 class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
-  
-    """Absolute correlation between predictions on two groups of examples.
+  # pylint: disable=g-classes-have-attributes
+  # pyformat: disable
+  """Absolute correlation between predictions on two groups of examples.
 
   Arguments:
     name: Name used for logging or tracking. Defaults to
@@ -40,7 +41,8 @@ class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
 
   For more details, see the [paper](https://arxiv.org/abs/1901.04562).
   """
-  
+  # pyformat: enable
+
   def __init__(self, name: Optional[Text] = None):
     """Initialize Loss."""
     super(AbsoluteCorrelationLoss,

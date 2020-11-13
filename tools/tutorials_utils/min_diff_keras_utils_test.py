@@ -20,7 +20,7 @@ import os
 import tempfile
 import unittest.mock as mock
 
-from tensorflow_model_remediation.docs.tutorials import min_diff_keras_util
+from tensorflow_model_remediation.tools.tutorials_utils import min_diff_keras_utils
 import tensorflow as tf
 
 
@@ -128,7 +128,7 @@ class UtilTest(tf.test.TestCase):
     return filename
 
   @mock.patch(
-      'model_remediation.docs.tutorials.min_diff_keras_util._create_embedding_layer',
+      'model_remediation.tools.tutorials_utils.min_diff_keras_utils._create_embedding_layer',
       autospec=True)
   @mock.patch('tensorflow.keras.utils.get_file', autospec=True)
   def test_download_and_process_civil_comments_data_and_create_model(
@@ -139,20 +139,20 @@ class UtilTest(tf.test.TestCase):
     filename = self._write_csv(
         self._create_example_csv(use_fake_embedding=True))
     mock_get_file.return_value = filename
-    data_train, _, _, labels_train, _ = min_diff_keras_util.download_and_process_civil_comments_data(
+    data_train, _, _, labels_train, _ = min_diff_keras_utils.download_and_process_civil_comments_data(
     )
 
     self.assertEqual(mock_get_file.call_count, 3)
 
     # Undo the string interpretation of the text_feature, since we are mocking
     # out the embedding layer in the following model testing.
-    data_train[min_diff_keras_util.TEXT_FEATURE] = data_train[
-        min_diff_keras_util.TEXT_FEATURE].astype(float)
+    data_train[min_diff_keras_utils.TEXT_FEATURE] = data_train[
+        min_diff_keras_utils.TEXT_FEATURE].astype(float)
 
     # Now use that data to test create_keras_sequential_model.
     mock__create_embedding_layer.return_value = tf.keras.layers.Dense(units=128)
 
-    model = min_diff_keras_util.create_keras_sequential_model(hub_url='')
+    model = min_diff_keras_utils.create_keras_sequential_model(hub_url='')
 
     # Sanity check that you have a valid model by training it and predicting.
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)

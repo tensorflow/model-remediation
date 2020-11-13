@@ -13,11 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""API for MinDiff kernels."""
+"""Internal API for MinDiff Colab utils."""
 
-# pylint: disable=g-bad-import-order
-
-# Kernels
-from tensorflow_model_remediation.min_diff.losses.kernels.base_kernel import MinDiffKernel
-from tensorflow_model_remediation.min_diff.losses.kernels.gaussian_kernel import GaussianKernel
-from tensorflow_model_remediation.min_diff.losses.kernels.laplacian_kernel import LaplacianKernel
+from tensorflow_model_remediation.tools import tutorials_utils

@@ -15,7 +15,7 @@
 
 """API for MinDiff losses."""
 
-
+# pylint: disable=g-bad-import-order
 
 # Losses
 from tensorflow_model_remediation.min_diff.losses.absolute_correlation_loss import AbsoluteCorrelationLoss

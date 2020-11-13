@@ -25,7 +25,8 @@ import tensorflow as tf
 
 
 class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
-    
+  # pyformat: disable
+  # pylint: disable=g-classes-have-attributes
   """MinDiffLoss abstract base class.
 
   Inherits from: `tf.keras.losses.Loss`
@@ -67,14 +68,15 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
   If the predictions between the two groups are indistinguishable, the loss
   should be 0. The more different the two scores are, the higher the loss.
   """
-  
+  # pyformat: enable
+
   def __init__(self,
                membership_transform=None,
                predictions_transform=None,
                membership_kernel=None,
                predictions_kernel=None,
                name: Optional[Text] = None):
-    
+    # pylint: disable=g-doc-args
     """Initialize `MinDiffLoss` instance.
 
     Raises:
@@ -151,7 +153,8 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
       predictions: types.TensorType,
       sample_weight: Optional[types.TensorType] = None
   ) -> Tuple[types.TensorType, types.TensorType, types.TensorType]:
-        """Preprocesses inputs by applying transforms and normalizing weights.
+    # pyformat: disable
+    """Preprocesses inputs by applying transforms and normalizing weights.
 
     Arguments:
       membership: `membership` column as described in
@@ -178,7 +181,8 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
       tf.errors.InvalidArgumentError: if `sample_weight` has negative
         entries.
     """
-        # Transform membership if transform is provided and cast.
+    # pyformat: enable
+    # Transform membership if transform is provided and cast.
     if self.membership_transform is not None:
       membership = self.membership_transform(membership)
     membership = tf.cast(membership, tf.float32)
@@ -209,7 +213,8 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
   def _apply_kernels(
       self, membership: types.TensorType, predictions: types.TensorType
   ) -> Tuple[types.TensorType, types.TensorType]:
-        """Applies `losses.MinDiffKernel` attributes to corresponding inputs.
+    # pyformat: disable
+    """Applies `losses.MinDiffKernel` attributes to corresponding inputs.
 
     Arguments:
       membership: `membership` column as described in `MinDiffLoss.call`.
@@ -252,7 +257,8 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     Returns:
       Tuple of (`membership_kernel_output`, `predictions_kernel_output`).
     """
-        if self.membership_kernel is not None:
+    # pyformat: enable
+    if self.membership_kernel is not None:
       membership = self.membership_kernel(membership)
     if self.predictions_kernel is not None:
       predictions = self.predictions_kernel(predictions)
@@ -264,7 +270,8 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
            membership: types.TensorType,
            predictions: types.TensorType,
            sample_weight: Optional[types.TensorType] = None):
-        """Invokes the `MinDiffLoss` instance.
+    # pyformat: disable
+    """Invokes the `MinDiffLoss` instance.
 
     Arguments:
       membership: Numerical `Tensor` indicating whether examples are
@@ -285,7 +292,8 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     Returns:
       Scalar `min_diff_loss`.
     """
-        raise NotImplementedError('Must be implemented in subclass.')
+    # pyformat: enable
+    raise NotImplementedError('Must be implemented in subclass.')
 
 
 #### Validation Functions ####
