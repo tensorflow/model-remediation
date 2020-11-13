@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generates api_docs for Model Remediation."""
+"""Generates API docs for TensorFlow Model Remediation."""
 import os
 
 from absl import app
@@ -45,7 +45,7 @@ flags.DEFINE_string("site_path",
 
 
 def execute(output_dir, code_url_prefix, search_hints, site_path):
-  """Builds API docs for tensorflow_model_remediation."""
+  """Builds API docs for TensorFlow Model Remediation."""
 
   # Hide `Model` methods with a few exceptions.
   for cls in [tf.Module, tf.keras.layers.Layer, tf.keras.Model]:

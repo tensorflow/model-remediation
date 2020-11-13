@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for input util functions."""
+"""Tests for input_util functions."""
 
 from tensorflow_model_remediation.min_diff.keras.utils import input_utils
 import tensorflow as tf

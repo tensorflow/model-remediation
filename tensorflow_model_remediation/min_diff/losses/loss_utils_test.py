@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test loss_utils module."""
+"""Tests for loss_utils functions."""
 
 from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as abscorrloss
 from tensorflow_model_remediation.min_diff.losses import base_loss

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test mmd_loss module."""
+"""Tests for MMDLoss class."""
 
 from tensorflow_model_remediation.min_diff.losses import mmd_loss as loss_lib
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel

@@ -26,19 +26,19 @@ landing_page:
   - classname: devsite-landing-row-100
   - heading: What is Model Remediation?
     options:
-    - description-50
+    - description-100
     items:
     - description: >
         <p>
-        After performing disaggregated evaluation of a machine learning model’s performance,
-        you might notice that your model is underperforming across certain slices of data. If
+        After performing disaggregated evaluation of a machine learning model’s performance, you
+        might notice that your model is underperforming across certain slices of data. If left
         unaddressed, this type of inequitable performance can lead to unfair outcomes. In practice,
         there are two main classes of technical interventions for addressing this type of bias
         concern:
         <ul style="padding-left: 20px">
           <li>
-              Augmenting the training data by collecting more examples, generating synthetic data,
-              or adjusting the weights and sampling rates of different slices of data
+              Augmenting the training data by collecting more examples, generating synthetic
+              data, or adjusting the weights and sampling rates of different slices of data
           </li>
           <li>
               Introducing loss functions, or constraints to remediate the model itself
@@ -57,32 +57,74 @@ landing_page:
           </pre>
           {% dynamic if request.tld != 'cn' %}
               <a class="colab-button" target="_blank"
-               href="https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials
+               href="https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tu
+               torials
                /_index.ipynb">Run in a <span>Notebook</span></a>
           {% dynamic endif %}
 
+  - classname: devsite-landing-row-100
   - heading: What is MinDiff?
+    options:
+    - description-100
     items:
-    - classname: devsite-landing-row-50
+    - classname: devsite-landing-row-100
       description: >
+        <p>
         MinDiff is a technique which applies a loss function that seeks to balance error rates
         across different slices of your data by penalizing disparities in performance across the
         desired metric. Typically, you apply MinDiff when trying to minimize the difference in
         either False Positive Rate (FPR) or False Negative Rate (FNR) for a slice of training data
         that belongs to a sensitive class when compared to the rest of the dataset.
-  - heading: How does MinDiff work?
-    items:
-    - classname: devsite-landing-row-50
-      description: >
-        Given two sets of examples from a dataset that are split across a sensitive attribute, min
-        diff penalizes the model during training for any differences in the distribution of scores
-        between the two sets. The less distinguishable the two are based on example scores, the
-        smaller the penalty that needs to be applied. The penalty is applied by adding a component
-        to the loss which the model is training on, and can be thought of as a measurement of the
-        difference in distributions. As the model learns from the penalty, it will adjust the
-        distributions, causing them to converge.
+        </p>
 
+  - classname: devsite-landing-row-100
+  - heading: How does MinDiff work?
+    options:
+    - description-100
+    items:
+    - classname: devsite-landing-row-100
+      description: >
+        <p>
+        Given two sets of examples from a dataset that are split across a sensitive attribute,
+        MinDiff penalizes the model during training for any differences in the distribution of
+        scores between the two sets. The lower the difference, the lower the penalty applied.
+        The penalty is applied by adding a component to the loss which the model is training on, and
+        can be thought of as a measurement of the difference in distributions. The model learns from
+        the penalty and adjusts the distributions, causing them to converge.
+        </p>
+        <figure>
+        <img src="images/mindiff.png"
+        <p>
         Because this effectively adds an objective for the model to optimize over, this may come
-        with tradeoffs with respect to performance on the original task. In practice MinDiff has
-        been found to be effective while not deteriorating said performance beyond product needs.
+        with tradeoffs with respect to performance on the original task. In practice, MinDiff has
+        been found to be effective while not degrading model performance beyond product needs.
         For examples showing how to implement MinDiff, see the docs <a href= "">here</a>.
+        </p>
+
+  - classname: devsite-landing-row-100
+    items:
+    - description: >
+        <h3>Resources</h3>
+
+  - classname: devsite-landing-row-cards
+    items:
+    - heading: "See MinDiff applied on a text classification model"
+      image_path: /resources/images/tf-logo-card-16x9.png
+      path: "https://developers.google.com/machine-learning/practica/fairness-indicators?utm_source=github&utm_medium=github&utm_campaign=fi-practicum&utm_term=&utm_content=repo-body"
+      buttons:
+      - label: "Check out the notebook"
+        path: "https://developers.google.com/machine-learning/practica/fairness-indicators?utm_source=github&utm_medium=github&utm_campaign=fi-practicum&utm_term=&utm_content=repo-body"
+
+    - heading: "MinDiff on the TensorFlow blog"
+      image_path: /resources/images/tf-logo-card-16x9.png
+      path: https://blog.tensorflow.org/2019/12/fairness-indicators-fair-ML-systems.html
+      buttons:
+      - label: "Read on the TensorFlow blog"
+        path: https://blog.tensorflow.org/2019/12/fairness-indicators-fair-ML-systems.html
+
+    - heading: "Model Remediation Library on GitHub"
+      image_path: /resources/images/github-card-16x9.png
+      path: https://github.com/tensorflow/model-remediation
+      buttons:
+      - label: "View on GitHub"
+        path: https://github.com/tensorflow/model-remediation

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Lint as: python3
-"""Utils for MinDiff losses."""
+"""Utility functions for MinDiff losses."""
 
 from typing import Text, Union
 

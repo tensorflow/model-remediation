@@ -19,3 +19,5 @@ toc:
   path: /responsible_ai/model_remediation/install
 - title: Usage requirements
   path: /responsible_ai/model_remediation/usage_reqs
+- title: Use MinDiff with Keras
+  path: /responsible_ai/model_remediation/tutorials/min_diff_keras

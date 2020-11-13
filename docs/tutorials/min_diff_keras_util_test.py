@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for model_remediation.docs.examples.min_diff_keras_util."""
+"""Tests for min_diff_keras_util functions."""
 
 import csv
 import os
 import tempfile
 import unittest.mock as mock
 
-from tensorflow_model_remediation.docs.examples import min_diff_keras_util
+from tensorflow_model_remediation.docs.tutorials import min_diff_keras_util
 import tensorflow as tf
 
 
@@ -128,7 +128,7 @@ class UtilTest(tf.test.TestCase):
     return filename
 
   @mock.patch(
-      'model_remediation.docs.examples.min_diff_keras_util._create_embedding_layer',
+      'model_remediation.docs.tutorials.min_diff_keras_util._create_embedding_layer',
       autospec=True)
   @mock.patch('tensorflow.keras.utils.get_file', autospec=True)
   def test_download_and_process_civil_comments_data_and_create_model(

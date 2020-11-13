@@ -1,39 +1,57 @@
 # TensorFlow Model Remediation
 
-Model Remediation is a library that provides solutions for machine learning
-practitioners working to create and train models in a way that reduces or
-eliminates user harm resulting from underlying performance biases.
+TensorFlow Model Remediation is a library that provides solutions for machine
+learning practitioners working to create and train models in a way that reduces
+or eliminates user harm resulting from underlying performance biases.
 
 [![PyPI version](https://badge.fury.io/py/tensorflow-model-remediation.svg)](https://badge.fury.io/py/tensorflow-model-remediation)
+[![Tutorial](https://img.shields.io/badge/doc-tutorial-blue.svg)](https://www.tensorflow.org/responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras)
+[![Overview](https://img.shields.io/badge/doc-overview-blue.svg)](https://www.tensorflow.org/responsible_ai/model_remediation)
+
+## Installation
+
+You can install the package from `pip`:
+
+```shell
+$ pip install tensorflow-model-remediation
+```
+
+Note: Make sure you are using TensorFlow 2.x.
 
 ## Documentation
 
-To install and use Model Remediation, start with our
-[**getting started guide**](https://www.tensorflow.org/responsible_ai/model_remediation) and try
-it interactively in a
-[Colab notebook](https://github.com/tensorflow/model-remediation/blob/master/docs/examples/min_diff_keras.ipynb).
+This library will ultimately contain a collection of techniques for addressing
+a wide range of concerns. For now it contains a single technique, MinDiff,
+which can help reduce performance gaps between example subgroups.
 
-To get started with Model Remediation:
+
+We recommend starting with the
+[overview guide](https://www.tensorflow.org/responsible_ai/model_remediation)
+or trying it interactively in our
+[tutorial notebook](https://github.com/tensorflow/model-remediation/blob/master/docs/examples/min_diff_keras.ipynb).
+
+
 
 ```python
-# !pip install tensorflow-model-remediation
-from fairness_indicators.examples import util
 from tensorflow_model_remediation import min_diff
 import tensorflow as tf
 
-# Start with a given Keras model.
-original_model = util.create_keras_sequential_model()
+# Start by defining a Keras model.
+original_model = ...
 
-# Set the strenth of MinDiff and a given loss.
-min_diff_weight = 1.0
+# Set the MinDiff weight and choose a loss.
 min_diff_loss = min_diff.losses.MMDLoss()
+min_diff_weight = 1.0  # Hyperparamater to be tuned.
 
 # Create a MinDiff model.
 min_diff_model = min_diff.keras.MinDiffModel(
-    original_model, min_diff_loss, min_diff_strength)
+    original_model, min_diff_loss, min_diff_weight)
 
-# Compile the MinDiff model as you normally would do with Keras.
+# Compile the MinDiff model as you normally would do with the original model.
 min_diff_model.compile(...)
+
+# Create a MinDiff Dataset and train the min_diff_model on it.
+min_diff_model.fit(min_diff_dataset, ...)
 ```
 
 #### *Disclaimers*

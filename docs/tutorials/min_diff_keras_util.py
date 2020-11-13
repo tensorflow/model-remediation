@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Util methods for the MinDiff keras colab."""
+"""Util methods for the MinDiff Keras colab."""
 TEXT_FEATURE = 'comment_text'
 LABEL = 'toxicity'
 
 
 def download_and_process_civil_comments_data():
-  """Download and process the civil comments dataset into a pandas DataFrame."""
+  """Download and process the civil comments dataset into a Pandas DataFrame."""
 
   # Download data.
   toxicity_data_url = 'https://storage.googleapis.com/civil_comments_dataset/'
@@ -29,12 +29,12 @@ def download_and_process_civil_comments_data():
       'validate_df_processed.csv',
       toxicity_data_url + 'validate_df_processed.csv')
 
-  # Get validation data as tfrecords.
+  # Get validation data as TFRecords.
   validate_tfrecord_file = tf.keras.utils.get_file(
       'validate_tf_processed.tfrecord',
       toxicity_data_url + 'validate_tf_processed.tfrecord')
 
-  # Read data into pandas DataFrame.
+  # Read data into Pandas DataFrame.
   data_train = pd.read_csv(train_csv_file)
   data_validate = pd.read_csv(validate_csv_file)
 

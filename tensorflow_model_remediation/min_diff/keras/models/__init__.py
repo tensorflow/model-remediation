@@ -13,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""High-level implementation supporting MinDiff integration for most arbitrary keras models."""
+"""High-level implementation supporting MinDiff integration for most arbitrary Keras models."""
 
 from tensorflow_model_remediation.min_diff.keras.models.min_diff_model import MinDiffModel

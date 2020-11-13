@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for input util functions."""
+"""Tests for MinDiffModel class."""
 
 import copy
 import os

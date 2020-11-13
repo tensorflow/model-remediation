@@ -13,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Version string for model_remediation."""
+"""Version string for TensorFlow Model Remediation."""
 
 __version__ = "0.1.0.dev"

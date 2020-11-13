@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test absolute_correlation_loss module."""
+"""Tests for AbsoluteCorrelationLoss class."""
 
 from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as loss_lib
 import tensorflow as tf

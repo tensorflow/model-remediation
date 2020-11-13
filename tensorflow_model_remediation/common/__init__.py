@@ -16,4 +16,3 @@
 """Public API for MinDiff common."""
 
 from tensorflow_model_remediation.common import docs
-from tensorflow_model_remediation.common import types
