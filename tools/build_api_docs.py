@@ -19,7 +19,7 @@ import os
 from absl import app
 from absl import flags
 
-import model_remediation
+import tensorflow_model_remediation
 
 import tensorflow as tf
 
