@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """Model module for MinDiff Keras integration.
 
 This Module provides the implementation of a MinDiffModel, a Model that

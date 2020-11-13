@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """Useful constants for typing the TensorFlow Model Remediation library."""
 
 from typing import Callable, Dict, Text, Tuple, Union

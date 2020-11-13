@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python3
 """Input utils module for MinDiff Keras integration.
 
 This module provides default implementations for packing and unpacking min_diff
