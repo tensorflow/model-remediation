@@ -14,10 +14,8 @@
 
 toc:
 - title: Overview
-  path: /responsible_ai/model_remediation
+  path: /responsible_ai/model_remediation/min_diff/guide/
 - title: Install
-  path: /responsible_ai/model_remediation/install
+  path: /responsible_ai/model_remediation/min_diff/guide/install
 - title: Usage requirements
-  path: /responsible_ai/model_remediation/usage_reqs
-- title: Use MinDiff with Keras
-  path: /responsible_ai/model_remediation/tutorials/min_diff_keras
+  path: /responsible_ai/model_remediation/min_diff/guide/usage_reqs
