@@ -30,37 +30,50 @@ landing_page:
     items:
     - description: >
         <p>
-        After performing disaggregated evaluation of a machine learning model’s performance, you
-        might notice that your model is underperforming across certain slices of data. If left
-        unaddressed, this type of inequitable performance can lead to unfair outcomes. In practice,
-        there are two main classes of technical interventions for addressing this type of bias
-        concern:
+        Once you’ve performed <a
+        href="./responsible_ai/fairness_indicators/guidance">sliced evaluation</a> of a machine
+        learning model’s performance, you might notice that your model is underperforming across
+        certain slices of data. This type of unequal performance can sometimes lead to unfair and
+        potentially harmful outcomes for vulnerable subsets of the population. Generally, there are
+        three primary types of technical interventions for addressing bias concerns:
         <ul style="padding-left: 20px">
           <li>
-              Augmenting the training data by collecting more examples, generating synthetic
-              data, or adjusting the weights and sampling rates of different slices of data
+              <strong>Changing the input data:</strong> Collecting more data, generating synthetic
+              data, adjusting the weights and sampling rates of different slices, etc.<sup>1</sup>
           </li>
           <li>
-              Introducing loss functions, or constraints to remediate the model itself
+              <strong>Intervening on the model:</strong> Changing the model itself by introducing or
+              altering model objectives, adding constraints, etc.<sup>2</sup>
+          </li>
+          <li>
+              <strong>Post-processing the results:</strong> Modifying the outputs of the model or
+              the interpretation of the outputs to improve performance across metrics.<sup>3</sup>
           </li>
         </ul>
         </p>
 
     - code_block: |
           <pre class = "prettyprint">
+          from tensorflow_model_remediation import min_diff
           import tensorflow as tf
-          import responsible-ai
 
-          # This is a short code snippet that shows off your project.
-          # Launch a Colab notebook to run this example.
-          print("Hello, responsible-ai")
+          # Start by defining a Keras model.
+          original_model = ...
+
+          # Set the MinDiff weight and choose a loss.
+          min_diff_loss = min_diff.losses.MMDLoss()
+          min_diff_weight = 1.0  # Hyperparamater to be tuned.
+
+          # Create a MinDiff model.
+          min_diff_model = min_diff.keras.MinDiffModel(
+          original_model, min_diff_loss, min_diff_weight)
+
+          # Compile the MinDiff model normally.
+          min_diff_model.compile(...)
+
+          # Create a MinDiff Dataset and train the min_diff_model.
+          min_diff_model.fit(min_diff_dataset, ...)
           </pre>
-          {% dynamic if request.tld != 'cn' %}
-              <a class="colab-button" target="_blank"
-               href="https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tu
-               torials
-               /_index.ipynb">Run in a <span>Notebook</span></a>
-          {% dynamic endif %}
 
   - classname: devsite-landing-row-100
   - heading: What is MinDiff?
@@ -69,12 +82,13 @@ landing_page:
     items:
     - classname: devsite-landing-row-100
       description: >
-        <p>
-        MinDiff is a technique which applies a loss function that seeks to balance error rates
-        across different slices of your data by penalizing disparities in performance across the
-        desired metric. Typically, you apply MinDiff when trying to minimize the difference in
-        either False Positive Rate (FPR) or False Negative Rate (FNR) for a slice of training data
-        that belongs to a sensitive class when compared to the rest of the dataset.
+        <p>MinDiff is a model remediation technique that seeks to equalize two distributions. In
+        practice, it can be used to balance error rates across different slices of your data by
+        penalizing distributional differences.</p>
+        <p>Typically, one applies MinDiff when trying to minimize the difference in either false
+        positive rate (FPR) or false negative rate (FNR) between a slice of data belonging to a
+        sensitive class and a better performing slice. For in-depth discussion of fairness metrics,
+        review the literature on this subject.<sup>4 5 6</sup></p>
         </p>
 
   - classname: devsite-landing-row-100
@@ -84,22 +98,41 @@ landing_page:
     items:
     - classname: devsite-landing-row-100
       description: >
-        <p>
-        Given two sets of examples from a dataset that are split across a sensitive attribute,
-        MinDiff penalizes the model during training for any differences in the distribution of
-        scores between the two sets. The lower the difference, the lower the penalty applied.
-        The penalty is applied by adding a component to the loss which the model is training on, and
-        can be thought of as a measurement of the difference in distributions. The model learns from
-        the penalty and adjusts the distributions, causing them to converge.
-        </p>
+        <p>Given two sets of examples from our dataset, MinDiff penalizes the model during training
+        for differences in the distribution of scores between the two sets. The less distinguishable
+        the two sets are based on prediction scores, the smaller the penalty that will be
+        applied.</p>
         <figure>
-        <img src="images/mindiff.png"
-        <p>
-        Because this effectively adds an objective for the model to optimize over, this may come
-        with tradeoffs with respect to performance on the original task. In practice, MinDiff has
-        been found to be effective while not degrading model performance beyond product needs.
-        For examples showing how to implement MinDiff, see the docs <a href= "">here</a>.
-        </p>
+            <img src="images/mindiff_graphs.svg">
+        </figure>
+        <p>The penalty is applied by adding a component to the loss with which the model is training.
+        It can be thought of as a measurement of the difference in distribution of model
+        predictions. As the model trains, it will try to minimize the penalty by bringing the
+        distributions closer together, as in the above graph.</p>
+        <p>Applying MinDiff may come with tradeoffs with respect to performance on the original
+        task. In practice, we have often found MinDiff to be effective while not deteriorating
+        performance beyond product needs, but this will be application dependent and the decision
+        should be made deliberately by the product owner. For examples showing how to implement
+        MinDiff, see <a
+        href="./responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras.ipynb">our
+        notebook tutorial</a>.</p>
+
+        <sup>1</sup>Zhang, G., Bai, B., Zhang, J., Bai, K., Zhu, C., Zhao, T. (2020). <a
+        href="https://arxiv.org/abs/2004.14088">Demographics Should Not Be the Reason of Toxicity:
+        Mitigating Discrimination in Text Classifications with Instance Weighting.</a><br>
+        <sup>2</sup>Prost, F., Qian H., Chen, Q., Chi, E., Chen, J., Beutel, A. (2019). <a
+        href="https://arxiv.org/abs/1910.11779">Toward a better trade-off between performance and
+        fairness with kernel-based distribution matching.</a><br>
+        <sup>3</sup>Alabdulmohsin, I. (2020). <a href="https://arxiv.org/abs/2005.14621">Fair
+        Classification via Unconstrained Optimization.</a><br>
+        <sup>4</sup>Dwork, C., Hardt, M., Pitassi, T., Reingold, O., Zemel, R. (2011). <a
+        href="https://arxiv.org/abs/1104.3913">Fairness Through Awareness.</a><br>
+        <sup>5</sup>Hardt, M., Price, E., Srebro, N. (2016). <a
+        href="https://arxiv.org/abs/1610.02413">Equality of Opportunity in Supervised
+        Learning.</a><br>
+        <sup>6</sup>Chouldechova, A. (2016). <a
+        href="https://arxiv.org/abs/1610.07524">Fair prediction with disparate impact: A study of
+        bias in recidivism prediction instruments.</a>
 
   - classname: devsite-landing-row-100
     items:
