@@ -27,7 +27,8 @@ import tensorflow as tf
 
 
 class MinDiffModel(tf.keras.Model):
-      """Model that adds a loss component to another model during training.
+  
+    """Model that adds a loss component to another model during training.
 
   Inherits from: `tf.keras.Model`
 
@@ -129,6 +130,7 @@ class MinDiffModel(tf.keras.Model):
   appearing in the metrics. For `predict` this should have no visible effect.
   """
   
+
   def __init__(self,
                original_model: tf.keras.Model,
                loss,
@@ -225,7 +227,8 @@ class MinDiffModel(tf.keras.Model):
     return self.original_model(inputs, **kwargs)
 
   def unpack_original_inputs(self, inputs):
-        """Extracts original_inputs from `inputs`.
+    
+    """Extracts original_inputs from `inputs`.
 
     Arguments:
       inputs: `inputs` as described in `MinDiffModel.call`.
@@ -260,10 +263,12 @@ class MinDiffModel(tf.keras.Model):
       Inputs to be used in the call to `original_model`.
 
     """
-        return utils.unpack_original_inputs(inputs)
+    
+    return utils.unpack_original_inputs(inputs)
 
   def unpack_min_diff_data(self, inputs):
-        """Extracts `min_diff_data` from `inputs` if present or returns `None`.
+    
+    """Extracts `min_diff_data` from `inputs` if present or returns `None`.
 
     Arguments:
       inputs: `inputs` as described in `MinDiffModel.call`.
@@ -298,10 +303,12 @@ class MinDiffModel(tf.keras.Model):
       `min_diff_data` to be passed to `MinDiffModel.compute_min_diff_loss` if
       present or `None` otherwise.
     """
-        return utils.unpack_min_diff_data(inputs)
+    
+    return utils.unpack_min_diff_data(inputs)
 
   def compute_min_diff_loss(self, min_diff_data, training=None, mask=None):
-        """Computes and returns the `min_diff_loss` corresponding to `min_diff_data`.
+    
+    """Computes and returns the `min_diff_loss` corresponding to `min_diff_data`.
 
     Arguments:
       min_diff_data: Tuple of length 2 or 3 as described below.
@@ -350,7 +357,8 @@ class MinDiffModel(tf.keras.Model):
       ValueError: If the transformed `min_diff_predictions`  is not a
         `tf.Tensor`.
     """
-        x, membership, sample_weight = (
+    
+    x, membership, sample_weight = (
         tf.keras.utils.unpack_x_y_sample_weight(min_diff_data))
 
     predictions = self._call_original_model(x, training=training, mask=mask)
@@ -388,7 +396,8 @@ class MinDiffModel(tf.keras.Model):
 
   @docs.do_not_doc_in_subclasses
   def call(self, inputs, training=None, mask=None):
-        """Calls `original_model` with optional `min_diff_loss` as regularization loss.
+    
+    """Calls `original_model` with optional `min_diff_loss` as regularization loss.
 
     Args:
       inputs: Inputs to original_model, optionally containing `min_diff_data` as
@@ -442,7 +451,8 @@ class MinDiffModel(tf.keras.Model):
       ValueError: If `training` is set to `True` but `inputs` does not include
       `min_diff_data`.
     """
-        original_inputs = self.unpack_original_inputs(inputs)
+    
+    original_inputs = self.unpack_original_inputs(inputs)
     min_diff_data = self.unpack_min_diff_data(inputs)
 
     # If training is True, we require min_diff_data to be available.
