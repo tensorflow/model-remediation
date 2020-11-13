@@ -55,6 +55,7 @@ def _create_embedding_layer(hub_url):
 
 
 # pylint does not understand the default arg values, thinks they are empty []
+
 def create_keras_sequential_model(
     hub_url='https://tfhub.dev/google/tf2-preview/nnlm-en-dim128/1',
     cnn_filter_sizes=[128, 128, 128],

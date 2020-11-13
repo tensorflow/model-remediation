@@ -46,8 +46,7 @@ class MinDiffPackedInputs(
 def pack_min_diff_data(
     original_dataset: tf.data.Dataset, sensitive_group_dataset: tf.data.Dataset,
     nonsensitive_group_dataset: tf.data.Dataset) -> tf.data.Dataset:
-  
-  """Packs `min_diff_data` with the `x` component of the original dataset.
+    """Packs `min_diff_data` with the `x` component of the original dataset.
 
   Arguments:
     original_dataset: `tf.data.Dataset` that was used before applying min
@@ -113,7 +112,6 @@ def pack_min_diff_data(
     `sample_weight`).
   """
   
-
   dataset = tf.data.Dataset.zip(
       (original_dataset, sensitive_group_dataset.repeat(),
        nonsensitive_group_dataset.repeat()))

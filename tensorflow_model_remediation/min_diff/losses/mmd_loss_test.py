@@ -171,7 +171,8 @@ class MMDLossTest(tf.test.TestCase):
   def testRaisesExpectedErrors(self):
     kernel = gaussian_kernel.GaussianKernel()
     loss_lib.MMDLoss(kernel)
-    bad_kernel = lambda x: kernel(x)      with self.assertRaisesRegex(
+    bad_kernel = lambda x: kernel(x)  
+    with self.assertRaisesRegex(
         TypeError,
         "predictions_kernel.*must be.*MinDiffKernel.*string.*4.*int"):
       loss_lib.MMDLoss(4)
