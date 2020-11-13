@@ -19,7 +19,7 @@ import os
 from absl import app
 from absl import flags
 
-import tensorflow_model_remediation
+import tensorflow_model_remediation as tfmr
 
 import tensorflow as tf
 
@@ -63,8 +63,7 @@ def execute(output_dir, code_url_prefix, search_hints, site_path):
 
   # Hide `MinDiffLoss` and `MinDiffKernel` __call__ method.
   for cls in [
-      model_remediation.min_diff.losses.MinDiffLoss,
-      model_remediation.min_diff.losses.MinDiffKernel
+      tfmr.min_diff.losses.MinDiffLoss, tfmr.min_diff.losses.MinDiffKernel
   ]:
     doc_controls.decorate_all_class_attributes(
         decorator=doc_controls.do_not_doc_in_subclasses,
@@ -73,12 +72,12 @@ def execute(output_dir, code_url_prefix, search_hints, site_path):
 
   # Delete common module when documenting. There is nothing there for users
   # quite yet.
-  del model_remediation.common
+  del tfmr.common
 
   doc_generator = generate_lib.DocGenerator(
       root_title="TensorFlow Model Remediation",
-      py_modules=[("model_remediation", model_remediation)],
-      base_dir=os.path.dirname(model_remediation.__file__),
+      py_modules=[("model_remediation", tfmr)],
+      base_dir=os.path.dirname(tfmr.__file__),
       search_hints=search_hints,
       code_url_prefix=code_url_prefix,
       site_path=site_path,
