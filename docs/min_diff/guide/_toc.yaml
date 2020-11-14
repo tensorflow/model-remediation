@@ -14,8 +14,8 @@
 
 toc:
 - title: Overview
-  path: /responsible_ai/model_remediation/min_diff/guide/
+  path: /responsible_ai/model_remediation/
 - title: Install
   path: /responsible_ai/model_remediation/min_diff/guide/install
 - title: Usage requirements
-  path: /responsible_ai/model_remediation/min_diff/guide/usage_reqs
+  path: /responsible_ai/model_remediation/min_diff/guide/requirements

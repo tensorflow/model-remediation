@@ -23,7 +23,7 @@ can help reduce performance gaps between example subgroups.
 Other Documentation:
 
 * [Overview](https://www.tensorflow.org/responsible_ai/model_remediation)
-* [MinDiff Requirements](https://www.tensorflow.org/responsible_ai/model_remediation/min_diff/requirements)
+* [MinDiff Requirements](https://www.tensorflow.org/responsible_ai/model_remediation/min_diff/guide/requirements)
 * [Tutorial](https://www.tensorflow.org/responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras)
 """
 # pyformat: enable
