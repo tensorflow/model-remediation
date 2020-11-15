@@ -31,7 +31,7 @@ landing_page:
     - description: >
         <p>
         Once you’ve performed <a
-        href="./responsible_ai/fairness_indicators/guidance">sliced evaluation</a> of a machine
+        href="../fairness_indicators/guidance">sliced evaluation</a> of a machine
         learning model’s performance, you might notice that your model is underperforming across
         certain slices of data. This type of unequal performance can sometimes lead to unfair and
         potentially harmful outcomes for vulnerable subsets of the population. Generally, there are
@@ -114,8 +114,7 @@ landing_page:
         performance beyond product needs, but this will be application dependent and the decision
         should be made deliberately by the product owner. For examples showing how to implement
         MinDiff, see <a
-        href="./responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras.ipynb">our
-        notebook tutorial</a>.</p>
+        href="./min_diff/tutorials/min_diff_keras">our notebook tutorial</a>.</p>
 
         <sup>1</sup>Zhang, G., Bai, B., Zhang, J., Bai, K., Zhu, C., Zhao, T. (2020). <a
         href="https://arxiv.org/abs/2004.14088">Demographics Should Not Be the Reason of Toxicity:
@@ -143,10 +142,10 @@ landing_page:
     items:
     - heading: "See MinDiff applied on a text classification model"
       image_path: /resources/images/tf-logo-card-16x9.png
-      path: "https://developers.google.com/machine-learning/practica/fairness-indicators?utm_source=github&utm_medium=github&utm_campaign=fi-practicum&utm_term=&utm_content=repo-body"
+      path: "https://tensorflow.org/responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras"
       buttons:
       - label: "Check out the notebook"
-        path: "https://developers.google.com/machine-learning/practica/fairness-indicators?utm_source=github&utm_medium=github&utm_campaign=fi-practicum&utm_term=&utm_content=repo-body"
+        path: "https://tensorflow.org/responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras"
 
     - heading: "MinDiff on the TensorFlow blog"
       image_path: /resources/images/tf-logo-card-16x9.png

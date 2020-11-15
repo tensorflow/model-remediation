@@ -3,7 +3,7 @@
 You have a few options to download and start using TensorFlow Model Remediation:
 
 *    To start learning what the library contains and how it works, run the
-     [tutorial](link to tutorial).
+     [tutorial](../tutorials/min_diff_keras).
 *    To download on a local machine, install the `tensorflow-model-remediation`
      pip package.
 *    If your machine has a unique configuration, you can build your package from
