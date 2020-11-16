@@ -149,10 +149,10 @@ landing_page:
 
     - heading: "MinDiff on the TensorFlow blog"
       image_path: /resources/images/tf-logo-card-16x9.png
-      path: https://blog.tensorflow.org/2019/12/fairness-indicators-fair-ML-systems.html
+      path: https://blog.tensorflow.org/2020/11/applying-mindiff-to-improve-model.html
       buttons:
       - label: "Read on the TensorFlow blog"
-        path: https://blog.tensorflow.org/2019/12/fairness-indicators-fair-ML-systems.html
+        path: https://blog.tensorflow.org/2020/11/applying-mindiff-to-improve-model.html
 
     - heading: "Model Remediation Library on GitHub"
       image_path: /resources/images/github-card-16x9.png
