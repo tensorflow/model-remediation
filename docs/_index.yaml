@@ -31,7 +31,7 @@ landing_page:
     - description: >
         <p>
         Once you’ve performed <a
-        href="../fairness_indicators/guidance">sliced evaluation</a> of a machine
+        href="../fairness_indicators/guide/guidance">sliced evaluation</a> of a machine
         learning model’s performance, you might notice that your model is underperforming across
         certain slices of data. This type of unequal performance can sometimes lead to unfair and
         potentially harmful outcomes for vulnerable subsets of the population. Generally, there are
