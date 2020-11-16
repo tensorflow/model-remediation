@@ -28,7 +28,7 @@ which can help reduce performance gaps between example subgroups.
 We recommend starting with the
 [overview guide](https://www.tensorflow.org/responsible_ai/model_remediation)
 or trying it interactively in our
-[tutorial notebook](https://github.com/tensorflow/model-remediation/blob/master/docs/examples/min_diff_keras.ipynb).
+[tutorial notebook](https://www.tensorflow.org/responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras).
 
 
 
