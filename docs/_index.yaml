@@ -142,10 +142,10 @@ landing_page:
     items:
     - heading: "See MinDiff applied on a text classification model"
       image_path: /resources/images/tf-logo-card-16x9.png
-      path: "https://tensorflow.org/responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras"
+      path: /responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras
       buttons:
       - label: "Check out the notebook"
-        path: "https://tensorflow.org/responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras"
+        path: /responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras
 
     - heading: "MinDiff on the TensorFlow blog"
       image_path: /resources/images/tf-logo-card-16x9.png
