@@ -103,7 +103,7 @@ landing_page:
         the two sets are based on prediction scores, the smaller the penalty that will be
         applied.</p>
         <figure>
-            <img src="images/mindiff_graphs.svg">
+            <img src="min_diff/guide/images/mindiff_graphs.svg">
         </figure>
         <p>The penalty is applied by adding a component to the loss with which the model is training.
         It can be thought of as a measurement of the difference in distribution of model
