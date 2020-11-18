@@ -24,7 +24,7 @@ import tensorflow as tf
 
 
 class MinDiffKernel(abc.ABC):
-  # pylint: disable=g-classes-have-attributes
+
   # pyformat: disable
   """MinDiffKernel abstract base class.
 

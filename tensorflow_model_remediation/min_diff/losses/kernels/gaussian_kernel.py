@@ -21,7 +21,7 @@ import tensorflow as tf
 
 
 class GaussianKernel(base_kernel.MinDiffKernel):
-  # pylint: disable=g-classes-have-attributes
+
   # pyformat: disable
   """Gaussian kernel class.
 

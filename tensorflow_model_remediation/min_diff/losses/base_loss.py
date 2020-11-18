@@ -26,7 +26,7 @@ import tensorflow as tf
 
 class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
   # pyformat: disable
-  # pylint: disable=g-classes-have-attributes
+
   """MinDiffLoss abstract base class.
 
   Inherits from: `tf.keras.losses.Loss`
@@ -76,7 +76,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
                membership_kernel=None,
                predictions_kernel=None,
                name: Optional[Text] = None):
-    # pylint: disable=g-doc-args
+
     """Initialize `MinDiffLoss` instance.
 
     Raises:

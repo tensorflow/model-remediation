@@ -23,7 +23,7 @@ import tensorflow as tf
 
 
 class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
-  # pylint: disable=g-classes-have-attributes
+
   # pyformat: disable
   """Absolute correlation between predictions on two groups of examples.
 

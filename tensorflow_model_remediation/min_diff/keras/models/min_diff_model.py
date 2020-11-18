@@ -28,7 +28,7 @@ import tensorflow as tf
 
 class MinDiffModel(tf.keras.Model):
   # pyformat: disable
-  # pylint: disable=g-classes-have-attributes
+
   """Model that adds a loss component to another model during training.
 
   Inherits from: `tf.keras.Model`
@@ -138,7 +138,7 @@ class MinDiffModel(tf.keras.Model):
                loss_weight: complex = 1.0,
                predictions_transform=None,
                **kwargs):
-    # pylint: disable=g-doc-args
+
     """Initializes a MinDiffModel instance.
 
     Raises:
@@ -221,7 +221,7 @@ class MinDiffModel(tf.keras.Model):
 
   def _call_original_model(self, inputs, training=None, mask=None):
     """Calls the original model with appropriate args."""
-    # pylint: disable=protected-access
+
     arg_tuples = [("training", training,
                    self.original_model._expects_training_arg),
                   ("mask", mask, self.original_model._expects_mask_arg)]
@@ -370,7 +370,7 @@ class MinDiffModel(tf.keras.Model):
     # is called on the original inputs.
     self._clear_losses()
 
-    predictions = self.predictions_transform(predictions)  # pylint: disable=not-callable
+    predictions = self.predictions_transform(predictions)
     if not isinstance(predictions, tf.Tensor):
       err_msg = (
           "MinDiff `predictions` meant for calculating the `min_diff_loss`"
@@ -475,9 +475,9 @@ class MinDiffModel(tf.keras.Model):
 
   # We are overriding this solely to provide complete documentation on the
   # limitations of saving this way as opposed to behavior of normal models.
-  # pylint: disable=useless-super-delegation
+
   def save(self, *args, **kwargs):
-    # pylint: disable=g-doc-args, g-doc-return-or-yield
+
     """Exports the model as described in `tf.keras.Model.save`.
 
     You may want to use this if you want to continue training your model with
@@ -496,7 +496,7 @@ class MinDiffModel(tf.keras.Model):
     return super(MinDiffModel, self).save(*args, **kwargs)
 
   def save_original_model(self, *args, **kwargs):
-    # pylint: disable=g-doc-args, g-doc-return-or-yield
+
     """Exports the `original_model` for inference without `min_diff_data`.
 
     Saving the `original_model` allows you to load a model and run
@@ -515,7 +515,7 @@ class MinDiffModel(tf.keras.Model):
     return self.original_model.save(*args, **kwargs)
 
   def compile(self, *args, **kwargs):
-    # pylint: disable=g-doc-args, g-doc-return-or-yield
+
     """Compile both `self` and `original_model` using the same parameters.
 
     See `tf.keras.Model.compile` for details.

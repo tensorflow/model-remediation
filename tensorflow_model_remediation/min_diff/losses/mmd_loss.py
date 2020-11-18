@@ -23,7 +23,7 @@ import tensorflow as tf
 
 
 class MMDLoss(base_loss.MinDiffLoss):
-  # pylint: disable=g-classes-have-attributes
+
   # pyformat: disable
   """Maximum Mean Discrepency between predictions on two groups of examples.
 

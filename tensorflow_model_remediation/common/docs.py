@@ -30,7 +30,7 @@ class A:
 
 """
 
-from tensorflow.tools.docs import doc_controls  # pylint: disable=g-direct-tensorflow-import
+from tensorflow.tools.docs import doc_controls
 
 
 def _no_op_decorator(obj):

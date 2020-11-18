@@ -15,7 +15,7 @@
 
 """API for MinDiff kernels."""
 
-# pylint: disable=g-bad-import-order
+
 
 # Kernels
 from tensorflow_model_remediation.min_diff.losses.kernels.base_kernel import MinDiffKernel
