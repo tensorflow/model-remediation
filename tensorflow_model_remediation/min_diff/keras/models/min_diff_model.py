@@ -84,7 +84,6 @@ class MinDiffModel(tf.keras.Model):
   import tensorflow as tf
 
   class CustomSequential(tf.keras.Sequential):
-
     def train_step(self, data):
       print("In a custom train_step!")
       super().train_step(data)
