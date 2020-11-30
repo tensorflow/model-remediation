@@ -190,7 +190,7 @@ class MinDiffModel(tf.keras.Model):
       "output1": [1, 2, 3],
       "output2": [4, 5, 6],
     }
-    model.predictions_transform(test_predictions)  # [4, 5 ,6]
+    model.predictions_transform(test_predictions)  # [4, 5, 6]
     ```
 
     If no `predictions_transform` parameter is passed in (or `None` is used),
