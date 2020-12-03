@@ -15,8 +15,9 @@
 
 """Test laplacian_kernel module."""
 
-from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
 import tensorflow as tf
+
+from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
 
 
 class LaplacianKernelTest(tf.test.TestCase):

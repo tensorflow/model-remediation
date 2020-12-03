@@ -17,9 +17,10 @@
 
 from typing import Optional, Text
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses import base_loss
-import tensorflow as tf
 
 
 class MMDLoss(base_loss.MinDiffLoss):

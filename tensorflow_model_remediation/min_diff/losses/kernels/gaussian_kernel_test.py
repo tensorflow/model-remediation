@@ -15,8 +15,9 @@
 
 """Test gaussian_kernel module."""
 
-from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 import tensorflow as tf
+
+from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 
 
 class GaussianKernelTest(tf.test.TestCase):

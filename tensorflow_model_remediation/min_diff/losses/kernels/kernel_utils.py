@@ -17,10 +17,11 @@
 
 from typing import Text, Union
 
+import six
+
 from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
-import six
 
 _STRING_TO_KERNEL_DICT = {}
 

@@ -18,10 +18,11 @@
 import abc
 from typing import Optional, Text, Tuple
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.common import docs
 from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses.kernels import kernel_utils
-import tensorflow as tf
 
 
 class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):

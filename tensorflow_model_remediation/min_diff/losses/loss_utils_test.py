@@ -15,11 +15,12 @@
 
 """Tests for loss_utils functions."""
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as abscorrloss
 from tensorflow_model_remediation.min_diff.losses import base_loss
 from tensorflow_model_remediation.min_diff.losses import loss_utils as utils
 from tensorflow_model_remediation.min_diff.losses import mmd_loss
-import tensorflow as tf
 
 
 class GetMinDiffLossTest(tf.test.TestCase):

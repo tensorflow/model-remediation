@@ -15,9 +15,10 @@
 
 """Implementation of LaplacianKernel for MinDiff."""
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
-import tensorflow as tf
 
 
 class LaplacianKernel(base_kernel.MinDiffKernel):

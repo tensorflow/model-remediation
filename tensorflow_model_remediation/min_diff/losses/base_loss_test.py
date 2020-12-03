@@ -15,11 +15,12 @@
 
 """Tests for MinDiffLoss class."""
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.min_diff.losses import base_loss
 from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
-import tensorflow as tf
 
 
 class CustomLoss(base_loss.MinDiffLoss):

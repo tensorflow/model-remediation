@@ -17,11 +17,12 @@
 
 from typing import Text, Union
 
+import six
+
 from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as abs_corr_loss
 from tensorflow_model_remediation.min_diff.losses import base_loss
 from tensorflow_model_remediation.min_diff.losses import mmd_loss
 
-import six
 
 _STRING_TO_LOSS_DICT = {}
 

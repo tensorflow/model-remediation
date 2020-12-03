@@ -20,10 +20,11 @@ import os
 import tempfile
 import mock
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.min_diff import losses
 from tensorflow_model_remediation.min_diff.keras import utils
 from tensorflow_model_remediation.min_diff.keras.models import min_diff_model
-import tensorflow as tf
 
 
 def _loss_fn(x, y, w=None):

@@ -18,9 +18,10 @@
 import abc
 from typing import Optional
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.common import docs
 from tensorflow_model_remediation.common import types
-import tensorflow as tf
 
 
 class MinDiffKernel(abc.ABC):

@@ -15,8 +15,9 @@
 
 """Test base_kernel module."""
 
-from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 import tensorflow as tf
+
+from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 
 
 class MinDiffKernelTest(tf.test.TestCase):

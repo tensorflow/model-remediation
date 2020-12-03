@@ -15,11 +15,12 @@
 
 """Test kernel_utils module."""
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import kernel_utils as utils
 from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
-import tensorflow as tf
 
 
 class GetMinDiffKernelTest(tf.test.TestCase):

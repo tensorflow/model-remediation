@@ -15,8 +15,9 @@
 
 """Tests for input_util functions."""
 
-from tensorflow_model_remediation.min_diff.keras.utils import input_utils
 import tensorflow as tf
+
+from tensorflow_model_remediation.min_diff.keras.utils import input_utils
 
 
 def _get_batch(tensors, batch_size, batch_num):

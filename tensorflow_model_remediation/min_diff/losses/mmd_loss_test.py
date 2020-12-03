@@ -15,9 +15,10 @@
 
 """Tests for MMDLoss class."""
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.min_diff.losses import mmd_loss as loss_lib
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
-import tensorflow as tf
 
 
 class MMDLossTest(tf.test.TestCase):

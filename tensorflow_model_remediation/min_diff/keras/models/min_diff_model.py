@@ -20,10 +20,11 @@ delegates its call method to another Model and adds a `min_diff_loss`
 during training and optionally during evaluation.
 """
 
+import tensorflow as tf
+
 from tensorflow_model_remediation.common import docs
 from tensorflow_model_remediation.min_diff.keras import utils
 from tensorflow_model_remediation.min_diff.losses import loss_utils
-import tensorflow as tf
 
 
 class MinDiffModel(tf.keras.Model):
