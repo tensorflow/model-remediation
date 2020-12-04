@@ -454,7 +454,7 @@ class MinDiffModel(tf.keras.Model):
 
     Raises:
       ValueError: If `training` is set to `True` but `inputs` does not include
-      `min_diff_data`.
+        `min_diff_data`.
     """
     # pyformat: enable
     original_inputs = self.unpack_original_inputs(inputs)
