@@ -358,7 +358,7 @@ class MinDiffModel(tf.keras.Model):
       `min_diff_loss` calculated from `min_diff_data`.
 
     Raises:
-      ValueError: If the transformed `min_diff_predictions`  is not a
+      ValueError: If the transformed `min_diff_predictions` is not a
         `tf.Tensor`.
     """
     # pyformat: enable
