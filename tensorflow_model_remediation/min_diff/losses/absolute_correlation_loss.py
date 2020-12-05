@@ -29,7 +29,7 @@ class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
   # pyformat: disable
   """Absolute correlation between predictions on two groups of examples.
 
-  Arguments:
+  Args:
     name: Name used for logging or tracking. Defaults to
       `'absolute_correlation_loss'`.
 

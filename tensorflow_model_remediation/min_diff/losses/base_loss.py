@@ -33,7 +33,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
 
   Inherits from: `tf.keras.losses.Loss`
 
-  Arguments:
+  Args:
     membership_transform: Transform function used on `membership`. If `None` is
       passed in then `membership` is left as is. The function must return a
       `tf.Tensor`.
@@ -158,7 +158,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     # pyformat: disable
     """Preprocesses inputs by applying transforms and normalizing weights.
 
-    Arguments:
+    Args:
       membership: `membership` column as described in
         `MinDiffLoss.call`.
       predictions: `predictions` tensor as described in `MinDiffLoss.call`.
@@ -218,7 +218,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     # pyformat: disable
     """Applies `losses.MinDiffKernel` attributes to corresponding inputs.
 
-    Arguments:
+    Args:
       membership: `membership` column as described in `MinDiffLoss.call`.
       predictions: `predictions` tensor as described in `MinDiffLoss.call`.
 
@@ -275,7 +275,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     # pyformat: disable
     """Invokes the `MinDiffLoss` instance.
 
-    Arguments:
+    Args:
       membership: Numerical `Tensor` indicating whether examples are
         part of the sensitive_group. This is often denoted with `1.0` or `0.0`
         for `True` or `False` respectively but the details are determined by the

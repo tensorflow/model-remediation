@@ -31,7 +31,7 @@ class GaussianKernel(base_kernel.MinDiffKernel):
   distribution as a sum of gaussian distributions. This is particularly useful
   when we are trying to determine a distribution from a set of points.
 
-  Arguments:
+  Args:
     kernel_length: Length (sometimes also called 'width') of the kernel.
       Defaults to `0.1`. This parameter essentially describes how far apart
       points can be and still affect each other.

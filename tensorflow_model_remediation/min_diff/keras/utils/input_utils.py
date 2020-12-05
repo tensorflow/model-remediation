@@ -49,7 +49,7 @@ def pack_min_diff_data(
   # pyformat: disable
   """Packs `min_diff_data` with the `x` component of the original dataset.
 
-  Arguments:
+  Args:
     original_dataset: `tf.data.Dataset` that was used before applying min
       diff. The output should conform to the format used in
       `tf.keras.Model.fit`.
@@ -185,7 +185,7 @@ def pack_min_diff_data(
 def unpack_original_inputs(inputs):
   """Unpacks `original_inputs` from a `utils.MinDiffPackedInputs` instance.
 
-  Arguments:
+  Args:
     inputs: Data to be unpacked, if possible.
 
   Returns:
@@ -200,7 +200,7 @@ def unpack_original_inputs(inputs):
 def unpack_min_diff_data(inputs):
   """Unpacks `min_diff_data` from a `utils.MinDiffPackedInputs` instance.
 
-  Arguments:
+  Args:
     inputs: Data to be unpacked, if possible.
 
   Returns:
