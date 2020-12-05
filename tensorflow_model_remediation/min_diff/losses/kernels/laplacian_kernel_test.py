@@ -80,6 +80,26 @@ class LaplacianKernelTest(tf.test.TestCase):
       kernel_val2 = laplacian_kernel_fn(tensor2, tensor2 + delta)
       self.assertAllClose(kernel_val1, kernel_val2)
 
+  def testGetAndFromConfig(self):
+    kernel_length = 5  # Arbitrary value.
+    kernel = laplacian_kernel.LaplacianKernel(kernel_length)
+
+    kernel_from_config = laplacian_kernel.LaplacianKernel.from_config(
+        kernel.get_config())
+    self.assertIsInstance(kernel_from_config, laplacian_kernel.LaplacianKernel)
+    self.assertEqual(kernel_from_config.kernel_length, kernel_length)
+
+  def testSerialization(self):
+    kernel_length = 5  # Arbitrary value.
+    kernel = laplacian_kernel.LaplacianKernel(kernel_length)
+
+    serialized_kernel = tf.keras.utils.serialize_keras_object(kernel)
+
+    deserialized_kernel = tf.keras.utils.deserialize_keras_object(
+        serialized_kernel)
+    self.assertIsInstance(deserialized_kernel, laplacian_kernel.LaplacianKernel)
+    self.assertEqual(deserialized_kernel.kernel_length, kernel_length)
+
 
 if __name__ == '__main__':
   tf.test.main()

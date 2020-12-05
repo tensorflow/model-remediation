@@ -111,4 +111,20 @@ class MinDiffKernel(abc.ABC):
       `tf.Tensor` of shape `[N, M]`.
     """
     # pyformat: enable
-    NotImplementedError('Must be implemented in subclasses')
+    raise NotImplementedError('Must be implemented in subclasses')
+
+  @docs.do_not_doc_in_subclasses
+  def get_config(self):
+    """Returns the config dictionary for a MinDiffKernel instance.
+
+    Any subclass with additional attributes or a different initialization
+    signature will need to override this method but must remember to call
+    `super`.
+    """
+    return {'tile_input': self.tile_input}
+
+  @classmethod
+  @docs.do_not_doc_in_subclasses
+  def from_config(cls, config):
+    """Creates a MinDiffKernel fron the config."""
+    return cls(**config)

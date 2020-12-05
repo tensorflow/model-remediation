@@ -35,6 +35,37 @@ class MinDiffKernelTest(tf.test.TestCase):
                                 'instantiate abstract class CustomKernel'):
       CustomKernel()
 
+  def testGetAndFromConfig(self):
+
+    class CustomKernel(base_kernel.MinDiffKernel):
+
+      def __init__(self, arg, **kwargs):
+        super(CustomKernel, self).__init__(**kwargs)
+        self.arg = arg
+
+      def call(self, x, y):
+        pass  # Unused in this test.
+
+      def get_config(self):
+        config = super(CustomKernel, self).get_config()
+        config.update({'arg': self.arg})
+        return config
+
+    val = 5
+    kernel = CustomKernel(val)
+
+    kernel_from_config = CustomKernel.from_config(kernel.get_config())
+    self.assertIsInstance(kernel_from_config, CustomKernel)
+    self.assertEqual(kernel_from_config.arg, val)
+    self.assertTrue(kernel_from_config.tile_input)
+
+    kernel = CustomKernel(val, tile_input=False)
+
+    kernel_from_config = CustomKernel.from_config(kernel.get_config())
+    self.assertIsInstance(kernel_from_config, CustomKernel)
+    self.assertEqual(kernel_from_config.arg, val)
+    self.assertFalse(kernel_from_config.tile_input)
+
 
 if __name__ == '__main__':
   tf.test.main()

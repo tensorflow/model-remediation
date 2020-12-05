@@ -21,6 +21,7 @@ from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 
 
+@tf.keras.utils.register_keras_serializable()
 class GaussianKernel(base_kernel.MinDiffKernel):
 
   # pyformat: disable
@@ -60,3 +61,9 @@ class GaussianKernel(base_kernel.MinDiffKernel):
     """Computes the Gaussian kernel."""
     return tf.exp(-tf.reduce_sum(tf.square(x - y), axis=2) /
                   tf.math.pow(self.kernel_length, 2))
+
+  def get_config(self):
+    """Returns the config dictionary for the GaussianKernel instance."""
+    config = super(GaussianKernel, self).get_config()
+    config.update({"kernel_length": self.kernel_length})
+    return config

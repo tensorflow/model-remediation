@@ -21,6 +21,7 @@ from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 
 
+@tf.keras.utils.register_keras_serializable()
 class LaplacianKernel(base_kernel.MinDiffKernel):
 
   # pyformat: disable
@@ -55,3 +56,9 @@ class LaplacianKernel(base_kernel.MinDiffKernel):
   def call(self, x: types.TensorType, y: types.TensorType) -> types.TensorType:
     """Computes the Laplacian kernel."""
     return tf.exp(-tf.norm(x - y, axis=2) / self.kernel_length)
+
+  def get_config(self):
+    """Returns the config dictionary for the LaplacianKernel instance."""
+    config = super(LaplacianKernel, self).get_config()
+    config.update({"kernel_length": self.kernel_length})
+    return config
