@@ -19,6 +19,7 @@ import tensorflow as tf
 
 from tensorflow_model_remediation.min_diff.losses import mmd_loss as loss_lib
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
+from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
 
 
 class MMDLossTest(tf.test.TestCase):
@@ -181,6 +182,33 @@ class MMDLossTest(tf.test.TestCase):
         TypeError,
         "predictions_kernel.*must be.*MinDiffKernel.*string.*lambda"):
       loss_lib.MMDLoss(bad_kernel)
+
+  def testSerialization(self):
+    loss = loss_lib.MMDLoss()
+    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
+    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+
+    self.assertIsInstance(deserialized_loss, loss_lib.MMDLoss)
+    self.assertIsNone(deserialized_loss.predictions_transform)
+    self.assertIsInstance(deserialized_loss.predictions_kernel,
+                          gaussian_kernel.GaussianKernel)
+    self.assertEqual(deserialized_loss.name, loss.name)
+
+  def testSerializationWithTransformAndKernel(self):
+    predictions_fn = lambda x: x * 5.1  # Arbitrary operation.
+
+    loss = loss_lib.MMDLoss(
+        predictions_transform=predictions_fn, kernel="laplacian")
+    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
+    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+
+    self.assertIsInstance(deserialized_loss, loss_lib.MMDLoss)
+    val = 7  # Arbitrary value.
+    self.assertEqual(
+        deserialized_loss.predictions_transform(val), predictions_fn(val))
+    self.assertIsInstance(deserialized_loss.predictions_kernel,
+                          laplacian_kernel.LaplacianKernel)
+    self.assertEqual(deserialized_loss.name, loss.name)
 
 
 if __name__ == "__main__":

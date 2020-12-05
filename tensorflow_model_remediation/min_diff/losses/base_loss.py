@@ -17,6 +17,7 @@
 
 import abc
 from typing import Optional, Text, Tuple
+import dill
 
 import tensorflow as tf
 
@@ -295,6 +296,77 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     """
     # pyformat: enable
     raise NotImplementedError('Must be implemented in subclass.')
+
+  def _serialize_config(self, config):
+
+    """Takes a config of attributes and serializes transforms and kernels.
+
+    Transforms are serialized using the `dill` module. Kernels are serialized
+    using the `tf.keras.utils.serialize_keras_object` function.
+
+    Note: This is a convenience method that assumes transform keys end in
+    `transform' and kernel keys end in `kernel`. If this is not the case for a
+    given subclass, the serialization (or `get_config`) will need to be
+    implemented directly.
+    """
+
+    def _serialize_value(key, value):
+      if key.endswith('transform'):
+        return dill.dumps(value)
+      if key.endswith('kernel'):
+        return tf.keras.utils.serialize_keras_object(value)
+      return value  # No transformation applied
+
+    return {k: _serialize_value(k, v) for k, v in config.items()}
+
+  @docs.do_not_doc_in_subclasses
+  def get_config(self):
+    """Returns the config dictionary for the MinDiffLoss instance."""
+    config = {
+        'membership_transform': self.membership_transform,
+        'predictions_transform': self.predictions_transform,
+        'membership_kernel': self.membership_kernel,
+        'predictions_kernel': self.predictions_kernel,
+        'name': self.name,
+    }
+    config = {k: v for k, v in config.items() if v is not None}
+    return self._serialize_config(config)
+
+  @classmethod
+  def _deserialize_config(cls, config):
+
+    """Takes a config of attributes and deserializes transforms and kernels.
+
+    Transforms are deserialized using the `dill` module. Kernels are
+    deserialized using the `tf.keras.utils.deserialize_keras_object` function.
+
+    Note: This is a convenience method that assumes transform keys end in
+    `transform' and kernel keys end in `kernel`. If this is not the case for a
+    given subclass, the deserialization (or `from_config`) will need to be
+    implemented directly.
+    """
+
+    def _deserialize_value(key, value):
+      if key.endswith('transform'):
+        return dill.loads(value)
+      if key.endswith('kernel'):
+        return tf.keras.utils.deserialize_keras_object(value)
+      return value  # No transformation applied
+
+    return {k: _deserialize_value(k, v) for k, v in config.items()}
+
+  @classmethod
+  @docs.do_not_doc_in_subclasses
+  def from_config(cls, config):
+
+    """Creates a MinDiffLoss from the config.
+
+    Any subclass with additional attributes or a different initialization
+    signature will need to override this method but must remember to call
+    `super`.
+    """
+    config = cls._deserialize_config(config)
+    return cls(**config)
 
 
 #### Validation Functions ####

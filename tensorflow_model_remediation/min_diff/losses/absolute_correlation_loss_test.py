@@ -103,6 +103,14 @@ class AbsoluteCorrelationLossTest(tf.test.TestCase):
     loss_value = loss_fn(membership, predictions, sample_weights)
     self.assertAllClose(0, loss_value)
 
+  def testSerialization(self):
+    loss = loss_lib.AbsoluteCorrelationLoss(name='custom_name')
+    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
+
+    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+    self.assertIsInstance(deserialized_loss, loss_lib.AbsoluteCorrelationLoss)
+    self.assertEqual(deserialized_loss.name, loss.name)
+
 
 if __name__ == '__main__':
   tf.test.main()

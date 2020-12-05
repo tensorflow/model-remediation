@@ -23,6 +23,7 @@ from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
 
 
+@tf.keras.utils.register_keras_serializable()
 class CustomLoss(base_loss.MinDiffLoss):
 
   def __init__(self,
@@ -208,6 +209,51 @@ class MinDiffLossTest(tf.test.TestCase):
       if not tf.executing_eagerly():
         with self.cached_session() as sess:
           sess.run(op)
+
+  def testGetAndFromConfig(self):
+    loss = CustomLoss()
+    config = loss.get_config()
+    self.assertDictEqual(config, {'name': loss.name})
+
+    loss_from_config = CustomLoss.from_config(config)
+
+    self.assertIsInstance(loss_from_config, CustomLoss)
+
+  def testSerialization(self):
+    loss = CustomLoss()
+    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
+    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+
+    self.assertIsInstance(deserialized_loss, CustomLoss)
+    self.assertIsNone(deserialized_loss.membership_transform)
+    self.assertIsNone(deserialized_loss.predictions_transform)
+    self.assertIsNone(deserialized_loss.membership_kernel)
+    self.assertIsNone(deserialized_loss.predictions_kernel)
+    self.assertEqual(deserialized_loss.name, loss.name)
+
+  def testSerializationWithTransformsAndKernels(self):
+    membership_fn = lambda x: x * 2.3  # Arbitrary operation.
+    predictions_fn = lambda x: x * 5.1  # Arbitrary operation.
+
+    loss = CustomLoss(
+        membership_transform=membership_fn,
+        membership_kernel='gaussian',
+        predictions_transform=predictions_fn,
+        predictions_kernel='laplacian')
+    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
+    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+
+    self.assertIsInstance(deserialized_loss, CustomLoss)
+    val = 7  # Arbitrary value.
+    self.assertEqual(
+        deserialized_loss.membership_transform(val), membership_fn(val))
+    self.assertEqual(
+        deserialized_loss.predictions_transform(val), predictions_fn(val))
+    self.assertIsInstance(deserialized_loss.membership_kernel,
+                          gaussian_kernel.GaussianKernel)
+    self.assertIsInstance(deserialized_loss.predictions_kernel,
+                          laplacian_kernel.LaplacianKernel)
+    self.assertEqual(deserialized_loss.name, loss.name)
 
 
 if __name__ == '__main__':

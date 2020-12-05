@@ -23,6 +23,7 @@ from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses import base_loss
 
 
+@tf.keras.utils.register_keras_serializable()
 class MMDLoss(base_loss.MinDiffLoss):
 
   # pyformat: disable
@@ -62,14 +63,14 @@ class MMDLoss(base_loss.MinDiffLoss):
   # pyformat: enable
 
   def __init__(self,
-               kernel='gaussian',
+               kernel="gaussian",
                predictions_transform=None,
                name: Optional[Text] = None):
     """Initialize an instance of MMDLoss."""
     super(MMDLoss, self).__init__(
         predictions_transform=predictions_transform,
         predictions_kernel=kernel,
-        name=name or 'mmd_loss')
+        name=name or "mmd_loss")
 
   def call(self,
            membership: types.TensorType,
@@ -108,3 +109,13 @@ class MMDLoss(base_loss.MinDiffLoss):
     # do not use that.
     loss = pos_mean - 2 * pos_neg_mean + neg_mean
     return loss
+
+  @classmethod
+  def from_config(cls, config):
+    """Creates a MMDLoss instance fron the config."""
+    config = cls._deserialize_config(config)
+    # Rename 'predictions_kernel' to 'kernel'
+    if "predictions_kernel" in config:
+      config["kernel"] = config["predictions_kernel"]
+      del config["predictions_kernel"]
+    return cls(**config)

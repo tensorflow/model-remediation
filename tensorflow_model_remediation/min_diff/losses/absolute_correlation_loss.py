@@ -23,6 +23,7 @@ from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses import base_loss
 
 
+@tf.keras.utils.register_keras_serializable()
 class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
 
   # pyformat: disable
