@@ -78,8 +78,11 @@ def execute(output_dir, code_url_prefix, search_hints, site_path):
   # Delete common module when documenting. There is nothing there for users
   # quite yet.
   del tfmr.common
-  # Delete tools module when documenting.
-  del tfmr.tools
+
+  try:
+    del tfmr.tools
+  except AttributeError:
+    pass
 
   doc_generator = generate_lib.DocGenerator(
       root_title="TensorFlow Model Remediation",
