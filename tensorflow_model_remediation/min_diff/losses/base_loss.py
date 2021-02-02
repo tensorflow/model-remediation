@@ -116,7 +116,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     Returns:
       Scalar `min_diff_loss`.
     """
-    with tf.name_scope(self.name):
+    with tf.name_scope(self.name + '_inputs'):
       loss = self.call(membership, predictions, sample_weight)
 
       scalar_version = (
