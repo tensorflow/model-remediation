@@ -261,6 +261,22 @@ class MinDiffModelTest(tf.test.TestCase):
     self.assertEmpty(model.losses)
     self.assertAllClose(preds, predictions)
 
+  def testEvalOutputs(self):
+    original_model = tf.keras.Sequential(
+        [tf.keras.layers.Dense(1, activation="softmax")])
+    model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss("gauss"))
+
+    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["acc"])
+
+    # Evaluate with min_diff_data.
+    output_metrics = model.test_step(iter(self.min_diff_dataset).get_next())
+    self.assertSetEqual(
+        set(output_metrics.keys()), set(["loss", "acc", "min_diff_loss"]))
+
+    # Evaluate without min_diff_data.
+    output_metrics = model.test_step(iter(self.original_dataset).get_next())
+    self.assertSetEqual(set(output_metrics.keys()), set(["loss", "acc"]))
+
   def testTrainingWithoutMinDiffDataRaisesError(self):
     original_model = tf.keras.Sequential()
     model = min_diff_model.MinDiffModel(original_model, DummyLoss())

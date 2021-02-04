@@ -474,6 +474,23 @@ class MinDiffModel(tf.keras.Model):
     return self._call_original_model(
         original_inputs, training=training, mask=mask)
 
+  @docs.do_not_generate_docs
+  def test_step(self, data, *args, **kwargs):
+
+    """The logic for one evaluation step.
+
+    Has the exact same behavior as `tf.keras.Model.test_step` with the one
+    exception that it removes the 'min_diff_loss' metric if min_diff_data is not
+    available.
+    """
+    metrics = super(MinDiffModel, self).test_step(data, *args, **kwargs)
+    # If there is no min_diff_data, remove the min_diff_loss metric.
+    x, _, _ = tf.keras.utils.unpack_x_y_sample_weight(data)
+    if (self._min_diff_loss_metric.name in metrics and
+        self.unpack_min_diff_data(x) is None):
+      del metrics[self._min_diff_loss_metric.name]
+    return metrics
+
   # We are overriding this solely to provide complete documentation on the
   # limitations of saving this way as opposed to behavior of normal models.
 

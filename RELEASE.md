@@ -4,9 +4,12 @@
 
 ## Major Features and Improvements
 
-## Bug fixes and other changes
+## Bug fixes and other small changes
 
 ## Breaking changes
+
+* (Minor) Change output of `test_step` to not include `min_diff_loss` metric if
+`min_diff_data` is not included.
 
 ## Deprecations
 
