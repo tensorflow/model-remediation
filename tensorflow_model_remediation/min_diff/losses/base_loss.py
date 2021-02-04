@@ -313,8 +313,6 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     def _serialize_value(key, value):
       if key.endswith('transform'):
         return dill.dumps(value)
-      if key.endswith('kernel'):
-        return tf.keras.utils.serialize_keras_object(value)
       return value  # No transformation applied
 
     return {k: _serialize_value(k, v) for k, v in config.items()}
@@ -349,8 +347,6 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     def _deserialize_value(key, value):
       if key.endswith('transform'):
         return dill.loads(value)
-      if key.endswith('kernel'):
-        return tf.keras.utils.deserialize_keras_object(value)
       return value  # No transformation applied
 
     return {k: _deserialize_value(k, v) for k, v in config.items()}
