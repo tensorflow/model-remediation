@@ -86,7 +86,7 @@ def execute(output_dir, code_url_prefix, search_hints, site_path):
 
   doc_generator = generate_lib.DocGenerator(
       root_title="TensorFlow Model Remediation",
-      py_modules=[("tensorflow_model_remediation", tfmr)],
+      py_modules=[("model_remediation", tfmr)],
       base_dir=os.path.dirname(tfmr.__file__),
       search_hints=search_hints,
       code_url_prefix=code_url_prefix,
