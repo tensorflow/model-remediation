@@ -6,6 +6,9 @@
 
 ## Bug fixes and other small changes
 
+* Implement `get_config` and `from_config` methods for losses, kernels and
+MinDiffModel register classes as keras objects.
+
 ## Breaking changes
 
 * (Minor) Change output of `test_step` to not include `min_diff_loss` metric if

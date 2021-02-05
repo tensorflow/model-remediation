@@ -20,6 +20,8 @@ delegates its call method to another Model and adds a `min_diff_loss`
 during training and optionally during evaluation.
 """
 
+import dill
+
 import tensorflow as tf
 
 from tensorflow_model_remediation.common import docs
@@ -27,6 +29,7 @@ from tensorflow_model_remediation.min_diff.keras import utils
 from tensorflow_model_remediation.min_diff.losses import loss_utils
 
 
+@tf.keras.utils.register_keras_serializable()
 class MinDiffModel(tf.keras.Model):
   # pyformat: disable
 
@@ -540,3 +543,83 @@ class MinDiffModel(tf.keras.Model):
     """
     self.original_model.compile(*args, **kwargs)
     return super(MinDiffModel, self).compile(*args, **kwargs)
+
+  @docs.do_not_doc_in_subclasses
+  def get_config(self):
+    """Returns the config dictionary for the MinDiffModel instance.
+
+    Any subclass with additional attributes or a different initialization
+    signature will need to override this method.
+
+    Note: This will ignore anything resulting from the kwargs passed in at
+    initialization time or changes new attributes added afterwards. If this is
+    problematic you will need to subclass MinDiffModel and override this
+    function.
+
+    Returns:
+      Config dictionary for MinDiffModel isinstance.
+
+    Raises:
+      Exception: If calling `original_model.get_config()` raises an error. The
+        type raised will be the same as that of the original error.
+    """
+
+    # Check that original_model.get_config is implemented and raise a helpful
+    # error message if not.
+    try:
+      _ = self._original_model.get_config()
+    except Exception as e:
+      raise type(e)(
+          "MinDiffModel cannot create a config because `original_model` has "
+          "not implemented get_config() or has an error in its implementation."
+          "\nError raised: {}".format(e))
+
+    # Try super.get_config if implemented. In most cases it will not be.
+    try:
+      config = super(MinDiffModel, self).get_config()
+    except NotImplementedError:
+      config = {}
+
+    config.update({
+        "original_model": self._original_model,
+        "loss": self._loss,
+        "loss_weight": self._loss_weight,
+        "name": self.name,
+    })
+    if self._predictions_transform is not None:
+      config["predictions_transform"] = dill.dumps(self._predictions_transform)
+    return {k: v for k, v in config.items() if v is not None}
+
+  @classmethod
+  def _deserialize_config(cls, config):
+
+    """Takes a config of attributes and deserializes as needed.
+
+    Transforms are deserialized using the `dill` module. The `original_model`
+    and `loss` are deserialized using the
+    `tf.keras.utils.deserialize_keras_object` function.
+
+    Note: This is a convenience method that assumes that the only elements that
+    need additional desiralization are `predictions_transform`, original_model`
+    and `loss`. If this is not the case for a given subclass this method (or
+    `from_config`) will need to be implemented directly.
+    """
+
+    def _deserialize_value(key, value):
+      if key == "predictions_transform":
+        return dill.loads(value)
+      return value  # No transformation applied.
+
+    return {k: _deserialize_value(k, v) for k, v in config.items()}
+
+  @classmethod
+  @docs.do_not_doc_in_subclasses
+  def from_config(cls, config):
+
+    """Creates a MinDiffLoss from the config.
+
+    Any subclass with a different initialization signature will need to
+    override this method.
+    """
+    config = cls._deserialize_config(config)
+    return cls(**config)
