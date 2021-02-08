@@ -37,13 +37,17 @@ def _no_op_decorator(obj):
   return obj
 
 
-try:
-  do_not_generate_docs = doc_controls.do_not_generate_docs
-  doc_private = doc_controls.doc_private
-  do_not_doc_in_subclasses = doc_controls.do_not_doc_in_subclasses
-  doc_in_current_and_subclasses = doc_controls.doc_in_current_and_subclasses
-except AttributeError:
-  do_not_generate_docs = _no_op_decorator
-  doc_private = _no_op_decorator
-  do_not_doc_in_subclasses = _no_op_decorator
-  doc_in_current_and_subclasses = _no_op_decorator
+def _get_safe_decorator(decorator_name):
+
+  try:
+    return getattr(doc_controls, decorator_name)
+  except AttributeError:
+
+    return _no_op_decorator
+
+
+do_not_generate_docs = _get_safe_decorator("do_not_generate_docs")
+doc_private = _get_safe_decorator("doc_private")
+do_not_doc_in_subclasses = _get_safe_decorator("do_not_doc_in_subclasses")
+doc_in_current_and_subclasses = _get_safe_decorator(
+    "doc_in_current_and_subclasses")
