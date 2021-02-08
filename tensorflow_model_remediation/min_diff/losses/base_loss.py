@@ -319,7 +319,14 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
 
   @docs.do_not_doc_in_subclasses
   def get_config(self):
-    """Returns the config dictionary for the MinDiffLoss instance."""
+    """Creates a config dictionary for the `MinDiffLoss` instance.
+
+    Any subclass with additional attributes will need to override this method.
+    When doing so, users will mostly likely want to first call `super`.
+
+    Returns:
+      A config dictionary for the `MinDiffLoss` isinstance.
+    """
     config = {
         'membership_transform': self.membership_transform,
         'predictions_transform': self.predictions_transform,
@@ -355,11 +362,13 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
   @docs.do_not_doc_in_subclasses
   def from_config(cls, config):
 
-    """Creates a MinDiffLoss from the config.
+    """Creates a `MinDiffLoss` instance from the config.
 
     Any subclass with additional attributes or a different initialization
-    signature will need to override this method but must remember to call
-    `super`.
+    signature will need to override this method or `get_config`.
+
+    Returns:
+      A new `MinDiffLoss` instance corresponding to `config`.
     """
     config = cls._deserialize_config(config)
     return cls(**config)

@@ -441,7 +441,7 @@ class MinDiffModel(tf.keras.Model):
     model.losses[0]  # First element will be the min_diff_loss.
     ```
 
-    Inlcuding `min_diff_data` in `inputs` implies that
+    Including `min_diff_data` in `inputs` implies that
     `MinDiffModel.unpack_original_inputs` and
     `MinDiffModel.unpack_min_diff_data` behave as expected when called on
     `inputs` (see methods for details).
@@ -546,18 +546,18 @@ class MinDiffModel(tf.keras.Model):
 
   @docs.do_not_doc_in_subclasses
   def get_config(self):
-    """Returns the config dictionary for the MinDiffModel instance.
-
-    Any subclass with additional attributes or a different initialization
-    signature will need to override this method.
+    """Creates a config dictionary for the `MinDiffModel` instance.
 
     Note: This will ignore anything resulting from the kwargs passed in at
-    initialization time or changes new attributes added afterwards. If this is
-    problematic you will need to subclass MinDiffModel and override this
-    function.
+    initialization time or changes made to new attributes added afterwards. If
+    this is problematic you will need to subclass MinDiffModel and override this
+    method to account for these.
+
+    Any subclass with additional attributes will need to override this method.
+    When doing so, users will mostly likely want to first call `super`.
 
     Returns:
-      Config dictionary for MinDiffModel isinstance.
+      A config dictionary for the `MinDiffModel` isinstance.
 
     Raises:
       Exception: If calling `original_model.get_config()` raises an error. The
@@ -600,7 +600,7 @@ class MinDiffModel(tf.keras.Model):
     `tf.keras.utils.deserialize_keras_object` function.
 
     Note: This is a convenience method that assumes that the only elements that
-    need additional desiralization are `predictions_transform`, original_model`
+    need additional deserialization are `predictions_transform`, original_model`
     and `loss`. If this is not the case for a given subclass this method (or
     `from_config`) will need to be implemented directly.
     """
@@ -616,10 +616,13 @@ class MinDiffModel(tf.keras.Model):
   @docs.do_not_doc_in_subclasses
   def from_config(cls, config):
 
-    """Creates a MinDiffLoss from the config.
+    """Creates a `MinDiffModel` instance from the config.
 
-    Any subclass with a different initialization signature will need to
-    override this method.
+    Any subclass with additional attributes or a different initialization
+    signature will need to override this method or `get_config`.
+
+    Returns:
+      A new `MinDiffModel` instance corresponding to `config`.
     """
     config = cls._deserialize_config(config)
     return cls(**config)
