@@ -6,6 +6,16 @@
 
 ## Bug fixes and other small changes
 
+## Breaking changes
+
+## Deprecations
+
+# Version 0.1.3
+
+## Major Features and Improvements
+
+## Bug fixes and other small changes
+
 * Implement `get_config` and `from_config` methods for losses, kernels and
 MinDiffModel register classes as keras objects.
 
