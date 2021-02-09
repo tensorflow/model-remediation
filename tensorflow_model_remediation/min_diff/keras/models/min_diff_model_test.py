@@ -365,7 +365,7 @@ class MinDiffModelTest(tf.test.TestCase):
 
   # TODO: consider testing actual output. This is not currently
   # done because the disproportionate amount of complexity this would add.
-  def testSingleOutputModel(self):
+  def testWithSequentialModel(self):
     original_model = tf.keras.Sequential(
         [tf.keras.layers.Dense(1, activation="softmax")])
     model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss("gauss"))
@@ -383,6 +383,35 @@ class MinDiffModelTest(tf.test.TestCase):
     model.evaluate(self.original_dataset)
     model.predict(self.original_dataset)
 
+  def testWithFunctionalModel(self):
+    inputs = tf.keras.Input(1)
+    outputs = tf.keras.layers.Dense(1, activation="softmax")(inputs)
+    original_model = tf.keras.Model(inputs=inputs, outputs=outputs)
+
+    model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss("gauss"))
+
+    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["acc"])
+
+    history = model.fit(self.min_diff_dataset)
+    self.assertSetEqual(
+        set(history.history.keys()), set(["loss", "acc", "min_diff_loss"]))
+
+    # Evaluate with min_diff_data.
+    model.evaluate(self.min_diff_dataset)
+
+    # Evaluate and run inference without min_diff_data.
+    model.evaluate(self.original_dataset)
+    model.predict(self.original_dataset)
+
+  def testMinDiffModelRaisesErrorWithBadKwarg(self):
+    original_model = tf.keras.Sequential(
+        [tf.keras.layers.Dense(1, activation="softmax")])
+
+    with self.assertRaisesRegex(
+        TypeError, "problem initializing the MinDiffModel instance"):
+      _ = min_diff_model.MinDiffModel(
+          original_model, losses.MMDLoss(), bad_kwarg="some value")
+
   def testBadPredictionsTransformReturnValueRaisesError(self):
     original_model = tf.keras.Sequential(
         [tf.keras.layers.Dense(1, activation="softmax")])
@@ -399,7 +428,7 @@ class MinDiffModelTest(tf.test.TestCase):
         ".*predictions_transform.*does not return a Tensor".format(bad_value)):
       _ = model.fit(self.min_diff_dataset)
 
-  def testMultiOutputModel(self):
+  def testWithFunctionalMultiOutputModel(self):
     # Create multi output Functional model.
     inputs = tf.keras.Input(1)
     output_1 = tf.keras.layers.Dense(1, activation="softmax")(inputs)
@@ -503,7 +532,70 @@ class MinDiffModelTest(tf.test.TestCase):
 
     # Evaluate and run inference without min_diff_data.
     model.evaluate(self.original_dataset)
+
+  def testCustomModelWithFunctional(self):
+
+    class CustomModel(tf.keras.Model):
+
+      def __init__(self, *args, **kwargs):
+        super(CustomModel, self).__init__(*args, **kwargs)
+        # Variable will be incremented in the custom train_step.
+        self.train_step_cnt = 0
+
+      def train_step(self, data):
+        self.train_step_cnt += 1
+        return super(CustomModel, self).train_step(data)
+
+    inputs = tf.keras.Input(1)
+    outputs = tf.keras.layers.Dense(1, activation="softmax")(inputs)
+    original_model = CustomModel(inputs=inputs, outputs=outputs)
+
+    class CustomMinDiffModel(min_diff_model.MinDiffModel, CustomModel):
+      pass
+
+    model = CustomMinDiffModel(original_model, DummyLoss())
+
+    # Compile with `run_eagerly=True` so that we can expect the number of times
+    # `train_step` is called to be the same as the number of batches passed in.
+    model.compile(
+        loss="binary_crossentropy",
+        optimizer="adam",
+        metrics=["acc"],
+        run_eagerly=True)
+
+    history = model.fit(self.min_diff_dataset)
+    self.assertSetEqual(
+        set(history.history.keys()), set(["loss", "acc", "min_diff_loss"]))
+    # There are 10 batches so the custom train step should have been called 10
+    # times.
+    self.assertEqual(model.train_step_cnt, 10)
+
+    # Evaluate with min_diff_data.
+    model.evaluate(self.min_diff_dataset)
+
+    # Evaluate and run inference without min_diff_data.
+    model.evaluate(self.original_dataset)
     model.predict(self.original_dataset)
+
+  def testCustomModelWithFunctionalRaisesErrorIfNoSkipInit(self):
+
+    class CustomModel(tf.keras.Model):
+
+      def __init__(self, *args, **kwargs):
+        # Explicitly don't pass in other kwargs. This causes problems when
+        # model is used via the Functional API.
+        super(CustomModel, self).__init__(kwargs["inputs"], kwargs["outputs"])
+
+    inputs = tf.keras.Input(1)
+    outputs = tf.keras.layers.Dense(1, activation="softmax")(inputs)
+    original_model = CustomModel(inputs=inputs, outputs=outputs)
+
+    class CustomMinDiffModel(min_diff_model.MinDiffModel, CustomModel):
+      pass
+
+    with self.assertRaisesRegex(
+        ValueError, "problem initializing the MinDiffModel subclass instance"):
+      _ = CustomMinDiffModel(original_model, DummyLoss())
 
   def testWithRegularizationInOriginalModel(self):
     original_model = tf.keras.Sequential([
@@ -684,8 +776,7 @@ class MinDiffModelTest(tf.test.TestCase):
         name=model_name)
 
     serialized_model = tf.keras.utils.serialize_keras_object(model)
-    deserialized_model = tf.keras.layers.deserialize(
-        serialized_model)
+    deserialized_model = tf.keras.layers.deserialize(serialized_model)
 
     self.assertIsInstance(deserialized_model, min_diff_model.MinDiffModel)
     self.assertIsNone(deserialized_model._predictions_transform)
@@ -709,8 +800,7 @@ class MinDiffModelTest(tf.test.TestCase):
         name=model_name)
 
     serialized_model = tf.keras.utils.serialize_keras_object(model)
-    deserialized_model = tf.keras.layers.deserialize(
-        serialized_model)
+    deserialized_model = tf.keras.layers.deserialize(serialized_model)
 
     self.assertIsInstance(deserialized_model, min_diff_model.MinDiffModel)
     val = 7  # Arbitrary value.

@@ -6,6 +6,9 @@
 
 ## Bug fixes and other small changes
 
+* Add support for MinDiffModel subclasses that are also subclasses of TF
+Functional class.
+
 ## Breaking changes
 
 ## Deprecations
