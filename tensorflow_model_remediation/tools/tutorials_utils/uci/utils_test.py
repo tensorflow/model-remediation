@@ -236,5 +236,88 @@ class MinDiffDatasetsTest(tf.test.TestCase):
         split='train', sample=None)
 
 
+class UCIModelTest(tf.test.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    self.read_csv_patch = mock.patch('pandas.read_csv', autospec=True)
+    mock_read_csv = self.read_csv_patch.start()
+    mock_data = {  # All values are realistic but arbitrary.
+        'age': pd.Series([25]),
+        'workclass': pd.Series(['Private']),
+        'fnlwgt': pd.Series([12456]),
+        'education': pd.Series(['Bachelors']),
+        'education-num': pd.Series([13]),
+        'marital-status': pd.Series(['Never-married']),
+        'race': pd.Series(['White']),
+        'occupation': pd.Series(['Tech-support']),
+        'relationship': pd.Series(['Husband']),
+        'sex': pd.Series(['Male']),
+        'capital-gain': pd.Series([1304]),
+        'capital-loss': pd.Series([0]),
+        'hours-per-week': pd.Series([40]),
+        'native-country': pd.Series(['United-States']),
+        'income': pd.Series(['>50K']),
+    }
+    mock_read_csv.return_value = pd.DataFrame(mock_data)
+
+  def tearDown(self):
+    super().tearDown()
+    self.read_csv_patch.stop()
+
+  def testModelStructure(self):
+    model = utils.get_uci_model()
+    self.assertIsInstance(model, tf.keras.Model)
+    expected_inputs = utils._UCI_COLUMN_NAMES.copy()
+    expected_inputs.remove('income')
+    expected_inputs.remove('race')
+    expected_inputs.remove('fnlwgt')
+    self.assertSetEqual(
+        set([layer.name for layer in model.inputs]), set(expected_inputs))
+    self.assertIsInstance(model.layers[-1], tf.keras.layers.Dense)
+
+  def testModelStructureWithCustomClass(self):
+
+    class CustomClass(tf.keras.Model):
+      pass  # No additional implementation needed for this test.
+
+    model = utils.get_uci_model(model_class=CustomClass)
+    self.assertIsInstance(model, CustomClass)
+    expected_inputs = utils._UCI_COLUMN_NAMES.copy()
+    expected_inputs.remove('income')
+    expected_inputs.remove('race')
+    expected_inputs.remove('fnlwgt')
+    self.assertSetEqual(
+        set([layer.name for layer in model.inputs]), set(expected_inputs))
+    self.assertIsInstance(model.layers[-1], tf.keras.layers.Dense)
+
+  def testModelRunsOnUCIData(self):
+    model = utils.get_uci_model()
+    model.compile(optimizer='adam', loss='binary_crossentropy')
+    data = utils.get_uci_data()
+    print('DATA:', data)
+    dataset = utils.df_to_dataset(data, batch_size=64)
+
+    # Model can train on UCI data
+    model.fit(dataset, epochs=1)
+
+    # Model can evaluate on UCI data
+    model.evaluate(dataset)
+
+  def testModelRaisesErrorForBadClass(self):
+    with self.assertRaisesRegex(TypeError,
+                                'must be a class.*given.*not_a_class'):
+      _ = utils.get_uci_model(model_class='not_a_class')
+
+    with self.assertRaisesRegex(
+        TypeError, 'must be a subclass of.*keras.Model.*given.*str'):
+      _ = utils.get_uci_model(model_class=type('bad_class'))
+
+    with self.assertRaisesRegex(
+        TypeError, 'must support the Functional API.*cannot be a subclass '
+        'of.*Sequential.*given.*Sequential'):
+      _ = utils.get_uci_model(model_class=tf.keras.Sequential)
+
+
 if __name__ == '__main__':
   tf.test.main()

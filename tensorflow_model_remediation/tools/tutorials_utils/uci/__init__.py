@@ -18,4 +18,5 @@
 from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import df_to_dataset
 from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import get_uci_data
 from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import get_uci_min_diff_datasets
+from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import get_uci_model
 from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import get_uci_with_min_diff_dataset

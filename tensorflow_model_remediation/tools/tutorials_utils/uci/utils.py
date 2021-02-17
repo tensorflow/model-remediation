@@ -196,3 +196,125 @@ def get_uci_with_min_diff_dataset(split='train', sample=None):
       original_dataset=original_ds,
       sensitive_group_dataset=min_diff_female_ds,
       nonsensitive_group_dataset=min_diff_male_ds)
+
+
+def get_uci_model(model_class=tf.keras.Model):
+  """Create the model to be trained on UCI income data.
+
+  The model created uses the keras Functional API. It expects the following
+  inputs from the UCI dataset: ['age', 'workclass', 'education', 'sex',
+    'education-num', 'marital-status', 'occupation', 'relationship',
+    'capital-gain', 'capital-loss', 'hours-per-week', 'native-country']
+  These features should be provided as a dictionary. Any additional features
+  provided will be ignored with a warning.
+  Users can pass in a custom class to be used instead of `tf.keras.Model` as
+  long as the class supports the Functional API.
+
+  Args:
+    model_class: Default: `tf.keras.Model`. Optional custom model class that can
+      be used to create the model. The class must be a subclass of
+      `tf.keras.Model` and support the Functional API. Note that
+      `tf.keras.Sequential` or a subclass of it does not meet this second
+      criteria.
+
+  Returns:
+    A model to be used on UCI income data.
+
+  Raises:
+    TypeError: If `model_class` is not a subclass of `tf.keras.Model`.
+    TypeError: If `model_class` is a subclass of `tf.keras.Sequential`.
+  """
+  if not isinstance(model_class, type):
+    raise TypeError(
+        '`model_class` must be a class, given: {}'.format(model_class))
+
+  if not issubclass(model_class, tf.keras.Model):
+    raise TypeError('`model_class` must be a subclass of `tf.keras.Model`, '
+                    'given: {}'.format(model_class))
+  if issubclass(model_class, tf.keras.Sequential):
+    raise TypeError('`model_class` must support the Functional API and '
+                    'therefore cannot be a subclass of `tf.keras.Sequential`, '
+                    'given: {}'.format(model_class))
+  inputs = {}  # Dictionary of input layers.
+  # List of either input layers or preprocessing layers built on top of inputs.
+  features = []
+
+  def _add_input_feature(input_layer, feature=None):
+    feature = feature if feature is not None else input_layer
+    inputs[input_layer.name] = input_layer
+    features.append(feature)
+
+  # Numeric inputs.
+  numeric_column_names = [
+      'education-num', 'capital-gain', 'capital-loss', 'hours-per-week'
+  ]
+  for col_name in numeric_column_names:
+    numeric_input = tf.keras.Input(shape=(1,), name=col_name)
+    _add_input_feature(numeric_input)
+
+  # Bucketized age feature.
+  age_input = tf.keras.Input(shape=(1,), name='age')
+  bucketized_age_feature = (
+      tf.keras.layers.experimental.preprocessing.Discretization(
+          bins=[18, 25, 30, 35, 40, 45, 50, 55, 60, 65])(age_input))
+  encoded_feature = (
+      tf.keras.layers.experimental.preprocessing.CategoryEncoding(
+          max_tokens=10)(bucketized_age_feature))
+  _add_input_feature(age_input, encoded_feature)
+
+  # Categorical inputs.
+  uci_df = get_uci_data()  # UCI data is used to index categorical features.
+  categorical_column_names = [
+      'sex', 'native-country', 'workclass', 'occupation', 'marital-status',
+      'relationship', 'education'
+  ]
+  for col_name in categorical_column_names:
+    categorical_input = (
+        tf.keras.Input(shape=(1,), name=col_name, dtype=tf.string))
+    vocabulary = uci_df[col_name].unique()
+    feature_index = (
+        tf.keras.layers.experimental.preprocessing.StringLookup(
+            vocabulary=vocabulary, mask_token=None)(categorical_input))
+    # Note that we need to add 1 to max_tokens to account for the 'UNK' token
+    # that StringLookup adds.
+    encoded_feature = (
+        tf.keras.layers.experimental.preprocessing.CategoryEncoding(
+            max_tokens=len(vocabulary) + 1)(feature_index))
+    _add_input_feature(categorical_input, encoded_feature)
+
+  # Crossed columns
+  # cross: Education x Occupation
+  num_bins = 1000
+  education_occupation_cross = (
+      tf.keras.layers.experimental.preprocessing.CategoryCrossing()(
+          [inputs['education'], inputs['occupation']]))
+  education_occupation_cross_hash = (
+      tf.keras.layers.experimental.preprocessing.Hashing(
+          num_bins=num_bins)(education_occupation_cross))
+  encoded_feature = (
+      tf.keras.layers.experimental.preprocessing.CategoryEncoding(
+          max_tokens=num_bins)(education_occupation_cross_hash))
+  features.append(encoded_feature)
+
+  # cross: Education x Occupation x Age
+  num_bins = 50000
+  age_education_occupation_cross = (
+      tf.keras.layers.experimental.preprocessing.CategoryCrossing()(
+          [inputs['education'], inputs['occupation'], bucketized_age_feature]))
+  age_education_occupation_cross_hash = (
+      tf.keras.layers.experimental.preprocessing.Hashing(
+          num_bins=num_bins)(age_education_occupation_cross))
+  encoded_feature = (
+      tf.keras.layers.experimental.preprocessing.CategoryEncoding(
+          max_tokens=num_bins)(age_education_occupation_cross_hash))
+  features.append(encoded_feature)
+
+  # Build model from inputs.
+  concatenated_features = tf.keras.layers.concatenate(features)
+  x = tf.keras.layers.Dense(64, activation='relu')(concatenated_features)
+  x = tf.keras.layers.Dense(64, activation='relu')(x)
+  x = tf.keras.layers.Dense(64, activation='relu')(x)
+  x = tf.keras.layers.Dense(64, activation='relu')(x)
+  x = tf.keras.layers.Dropout(.1)(x)
+  outputs = tf.keras.layers.Dense(1, activation='sigmoid')(x)
+  return model_class(inputs, outputs)
