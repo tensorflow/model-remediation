@@ -28,6 +28,9 @@ MinDiffModel register classes as keras objects.
 
 * (Minor) Change output of `test_step` to not include `min_diff_loss` metric if
 `min_diff_data` is not included.
+* (Minor) Ensure that MinDiffModel metric has a unique name. In the case of a
+collision, the name will be changed to "min_diff_loss_N" for the lowest N
+(starting at 1) that makes it unique.
 
 ## Deprecations
 

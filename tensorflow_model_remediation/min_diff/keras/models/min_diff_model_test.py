@@ -118,6 +118,45 @@ class MinDiffModelTest(tf.test.TestCase):
       _ = min_diff_model.MinDiffModel(
           tf.keras.Sequential(), DummyLoss(), predictions_transform=bad_fn)
 
+  def testUniqueMetricNameHelper(self):
+    existing_metrics = [
+        tf.keras.metrics.Mean("mean"),
+        tf.keras.metrics.MeanSquaredError("mean_1"),
+        tf.keras.metrics.Mean("mean_2"),
+        tf.keras.metrics.Mean("metric_1"),
+        tf.keras.metrics.Mean("unrelated_name"),
+    ]
+    # Completely new name is unchanged.
+    unique_name = min_diff_model._unique_metric_name("unique", existing_metrics)
+    self.assertEqual(unique_name, "unique")
+    # Name that is a prefix of others but not included itself is unchanged.
+    unique_name = min_diff_model._unique_metric_name("metric", existing_metrics)
+    self.assertEqual(unique_name, "metric")
+    # Name that already exists should increment until unique.
+    unique_name = min_diff_model._unique_metric_name("mean", existing_metrics)
+    self.assertEqual(unique_name, "mean_3")
+
+  def testUniqueMetricNameInModel(self):
+    original_model = tf.keras.Sequential()
+    # Nest MinDiffModels to create potentially duplicate metrics.
+    model = min_diff_model.MinDiffModel(original_model, DummyLoss())
+    model = min_diff_model.MinDiffModel(model, DummyLoss())
+    metric_names = [metric.name for metric in model.metrics]
+    self.assertSetEqual(
+        set(metric_names), set(["min_diff_loss", "min_diff_loss_1"]))
+
+    # Test with CustomModel that has colliding metric names.
+    class CustomModel(tf.keras.Sequential):
+
+      def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._metric1 = tf.keras.metrics.Mean("min_diff_loss")
+        self._metric2 = tf.keras.metrics.Mean("min_diff_loss_1")
+
+    original_model = CustomModel()
+    model = min_diff_model.MinDiffModel(original_model, DummyLoss())
+    self.assertEqual(model._min_diff_loss_metric.name, "min_diff_loss_2")
+
   def testGetDataFns(self):
     original_model = tf.keras.Sequential()
     model = min_diff_model.MinDiffModel(original_model, DummyLoss())

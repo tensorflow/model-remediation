@@ -203,7 +203,8 @@ class MinDiffModel(tf.keras.Model):
     self._original_model = original_model
     self._loss = loss_utils._get_loss(loss)
     self._loss_weight = loss_weight
-    self._min_diff_loss_metric = tf.keras.metrics.Mean("min_diff_loss")
+    self._min_diff_loss_metric = tf.keras.metrics.Mean(
+        _unique_metric_name("min_diff_loss", original_model.metrics))
 
     if (predictions_transform is not None and
         not callable(predictions_transform)):
@@ -666,3 +667,17 @@ class MinDiffModel(tf.keras.Model):
     """
     config = cls._deserialize_config(config)
     return cls(**config)
+
+
+def _unique_metric_name(name, existing_metrics):
+  """Returns a unique name given the existing metric names."""
+  existing_names = set([metric.name for metric in existing_metrics])
+
+  proposed_name = name
+  cnt = 1  # Start incrementing with 1.
+  # Increment name suffix until the name is unique.
+  while proposed_name in existing_names:
+    proposed_name = name + "_" + str(cnt)
+    cnt += 1
+
+  return proposed_name
