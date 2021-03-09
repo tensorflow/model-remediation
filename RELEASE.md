@@ -6,6 +6,16 @@
 
 ## Bug fixes and other small changes
 
+## Breaking changes
+
+## Deprecations
+
+# Version 0.1.4
+
+## Major Features and Improvements
+
+## Bug fixes and other small changes
+
 * Add support for MinDiffModel subclasses that are also subclasses of TF
 Functional class.
 * Add uci related utils for colabs. This is unrelated to the actual
