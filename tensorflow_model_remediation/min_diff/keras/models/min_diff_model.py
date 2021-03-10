@@ -127,8 +127,9 @@ class MinDiffModel(tf.keras.Model):
 
   - During training, the inputs must include `min_diff_data`, see
     `MinDiffModel.compute_min_diff_loss` for details.
-  - Saving and loading a model has slightly different behavior. See
-    `MinDiffModel.save` and `MinDiffModel.save_original_model` for details.
+  - Saving and loading a model can have slightly different behavior if you are
+    subclassing `MinDiffModel`. See `MinDiffModel.save` and
+    `MinDiffModel.save_original_model` for details.
 
   Optionally, inputs containing `min_diff_data` can be passed in to `evaluate`
   and `predict`. For the former, this will result in the `min_diff_loss`
@@ -542,37 +543,38 @@ class MinDiffModel(tf.keras.Model):
 
     """Exports the model as described in `tf.keras.Model.save`.
 
-    You may want to use this if you want to continue training your model with
-    MinDiff after having loaded it. If you want to use the loaded model purely
-    for inference, you will likely want to use
+    For subclasses of `MinDiffModel` that have not been registered as Keras
+    objects, this method will likely be what you want to call to continue
+    training your model with MinDiff after having loaded it. If you want to use
+    the loaded model purely for inference, you will likely want to use
     `MinDiffModel.save_original_model` instead.
 
-    Note: A model loaded from the output of `MinDiffModel.save` is slightly
-      different from the original instance in that it will require
-      `min_diff_data` to be included in inputs to all functions, even
-      `MinDiffModel.evaluate` and `MinDiffModel.predict`.
+    Note: A model loaded from the output of
+      `UnregisteredMinDiffModelSubclass.save` is slightly different from the
+      original instance in that it will require `min_diff_data` to be included
+      in inputs to all functions, even `MinDiffModel.evaluate` and
+      `MinDiffModel.predict`.
 
-    Other than the exception noted above, this method has the same behavior as
-    `tf.keras.Model.save`.
+    The exception noted above for unregistered `MinDiffModel` subclasses is the
+    only difference with `tf.keras.Model.save`. To avoid these subtle
+    differences, we strongly recommend registering `MinDiffModel` subclasses as
+    Keras objects. See the documentation of
+    `tf.keras.utils.register_keras_serializable` for details.
     """
     return super(MinDiffModel, self).save(*args, **kwargs)
 
   def save_original_model(self, *args, **kwargs):
 
-    """Exports the `original_model` for inference without `min_diff_data`.
+    """Exports the `original_model`.
 
-    Saving the `original_model` allows you to load a model and run
-    `tf.keras.Model.evaluate` or `tf.keras.Model.predict` without requiring
-    `min_diff_data` to be included.
+    Exports the `original_model`. When loaded, this model will be the type of
+    `original_model` and will no longer be able to train or evaluate with
+    MinDiff data.
 
-    This is most likely what you will want to use if you want to save your model
-    for inference only. Most cases will need to use this method instead of
-    `MinDiffModel.save`.
-
-    Note: A model loaded from the output of `MinDiffModel.save_original_model`
-    will be an instance of the same type as `original_model`, not
-    `MinDiffModel`. This means that if you want to train it more with MinDiff,
-    you will need to rewrap it with `MinDiffModel`.
+    Note: Since a model loaded from the output of
+    `MinDiffModel.save_original_model` will be an instance of the same type as
+    `original_model`, you will need to rewrap it with `MinDiffModel` if you want
+    to train it more with MinDiff.
     """
     return self.original_model.save(*args, **kwargs)
 
