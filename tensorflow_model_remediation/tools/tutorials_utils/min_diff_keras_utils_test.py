@@ -165,10 +165,6 @@ class UtilTest(tf.test.TestCase):
     result = model.predict([0.1])
     self.assertTrue(result[0][0] < 1 and result[0][0] > 0)
 
-  def test_get_eval_results(self):
-    # TODO: Add testing.
-    pass
-
 
 if __name__ == '__main__':
   tf.test.main()

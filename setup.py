@@ -19,12 +19,12 @@ from setuptools import setup
 
 REQUIRED_PACKAGES = [
     'dill',
+    # TODO: Look into removing mock from setup.
+    'mock',
     'pandas',
-    'protobuf',
     'six',
     'tensorflow>=2.0.0',
     'tensorflow_hub',
-    'tensorflow_model_analysis',
 ]
 
 # Get version from version module.

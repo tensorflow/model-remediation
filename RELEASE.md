@@ -5,6 +5,7 @@
 ## Major Features and Improvements
 
 ## Bug fixes and other small changes
+* Remove protobuf and tensorflow_model_analysis dependencies.
 
 ## Breaking changes
 
