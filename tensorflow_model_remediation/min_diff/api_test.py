@@ -34,11 +34,14 @@ class KerasAPITest(tf.test.TestCase):
     _ = min_diff.keras.MinDiffModel
     _ = min_diff.keras.models.MinDiffModel
 
-  def testUtilsAPI(self):
+  def testInputUtilsAPI(self):
     _ = min_diff.keras.utils.MinDiffPackedInputs
     _ = min_diff.keras.utils.pack_min_diff_data
     _ = min_diff.keras.utils.unpack_min_diff_data
     _ = min_diff.keras.utils.unpack_original_inputs
+
+  def testStructureUtilsAPI(self):
+    _ = min_diff.keras.utils.validate_min_diff_structure
 
 
 class LossesAPITest(tf.test.TestCase):
