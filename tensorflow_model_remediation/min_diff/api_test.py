@@ -35,6 +35,7 @@ class KerasAPITest(tf.test.TestCase):
     _ = min_diff.keras.models.MinDiffModel
 
   def testInputUtilsAPI(self):
+    _ = min_diff.keras.utils.build_min_diff_dataset
     _ = min_diff.keras.utils.MinDiffPackedInputs
     _ = min_diff.keras.utils.pack_min_diff_data
     _ = min_diff.keras.utils.unpack_min_diff_data
