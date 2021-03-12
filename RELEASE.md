@@ -4,6 +4,15 @@
 
 ## Major Features and Improvements
 
+* Add support for multiple applications of MinDiff within MinDiffModel. This
+includes:
+
+  *  Utils for validating and manipulating structures for MinDiff applications
+  * Added functionality in input utils to enable packing multiple sets of
+  MinDiff data into one dataset.
+  * Changes to MinDiffModel to support multiple applications of MinDiff in a
+  single instance.
+
 ## Bug fixes and other small changes
 * Remove protobuf and tensorflow_model_analysis dependencies.
 
