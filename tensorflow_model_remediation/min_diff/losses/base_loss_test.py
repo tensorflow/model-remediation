@@ -79,11 +79,21 @@ class MinDiffLossTest(tf.test.TestCase):
   def testLossName(self):
     # Default name.
     loss = CustomLoss()
-    self.assertEqual(loss.name, 'CustomLoss')
+    self.assertEqual(loss.name, 'custom_loss')
 
     # Custom name.
     loss = CustomLoss(name='custom_name')
     self.assertEqual(loss.name, 'custom_name')
+
+    # Private class
+    class _CustomLoss(base_loss.MinDiffLoss):
+
+      def call(self):
+        pass
+
+    # Private name name.
+    loss = _CustomLoss()
+    self.assertEqual(loss.name, 'private__custom_loss')
 
   def testReduction(self):
     # MinDiffLoss should set the reduction to NONE.

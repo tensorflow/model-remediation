@@ -17,6 +17,8 @@ includes:
 * Remove protobuf and tensorflow_model_analysis dependencies.
 
 ## Breaking changes
+* (Minor) Change default name of MinDiffLoss instance to be snake_case.
+
 
 ## Deprecations
 
