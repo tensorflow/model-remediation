@@ -15,6 +15,7 @@ includes:
 
 ## Bug fixes and other small changes
 * Remove protobuf and tensorflow_model_analysis dependencies.
+* `pack_min_diff_data` now conserves shape or original inputs.
 
 ## Breaking changes
 * (Minor) Change default name of MinDiffLoss instance to be snake_case.

@@ -515,7 +515,57 @@ class PackMinDiffDataTest(MinDiffInputUtilsTestCase):
                                 sensitive_batch_size, nonsensitive_batch_size,
                                 batch_ind))
 
-  def testWithOriginaleWeightsNone(self):
+  def testWithoutOriginalWeights(self):
+    original_batch_size = 5
+    original_dataset = tf.data.Dataset.from_tensor_slices(
+        (self.original_x, self.original_y)).batch(original_batch_size)
+
+    sensitive_batch_size = 3
+    sensitive_dataset = tf.data.Dataset.from_tensor_slices(
+        (self.sensitive_x, None, None)).batch(sensitive_batch_size)
+
+    nonsensitive_batch_size = 1
+    nonsensitive_dataset = tf.data.Dataset.from_tensor_slices(
+        (self.nonsensitive_x, None, None)).batch(nonsensitive_batch_size)
+
+    dataset = input_utils.pack_min_diff_data(original_dataset,
+                                             sensitive_dataset,
+                                             nonsensitive_dataset)
+
+    for batch in dataset:
+      # Only validate original batch weights (other tests cover others).
+      # Should be of length 2.
+      self.assertEqual(len(batch), 2)
+      _, _, w = tf.keras.utils.unpack_x_y_sample_weight(batch)
+
+      self.assertIsNone(w)
+
+  def testWithoutOriginalLabels(self):
+    original_batch_size = 5
+    original_dataset = tf.data.Dataset.from_tensor_slices(
+        self.original_x).batch(original_batch_size)
+
+    sensitive_batch_size = 3
+    sensitive_dataset = tf.data.Dataset.from_tensor_slices(
+        (self.sensitive_x, None, None)).batch(sensitive_batch_size)
+
+    nonsensitive_batch_size = 1
+    nonsensitive_dataset = tf.data.Dataset.from_tensor_slices(
+        (self.nonsensitive_x, None, None)).batch(nonsensitive_batch_size)
+
+    dataset = input_utils.pack_min_diff_data(original_dataset,
+                                             sensitive_dataset,
+                                             nonsensitive_dataset)
+
+    for batch in dataset:
+      # Only validate original batch weights (other tests cover others).
+      # Should not be a tuple.
+      self.assertIsInstance(batch, input_utils.MinDiffPackedInputs)
+      _, _, w = tf.keras.utils.unpack_x_y_sample_weight(batch)
+
+      self.assertIsNone(w)
+
+  def testWithOriginalWeightsNone(self):
     original_batch_size = 5
     original_dataset = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.original_y, None)).batch(original_batch_size)
@@ -535,6 +585,8 @@ class PackMinDiffDataTest(MinDiffInputUtilsTestCase):
 
     for batch in dataset:
       # Only validate original batch weights (other tests cover others).
+      # Should be of length 3 despite sample_weight being None.
+      self.assertEqual(len(batch), 3)
       _, _, w = tf.keras.utils.unpack_x_y_sample_weight(batch)
 
       self.assertIsNone(w)

@@ -164,9 +164,6 @@ def pack_min_diff_data(original_dataset: tf.data.Dataset,
 
   dataset = tf.data.Dataset.zip((original_dataset, min_diff_dataset))
 
-  # TODO: Should we conserve the length of the tuples returned?
-  #                    Right now we always return a tuple of length 3 (with None
-  #                    if things are missing).
   def _map_fn(original_batch, min_diff_batch):
     # Unpack original batch.
     original_x, original_y, original_sample_weight = (
@@ -190,13 +187,22 @@ def pack_min_diff_data(original_dataset: tf.data.Dataset,
             "first): {}".format(e))
 
     # pack min_diff_batch with original_x
-    return tf.keras.utils.pack_x_y_sample_weight(
+    return _pack_as_original(
+        original_batch,
         MinDiffPackedInputs(
             original_inputs=original_x, min_diff_data=min_diff_batch),
         original_y, original_sample_weight)
 
   # Reshape dataset output.
   return dataset.map(_map_fn)
+
+
+def _pack_as_original(original_batch, x, y, w):
+  """Packs x, y, w while conserving the shape of the original batch."""
+  if not isinstance(original_batch, tuple):
+    return x
+  length = len(original_batch)
+  return (x, y, w)[:length]
 
 
 def build_min_diff_dataset(sensitive_group_dataset,
