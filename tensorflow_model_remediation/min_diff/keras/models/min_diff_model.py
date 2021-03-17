@@ -394,8 +394,8 @@ class MinDiffModel(tf.keras.Model):
     """Computes `min_diff_loss`(es) corresponding to `min_diff_data`.
 
     Arguments:
-      min_diff_data: Tuple of data or MinDiff structure of tuples as described
-        below.
+      min_diff_data: Tuple of data or valid MinDiff structure of tuples as
+        described below.
       training: Boolean indicating whether to run in training or inference mode.
         See `tf.keras.Model.call` for details.
       mask: Mask or list of masks as described in `tf.keras.Model.call`. These

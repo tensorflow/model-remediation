@@ -56,7 +56,7 @@ def _flatten_min_diff_structure(struct, run_validation=False):
 
 
 def _pack_min_diff_sequence_as(struct, flat_sequence):
-    # pyformat: disable
+  # pyformat: disable
   """Pack `flat_sequence` into the same structure as `struct`.
 
   Arguments:
@@ -201,7 +201,8 @@ def validate_min_diff_structure(struct,
     TypeError: If `struct` is neither a single element (including a tuple) nor a
       dict.
     ValueError: If `struct` is a dict with non-string keys.
-    ValueError: If `struct` is a dict with values that are not single elements.
+    ValueError: If `struct` is a dict with values that are not single elements
+      (including tuples).
   """
   # pyformat: enable
   if _is_min_diff_element(struct, element_type):

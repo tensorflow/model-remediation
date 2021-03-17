@@ -56,20 +56,28 @@ def pack_min_diff_data(original_dataset: tf.data.Dataset,
     original_dataset: `tf.data.Dataset` that was used before applying min
       diff. The output should conform to the format used in
       `tf.keras.Model.fit`.
-    sensitive_group_dataset: `tf.data.Dataset` or valid MinDiff nested structure
-      (flat list or dict) of `tf.data.Dataset`s containing only examples that
-      belong to the sensitive group. The output of each should have the same
-      structure as that of `original_dataset`.
-    nonsensitive_group_dataset: `tf.data.Dataset` or valid MinDiff nested
-      structure (flat list or dict) of `tf.data.Dataset`s containing only
-      examples that do **not** belong to the sensitive group. The output of each
-      should have the same structure as that of `original_dataset`.
-    min_diff_dataset: `tf.data.Dataset` or valid MinDiff nested
-      structure (flat list or dict) of `tf.data.Dataset`s containing only
-      examples to be used to calculate the `min_diff_loss`. The output of each
-      should have the same structure as that of `original_dataset`. This should
-      only be set if neither `sensitive_group_dataset` or
+    sensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
+      (unnested dict) of `tf.data.Dataset`s containing only examples that
+      belong to the sensitive group.
+
+      This must be passed in if `nonsensitive_group_dataset` is passed in.
+      Furthermore, the `x` component for every batch should have the same
+      structure as that of the `original_dataset` batches' `x` components.
+    nonsensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
+      (unnested dict) of `tf.data.Dataset`s containing only examples that do
+      **not** belong to the sensitive group.
+
+      This must be passed in if `sensitive_group_dataset` is passed in.
+      Furthermore, the `x` component for every batch should have the same
+      structure as that of the `original_dataset` batches' `x` components.
+    min_diff_dataset: `tf.data.Dataset` or valid MinDiff structure (unnested
+      dict) of `tf.data.Dataset`s containing only examples to be used to
+      calculate the `min_diff_loss`.
+
+      This should only be set if neither `sensitive_group_dataset` or
       `nonsensitive_group_dataset` is passed in.
+      Furthermore, the `x` component for every batch should have the same
+      structure as that of the `original_dataset` batches' `x` components.
 
   This function should be used to create the dataset that will be passed to
   `min_diff.keras.MinDiffModel` during training and, optionally, during
@@ -77,7 +85,7 @@ def pack_min_diff_data(original_dataset: tf.data.Dataset,
 
   The inputs should either have both `sensitive_group_dataset` and
   `nonsensitive_group_dataset` passed in and `min_diff_dataset` left unset or
-  vice versa. In the case of the former, the `min_diff_data` will be built using
+  vice versa. In the case of the former, `min_diff_data` will be built using
   `utils.build_min_diff_dataset`.
 
   Warning: All input datasets should be batched **before** being passed in.
@@ -93,35 +101,38 @@ def pack_min_diff_data(original_dataset: tf.data.Dataset,
   x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(batch)
   ```
 
-  The `tf.data.Dataset` returned will output a tuple or nested structure
-  (matching the structure of the inputs) of `(packed_inputs, y, sample_weight)`
-  where:
+  Every batch from the returned `tf.data.Dataset` will contain one batch from
+  each of the input datasets. Each returned batch will be a tuple of
+  `(packed_inputs, original_y, original_sample_weight)` matching the length of
+  `original_dataset` batches where:
 
   - `packed_inputs`: is an instance of `utils.MinDiffPackedInputs` containing:
 
-    - `original_inputs`: `x` component from the `original_dataset`.
-    - `min_diff_data`: data formed from `sensitive_group_dataset` and
+    - `original_inputs`: `x` component taken directly from the
+        `original_dataset` batch.
+    - `min_diff_data`: batch of data formed from `sensitive_group_dataset` and
       `nonsensitive_group_dataset` (as described in
       `utils.build_min_diff_dataset`) or taken directly from `min_diff_dataset`.
 
-  - `y`: is the `y` component taken directly from `original_dataset`.
-  - `sample_weight`: is the `sample_weight` component taken directly from
-    `original_dataset`.
+  - `original_y`: is the `y` component taken directly from the
+    `original_dataset` batch.
+  - `original_sample_weight`: is the `sample_weight` component taken directly
+    from the `original_dataset` batch.
 
   `min_diff_data` will be used in `min_diff.keras.MinDiffModel` when calculating
-  the `min_diff_loss`. It is a tuple or nested structure (matching the structure
-  of the inputs) of `(min_diff_x, min_diff_membership, min_diff_sample_weight)`.
+  the `min_diff_loss`. It is a tuple or structure (matching the structure of the
+  inputs) of `(min_diff_x, min_diff_membership, min_diff_sample_weight)`.
 
-  If you are passing in `min_diff_dataset` make sure that each `min_diff_data`
-  batch contains about the same number of sensitive and nonsensitive examples
-  as indicated by `min_diff_membership` (when passing in
+  Caution: If you are passing in `min_diff_dataset` make sure that each
+  `min_diff_data` batch contains about the same number of sensitive and
+  nonsensitive examples as indicated by `min_diff_membership` (when passing in
   `sensitive_group_dataset` and `nonsensitive_group_dataset` this is determined
   by their batch sizes).
 
   Returns:
-    A `tf.data.Dataset` whose output is a tuple or nested structure
-      (matching the structure of the inputs) of (`packed_inputs`, `y`,
-      `sample_weight`).
+    A `tf.data.Dataset` whose output is a tuple of (`packed_inputs`,
+      `original_y`, `original_sample_weight`) matching the output length
+      of `original_dataset`.
   """
   # pyformat: enable
   # Either sensitive_group_dataset and nonsensitive_group_dataset are both set
@@ -211,12 +222,12 @@ def build_min_diff_dataset(sensitive_group_dataset,
   """Build MinDiff dataset from sensitive and nonsensitive datasets.
 
   Arguments:
-    sensitive_group_dataset: `tf.data.Dataset` or valid MinDiff nested structure
-      (flat list or dict) of `tf.data.Dataset`s containing only examples that
+    sensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
+      (unnested dict) of `tf.data.Dataset`s containing only examples that
       belong to the sensitive group.
-    nonsensitive_group_dataset: `tf.data.Dataset` or valid MinDiff nested
-      structure (flat list or dict) of `tf.data.Dataset`s containing only
-      examples that do **not** belong to the sensitive group.
+    nonsensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
+      (unnested dict) of `tf.data.Dataset`s containing only examples that do
+      **not** belong to the sensitive group.
 
   This function builds a `tf.data.Dataset` containing examples that are meant to
   only be used when calculating a `min_diff_loss`. This resulting dataset will
@@ -240,7 +251,8 @@ def build_min_diff_dataset(sensitive_group_dataset,
   be set to `None` or any other arbitrary value. If `sample_weight` is not
   included, it can be left out entirely.
 
-  The `tf.data.Dataset` returned will output a tuple or nested structure
+  Every batch from the returned `tf.data.Dataset` will contain one batch from
+  each of the input datasets. Each returned batch will be a tuple or structure
   (matching the structure of the inputs) of `(min_diff_x, min_diff_membership,
   min_diff_sample_weight)` where, for each pair of input datasets:
 
@@ -256,14 +268,14 @@ def build_min_diff_dataset(sensitive_group_dataset,
     the appropriate shape.
 
   Returns:
-    A `tf.data.Dataset` whose output is a tuple or nested structure (matching
-      the structure of the inputs) of `(min_diff_x, min_diff_membership,
+    A `tf.data.Dataset` whose output is a tuple or structure (matching the
+      structure of the inputs) of `(min_diff_x, min_diff_membership,
       min_diff_sample_weight)`.
 
   Raises:
     ValueError: If either `sensitive_group_dataset` or
-      `nonsensitive_group_dataset` is not a valid MinDiff structure (flat list
-      or dict).
+      `nonsensitive_group_dataset` is not a valid MinDiff structure (unnested
+      dict).
     ValueError: If `sensitive_group_dataset` and `nonsensitive_group_dataset` do
       not have the same structure.
   """
