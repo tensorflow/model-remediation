@@ -1,6 +1,6 @@
 <!-- mdlint off(HEADERS_TOO_MANY_H1) -->
 
-# Current Version (Still in Development)
+# Version 0.1.5
 
 ## Major Features and Improvements
 
@@ -19,7 +19,6 @@ includes:
 
 ## Breaking changes
 * (Minor) Change default name of MinDiffLoss instance to be snake_case.
-
 
 ## Deprecations
 
