@@ -119,10 +119,6 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     with tf.name_scope(self.name + '_inputs'):
       loss = self.call(membership, predictions, sample_weight)
 
-      scalar_version = (
-          tf.summary.scalar
-          if tf.executing_eagerly() else tf.compat.v1.summary.scalar)
-
       # Calculate metrics.
       weights = (
           sample_weight
@@ -132,14 +128,14 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
                                                                     membership)
       num_non_sensitive_group_min_diff_examples = (
           num_min_diff_examples - num_sensitive_group_min_diff_examples)
-      scalar_version('sensitive_group_min_diff_examples_count',
-                     num_sensitive_group_min_diff_examples)
-      scalar_version('non-sensitive_group_min_diff_examples_count',
-                     num_non_sensitive_group_min_diff_examples)
-      scalar_version('min_diff_examples_count', num_min_diff_examples)
+      tf.summary.scalar('sensitive_group_min_diff_examples_count',
+                        num_sensitive_group_min_diff_examples)
+      tf.summary.scalar('non-sensitive_group_min_diff_examples_count',
+                        num_non_sensitive_group_min_diff_examples)
+      tf.summary.scalar('min_diff_examples_count', num_min_diff_examples)
       # The following metric can capture when the model degenerates and all
       # predictions go towards zero or one.
-      scalar_version(
+      tf.summary.scalar(
           'min_diff_average_prediction',
           tf.math.divide_no_nan(
               tf.reduce_sum(tf.dtypes.cast(weights, tf.float32) * predictions),
