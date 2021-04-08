@@ -22,6 +22,8 @@ import tensorflow as tf
 from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses import base_loss
 
+_EPSILON = 1.0e-7
+
 
 @tf.keras.utils.register_keras_serializable()
 class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
@@ -76,8 +78,8 @@ class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
 
     corr = tf.math.divide_no_nan(
         weighted_covar,
-        tf.sqrt(weighted_var_sensitive_group_labels) *
-        tf.sqrt(weighted_var_y_pred))
+        tf.sqrt(weighted_var_sensitive_group_labels + _EPSILON) *
+        tf.sqrt(weighted_var_y_pred + _EPSILON))
 
     loss = tf.abs(corr)
     return loss

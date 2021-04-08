@@ -103,6 +103,40 @@ class AbsoluteCorrelationLossTest(tf.test.TestCase):
     loss_value = loss_fn(membership, predictions, sample_weights)
     self.assertAllClose(0, loss_value)
 
+  def testGradients(self):
+    loss_fn = loss_lib.AbsoluteCorrelationLoss()
+    variables = tf.constant([[0.1], [0.3], [0.5], [0.7], [0.9]])
+    membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
+    sample_weights = tf.constant([[1.0], [2.0], [2.5], [1.2], [0.9]])
+
+    with tf.GradientTape() as tape:
+      tape.watch(variables)
+      predictions = variables * 3  # arbitrary linear operation.
+      loss_value = loss_fn(membership, predictions, sample_weights)
+
+    gradients = tape.gradient(loss_value, variables)
+    # Assert that gradient computations are non trivial and do not change based
+    # on loss implementation.
+    expected_gradients = [[0.5481868], [-1.2328656], [1.1707227], [-0.83559656],
+                          [0.34955233]]
+    self.assertAllClose(expected_gradients, gradients)
+
+  def testGradientsWithAllZeroWeights(self):
+    loss_fn = loss_lib.AbsoluteCorrelationLoss()
+    variables = tf.constant([[0.1], [0.3], [0.5], [0.7], [0.9]])
+    membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])
+    sample_weights = tf.constant([[0.0], [0.0], [0.0], [0.0], [0.0]])
+
+    with tf.GradientTape() as tape:
+      tape.watch(variables)
+      predictions = variables * 3  # arbitrary linear operation.
+      loss_value = loss_fn(membership, predictions, sample_weights)
+
+    gradients = tape.gradient(loss_value, variables)
+    # Gradients should all be 0 for weights that are all 0.
+    expected_gradients = [[0.0], [0.0], [0.0], [0.0], [0.0]]
+    self.assertAllClose(expected_gradients, gradients)
+
   def testSerialization(self):
     loss = loss_lib.AbsoluteCorrelationLoss(name='custom_name')
     serialized_loss = tf.keras.utils.serialize_keras_object(loss)
