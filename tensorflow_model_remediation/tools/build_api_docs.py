@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -79,9 +79,14 @@ def execute(output_dir, code_url_prefix, search_hints, site_path):
   # quite yet.
   del tfmr.common
 
+  try:
+    del tfmr.tools
+  except AttributeError:
+    pass
+
   doc_generator = generate_lib.DocGenerator(
       root_title="TensorFlow Model Remediation",
-      py_modules=[("tensorflow_model_remediation", tfmr)],
+      py_modules=[("model_remediation", tfmr)],
       base_dir=os.path.dirname(tfmr.__file__),
       search_hints=search_hints,
       code_url_prefix=code_url_prefix,

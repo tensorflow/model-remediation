@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,31 +20,36 @@ delegates its call method to another Model and adds a `min_diff_loss`
 during training and optionally during evaluation.
 """
 
+import dill
+
 import tensorflow as tf
 
 from tensorflow_model_remediation.common import docs
 from tensorflow_model_remediation.min_diff.keras import utils
+from tensorflow_model_remediation.min_diff.keras.utils import structure_utils
 from tensorflow_model_remediation.min_diff.losses import loss_utils
 
 
+@tf.keras.utils.register_keras_serializable()
 class MinDiffModel(tf.keras.Model):
   # pyformat: disable
 
-  """Model that adds a loss component to another model during training.
+  """Model that adds one or more loss component(s) to another model during training.
 
   Inherits from: `tf.keras.Model`
 
   Args:
     original_model: Instance of `tf.keras.Model` that will be trained with the
       additional `min_diff_loss`.
-    loss: String (name of loss) or `min_diff.losses.MinDiffLoss` instance that
-      will be used to calculate the `min_diff_loss`.
-    loss_weight: Scalar applied to the `min_diff_loss` before being included
-      in training.
+    loss: `dict` or single element of string(s) (name of loss) or
+      `min_diff.losses.MinDiffLoss` instance(s) that will be used to calculate
+      the `min_diff_loss`(es).
+    loss_weight: `dict` of scalars or single scalar applied to the
+      `min_diff_loss`(es) before being included in training.
     predictions_transform: Optional if the output of `original_model` is a
       `tf.Tensor`. Function that transforms the output of `original_model` after
       it is called on MinDiff examples. The resulting predictions tensor is
-      what will be passed in to the `losses.MinDiffLoss`.
+      what will be passed in to the `losses.MinDiffLoss`(es).
     **kwargs: Named parameters that will be passed directly to the base
       class' `__init__` function.
 
@@ -116,6 +121,34 @@ class MinDiffModel(tf.keras.Model):
                                           # unpack_min_diff_data method.
   ```
 
+  ### <a id=multiple_applications></a>Multiple Applications of MinDiff
+
+  It is possible to apply MinDiff multiple times within a single instance of
+  `MinDiffModel`. To do so, you can pass in a dictionary of losses where keys
+  are the names of each MinDiff application and the values are the names or
+  instances of `losses.MinDiffLoss` that will be applied for each respective
+  MinDiff application.
+  Loss weights can be set as either one value that will be used for all
+  applications or with a dictionary that specifies weights for individual
+  applications. Weights not specified will default to 1.0.
+
+  ```
+  import tensorflow as tf
+
+  model = tf.keras.Sequential([...])
+
+  model = MinDiffModel(model, loss={
+    "application1": min_diff.losses.MMDLoss(),  # Loss for first application.
+    "application2": min_diff.losses.MMDLoss()   # Loss for second application.
+  },
+  loss_weight=2.0)  # 2.0 will used as the weight for all applications.
+  ```
+
+  A `MinDiffModel` initialized as shown above will expect `min_diff_data` to
+  have a structure matching that of `loss` (i.e. a dictionary of inputs with
+  keys matching that of `loss`). See `MinDiffModel.compute_min_diff_loss` for
+  details.
+
   ### <a id=using_mindiffmodel></a>Usage
 
   Once you have created an instance of `MinDiffModel`, it can be used almost
@@ -124,8 +157,9 @@ class MinDiffModel(tf.keras.Model):
 
   - During training, the inputs must include `min_diff_data`, see
     `MinDiffModel.compute_min_diff_loss` for details.
-  - Saving and loading a model has slightly different behavior. See
-    `MinDiffModel.save` and `MinDiffModel.save_original_model` for details.
+  - Saving and loading a model can have slightly different behavior if you are
+    subclassing `MinDiffModel`. See `MinDiffModel.save` and
+    `MinDiffModel.save_original_model` for details.
 
   Optionally, inputs containing `min_diff_data` can be passed in to `evaluate`
   and `predict`. For the former, this will result in the `min_diff_loss`
@@ -136,7 +170,7 @@ class MinDiffModel(tf.keras.Model):
   def __init__(self,
                original_model: tf.keras.Model,
                loss,
-               loss_weight: complex = 1.0,
+               loss_weight=1.0,
                predictions_transform=None,
                **kwargs):
 
@@ -145,28 +179,73 @@ class MinDiffModel(tf.keras.Model):
     Raises:
       ValueError: If `predictions_transform` is passed in but not callable.
     """
+    # Roundabout way of accessing the Functional class.
+    functional_class = tf.keras.Sequential.__bases__[0]
+    # We need to handle a special case where a custom MinDiffModel class is
+    # created that is also a subclass of the Functional class. In this case, we
+    # need to make sure that args match what the Functional.__init__ requires
+    # (i.e. `inputs` and `outputs` args) and that the rest of the
+    # Functional.__init__ method is skipped (supported by passing in
+    # `skip_init=True`).
+    # This requires any __init__ methods to not do input validation and to
+    # pass through `skip_init`.
+    if (isinstance(self, functional_class) and
+        not isinstance(self, tf.keras.Sequential)):
+      try:
+        super(MinDiffModel, self).__init__(
+            inputs=None, outputs=None, skip_init=True, **kwargs)
+        tf.keras.Model.__init__(self, **kwargs)
+      except Exception as e:
+        raise type(e)(
+            "There was a problem initializing the MinDiffModel subclass "
+            "instance. This was likely caused by:\n"
+            "  - The kwargs that were passed in were not valid according to "
+            "tf.keras.Model or a base of your custom Model.\n"
+            "  - Some args validation or requirement in your custom Model "
+            "__init__ method is too strict.\n"
+            "  - Your Model subclass is not passing through **kwargs (in "
+            "particular `skip_init`) to the super().__init__ invocation.\n"
+            "To fix this, either fix the args, loosen the requirements, or "
+            "make sure to pass **kwargs to calls with super. If this is not "
+            "possible, you may need to integrate MinDiff without using "
+            "MinDiffModel.\n"
+            "Error raised: {}".format(e))
+    else:
+      try:
+        super(MinDiffModel, self).__init__(**kwargs)
+      except Exception as e:
+        raise type(e)(
+            "There was a problem initializing the MinDiffModel instance. "
+            "This was likely caused by the kwargs that were passed in not "
+            "being valid according to tf.keras.Model.\n"
+            "Error raised: {}".format(e))
 
-    super(MinDiffModel, self).__init__(**kwargs)
     # Set _auto_track_sub_layers to true to ensure we track the
     # original_model and MinDiff layers.
     self._auto_track_sub_layers = True  # Track sub layers.
     self.built = True  # This Model is built, original_model may or may not be.
+    # Masking, if any, is taken care of by original_model.
+    self._supports_masking = False
+    # Clear input_spec in case there is one. We cannot make any strong
+    # assertions because `min_diff_data` may or may not be included and can
+    # have different shapes since weight is optional.
+    self.input_spec = None
 
     self._original_model = original_model
-    self._loss = loss_utils._get_loss(loss)
-    self._loss_weight = loss_weight
-    self._min_diff_loss_metric = tf.keras.metrics.Mean("min_diff_loss")
+    structure_utils.validate_min_diff_structure(loss, struct_name="loss")
+    self._loss = tf.nest.map_structure(loss_utils._get_loss, loss)
+    structure_utils.validate_min_diff_structure(
+        loss_weight, struct_name="loss_weight")
+    self._loss_weight = _conform_weights_to_losses(
+        self._loss, loss_weight, default_value=1.0)
+    self._min_diff_loss_metric = _create_unique_metrics(self._loss,
+                                                        self.metrics)
 
     if (predictions_transform is not None and
         not callable(predictions_transform)):
       raise ValueError("`predictions_transform` must be callable if passed "
                        "in, given: {}".format(predictions_transform))
     self._predictions_transform = predictions_transform
-
-    # Clear input_spec in case there is one. We cannot make any strong
-    # assertions because `min_diff_data` may or may not be included and can
-    # have different shapes since weight is optional.
-    self.input_spec = None
 
   @property
   def predictions_transform(self):
@@ -312,24 +391,32 @@ class MinDiffModel(tf.keras.Model):
 
   def compute_min_diff_loss(self, min_diff_data, training=None, mask=None):
     # pyformat: disable
-    """Computes and returns the `min_diff_loss` corresponding to `min_diff_data`.
+    """Computes `min_diff_loss`(es) corresponding to `min_diff_data`.
 
-    Args:
-      min_diff_data: Tuple of length 2 or 3 as described below.
+    Arguments:
+      min_diff_data: Tuple of data or valid MinDiff structure of tuples as
+        described below.
+
       training: Boolean indicating whether to run in training or inference mode.
         See `tf.keras.Model.call` for details.
-      mask: Mask or list of masks as described in `tf.keras.Model.call`.
+      mask: Mask or list of masks as described in `tf.keras.Model.call`. These
+        will be applied when calling the `original_model`.
 
 
-    Like the input requirements described in `tf.keras.Model.fit`,
-    `min_diff_data` must be a tuple of length 2 or 3. The tuple will be unpacked
-    using the standard `tf.keras.utils.unpack_x_y_sample_weight` function:
+    `min_diff_data` must have a structure (or be a single element) matching that
+    of the `loss` parameter passed in during initialization. Each element of
+    `min_diff_data` (and `loss`) corresponds to one application of MinDiff.
+
+    Like the input requirements described in `tf.keras.Model.fit`, each element
+    of `min_diff_data` must be a tuple of length 2 or 3. The tuple will be
+    unpacked using the standard `tf.keras.utils.unpack_x_y_sample_weight`
+    function:
 
     ```
-    min_diff_data = ...  # Single batch of min_diff_data.
+    min_diff_data_elem = ...  # Single element from a batch of min_diff_data.
 
     min_diff_x, min_diff_membership, min_diff_sample_weight = (
-        tf.keras.utils.unpack_x_y_sample_weight(min_diff_data))
+        tf.keras.utils.unpack_x_y_sample_weight(min_diff_data_elem))
     ```
     The components are defined as follows:
 
@@ -340,8 +427,9 @@ class MinDiffModel(tf.keras.Model):
     - `min_diff_sample_weight`: Optional weight `Tensor`. The weights will be
       applied to the examples during the `min_diff_loss` calculation.
 
-    The `min_diff_loss` is ultimately calculated from the MinDiff
-    predictions which are evaluated in the following way:
+    For each application of MinDiff, the `min_diff_loss` is ultimately
+    calculated from the MinDiff predictions which are evaluated in the
+    following way:
 
     ```
     ...  # In compute_min_diff_loss call.
@@ -355,13 +443,49 @@ class MinDiffModel(tf.keras.Model):
     ```
 
     Returns:
-      `min_diff_loss` calculated from `min_diff_data`.
+      Scalar (if only one) or list of `min_diff_loss` values calculated from
+        `min_diff_data`.
 
     Raises:
+      ValueError: If the structure of `min_diff_data` does not match that of the
+        `loss` that was passed to the model during initialization.
       ValueError: If the transformed `min_diff_predictions` is not a
         `tf.Tensor`.
     """
     # pyformat: enable
+
+    structure_utils._assert_same_min_diff_structure(min_diff_data, self._loss)
+
+    # Flatten everything and calculate min_diff_loss for each application.
+    flat_data = structure_utils._flatten_min_diff_structure(min_diff_data)
+    flat_losses = structure_utils._flatten_min_diff_structure(self._loss)
+    flat_weights = structure_utils._flatten_min_diff_structure(
+        self._loss_weight)
+    flat_metrics = structure_utils._flatten_min_diff_structure(
+        self._min_diff_loss_metric)
+    min_diff_losses = [
+        self._compute_single_min_diff_loss(data, loss, weight, metric, training,
+                                           mask) for data, loss, weight, metric
+        in zip(flat_data, flat_losses, flat_weights, flat_metrics)
+    ]
+    # If there is only one application return a scalar rather than a list.
+    if len(min_diff_losses) == 1:
+      min_diff_losses = min_diff_losses[0]
+    return min_diff_losses
+
+  def _compute_single_min_diff_loss(self,
+                                    min_diff_data,
+                                    loss,
+                                    loss_weight,
+                                    min_diff_loss_metric,
+                                    training=None,
+                                    mask=None):
+
+    """Computes a single `min_diff_loss` given a loss, weight, and data.
+
+    This will be called for each application of MinDiff. See
+    `MinDiffModel.compute_min_diff_loss` for details.
+    """
     x, membership, sample_weight = (
         tf.keras.utils.unpack_x_y_sample_weight(min_diff_data))
 
@@ -391,11 +515,11 @@ class MinDiffModel(tf.keras.Model):
 
       raise ValueError(err_msg)
 
-    min_diff_loss = self._loss_weight * self._loss(
+    min_diff_loss = loss_weight * loss(
         predictions=predictions,
         membership=membership,
         sample_weight=sample_weight)
-    self._min_diff_loss_metric.update_state(min_diff_loss)
+    min_diff_loss_metric.update_state(min_diff_loss)
 
     return min_diff_loss
 
@@ -435,10 +559,10 @@ class MinDiffModel(tf.keras.Model):
     for batch in dataset.take(1):
       model(batch, training=True)
 
-    model.losses[0]  # First element will be the min_diff_loss.
+    model.losses[0]  # First element(s) will be the min_diff_loss(es).
     ```
 
-    Inlcuding `min_diff_data` in `inputs` implies that
+    Including `min_diff_data` in `inputs` implies that
     `MinDiffModel.unpack_original_inputs` and
     `MinDiffModel.unpack_min_diff_data` behave as expected when called on
     `inputs` (see methods for details).
@@ -469,10 +593,29 @@ class MinDiffModel(tf.keras.Model):
     if min_diff_data is not None:
       min_diff_loss = self.compute_min_diff_loss(
           min_diff_data, training=training)
-      self.add_loss(min_diff_loss)
+      # Add min_diff_loss(es) as regularization loss(es).
+      tf.nest.map_structure(self.add_loss, min_diff_loss)
 
     return self._call_original_model(
         original_inputs, training=training, mask=mask)
+
+  @docs.do_not_generate_docs
+  def test_step(self, data, *args, **kwargs):
+
+    """The logic for one evaluation step.
+
+    Has the exact same behavior as `tf.keras.Model.test_step` with the one
+    exception that it removes the 'min_diff_loss' metric(s) if `min_diff_data`
+    is not available.
+    """
+    metrics = super(MinDiffModel, self).test_step(data, *args, **kwargs)
+    # If there is no min_diff_data, remove the min_diff_loss metric.
+    x, _, _ = tf.keras.utils.unpack_x_y_sample_weight(data)
+    if self.unpack_min_diff_data(x) is None:
+      for metric in tf.nest.flatten(self._min_diff_loss_metric):
+        if metric.name in metrics:
+          del metrics[metric.name]
+    return metrics
 
   # We are overriding this solely to provide complete documentation on the
   # limitations of saving this way as opposed to behavior of normal models.
@@ -481,37 +624,38 @@ class MinDiffModel(tf.keras.Model):
 
     """Exports the model as described in `tf.keras.Model.save`.
 
-    You may want to use this if you want to continue training your model with
-    MinDiff after having loaded it. If you want to use the loaded model purely
-    for inference, you will likely want to use
+    For subclasses of `MinDiffModel` that have not been registered as Keras
+    objects, this method will likely be what you want to call to continue
+    training your model with MinDiff after having loaded it. If you want to use
+    the loaded model purely for inference, you will likely want to use
     `MinDiffModel.save_original_model` instead.
 
-    Note: A model loaded from the output of `MinDiffModel.save` is slightly
-      different from the original instance in that it will require
-      `min_diff_data` to be included in inputs to all functions, even
-      `MinDiffModel.evaluate` and `MinDiffModel.predict`.
+    Note: A model loaded from the output of
+      `UnregisteredMinDiffModelSubclass.save` is slightly different from the
+      original instance in that it will require `min_diff_data` to be included
+      in inputs to all functions, even `MinDiffModel.evaluate` and
+      `MinDiffModel.predict`.
 
-    Other than the exception noted above, this method has the same behavior as
-    `tf.keras.Model.save`.
+    The exception noted above for unregistered `MinDiffModel` subclasses is the
+    only difference with `tf.keras.Model.save`. To avoid these subtle
+    differences, we strongly recommend registering `MinDiffModel` subclasses as
+    Keras objects. See the documentation of
+    `tf.keras.utils.register_keras_serializable` for details.
     """
     return super(MinDiffModel, self).save(*args, **kwargs)
 
   def save_original_model(self, *args, **kwargs):
 
-    """Exports the `original_model` for inference without `min_diff_data`.
+    """Exports the `original_model`.
 
-    Saving the `original_model` allows you to load a model and run
-    `tf.keras.Model.evaluate` or `tf.keras.Model.predict` without requiring
-    `min_diff_data` to be included.
+    Exports the `original_model`. When loaded, this model will be the type of
+    `original_model` and will no longer be able to train or evaluate with
+    MinDiff data.
 
-    This is most likely what you will want to use if you want to save your model
-    for inference only. Most cases will need to use this method instead of
-    `MinDiffModel.save`.
-
-    Note: A model loaded from the output of `MinDiffModel.save_original_model`
-    will be an instance of the same type as `original_model`, not
-    `MinDiffModel`. This means that if you want to train it more with MinDiff,
-    you will need to rewrap it with `MinDiffModel`.
+    Note: Since a model loaded from the output of
+    `MinDiffModel.save_original_model` will be an instance of the same type as
+    `original_model`, you will need to rewrap it with `MinDiffModel` if you want
+    to train it more with MinDiff.
     """
     return self.original_model.save(*args, **kwargs)
 
@@ -523,3 +667,195 @@ class MinDiffModel(tf.keras.Model):
     """
     self.original_model.compile(*args, **kwargs)
     return super(MinDiffModel, self).compile(*args, **kwargs)
+
+  @docs.do_not_doc_in_subclasses
+  def get_config(self):
+    """Creates a config dictionary for the `MinDiffModel` instance.
+
+    Note: This will ignore anything resulting from the kwargs passed in at
+    initialization time or changes made to new attributes added afterwards. If
+    this is problematic you will need to subclass MinDiffModel and override this
+    method to account for these.
+
+    Any subclass with additional attributes will need to override this method.
+    When doing so, users will mostly likely want to first call `super`.
+
+    Returns:
+      A config dictionary for the `MinDiffModel` isinstance.
+
+    Raises:
+      Exception: If calling `original_model.get_config()` raises an error. The
+        type raised will be the same as that of the original error.
+    """
+
+    # Check that original_model.get_config is implemented and raise a helpful
+    # error message if not.
+    try:
+      _ = self._original_model.get_config()
+    except Exception as e:
+      raise type(e)(
+          "MinDiffModel cannot create a config because `original_model` has "
+          "not implemented get_config() or has an error in its implementation."
+          "\nError raised: {}".format(e))
+
+    # Try super.get_config if implemented. In most cases it will not be.
+    try:
+      config = super(MinDiffModel, self).get_config()
+    except NotImplementedError:
+      config = {}
+
+    config.update({
+        "original_model": self._original_model,
+        "loss": self._loss,
+        "loss_weight": self._loss_weight,
+        "name": self.name,
+    })
+    if self._predictions_transform is not None:
+      config["predictions_transform"] = dill.dumps(self._predictions_transform)
+    return {k: v for k, v in config.items() if v is not None}
+
+  @classmethod
+  def _deserialize_config(cls, config):
+
+    """Takes a config of attributes and deserializes as needed.
+
+    Transforms are deserialized using the `dill` module. The `original_model`
+    and `loss` are deserialized using the
+    `tf.keras.utils.deserialize_keras_object` function.
+
+    Note: This is a convenience method that assumes that the only elements that
+    need additional deserialization are `predictions_transform`, original_model`
+    and `loss`. If this is not the case for a given subclass this method (or
+    `from_config`) will need to be implemented directly.
+    """
+
+    def _deserialize_value(key, value):
+      if key == "predictions_transform":
+        return dill.loads(value)
+      return value  # No transformation applied.
+
+    return {k: _deserialize_value(k, v) for k, v in config.items()}
+
+  @classmethod
+  @docs.do_not_doc_in_subclasses
+  def from_config(cls, config):
+
+    """Creates a `MinDiffModel` instance from the config.
+
+    Any subclass with additional attributes or a different initialization
+    signature will need to override this method or `get_config`.
+
+    Returns:
+      A new `MinDiffModel` instance corresponding to `config`.
+    """
+    config = cls._deserialize_config(config)
+    return cls(**config)
+
+
+def _unique_metric_name(name, existing_metrics):
+  """Returns a unique name given the existing metric names."""
+  existing_names = set([metric.name for metric in existing_metrics])
+
+  proposed_name = name
+  cnt = 1  # Start incrementing with 1.
+  # Increment name suffix until the name is unique.
+  while proposed_name in existing_names:
+    proposed_name = name + "_" + str(cnt)
+    cnt += 1
+
+  return proposed_name
+
+
+def _create_unique_metrics(loss, existing_metrics):
+  """Create uniquely named MinDiff metric(s) corresponding to loss parameter."""
+  if not isinstance(loss, dict):
+    return tf.keras.metrics.Mean(
+        _unique_metric_name("min_diff_loss", existing_metrics))
+
+  min_diff_metrics = []
+  for name in loss.keys():
+    min_diff_metrics.append(
+        tf.keras.metrics.Mean(
+            _unique_metric_name(name + "_min_diff_loss", existing_metrics)))
+  return tf.nest.pack_sequence_as(loss, min_diff_metrics)
+
+
+def _conform_weights_to_losses(loss, loss_weight, default_value):
+  """Conforms weights to match structure of losses.
+
+  Shape weights to match the structure of `loss` if possible. If `loss_weight`
+  is a single value, it will be broadcast for all losses. If `loss_weight` is
+  `None` or has missing entries, `default_value` will be used.
+
+  Args:
+    loss: loss (possible nested) that weights will be conformed to.
+    loss_weight: weight that will be conformed to loss structure. If only a
+      single value, it will be broadcast for all losses. If `None`, it will be
+      replaced by `default_value`.
+    default_value: Value used if `loss_weight` is `None` or if some weights are
+      missing for certain losses.
+
+  Returns:
+    Weight corresponding to `loss` structure.
+  """
+  # Validate loss (loss_weights will be implicitly validated)
+  structure_utils.validate_min_diff_structure(loss, struct_name="loss")
+
+  # If loss_weight is unnested, then broadcast to all values of loss.
+  if not tf.nest.is_nested(loss_weight):
+    if loss_weight is None:
+      loss_weight = default_value
+    return tf.nest.map_structure(lambda _: loss_weight, loss)
+
+  # If execution reaches here, then loss_weight is nested (a dict).
+
+  # If loss is not nested, then raise an error (since loss_weight is a nested).
+  if not tf.nest.is_nested(loss):
+    try:
+      tf.nest.assert_same_structure(loss, loss_weight)
+    except Exception as e:
+      raise ValueError("`loss` and `loss_weight` do not have matching "
+                       "structures: \n{}".format(e))
+
+  # At this point, we should be guaranteed that the two structures are dicts if
+  # they are valid MinDiff structures. However, in case they are not, we assert
+  # that they are both dicts (this also helps be future proof since it will
+  # catch the broken assumption immediately if the validity definition changes).
+  # Note: As is, it should be impossible to get to this point. The only way it
+  #       would is if this function is called without validating or if the
+  #       definition of a valid MinDiff structure has changed.
+  if not (isinstance(loss, dict) and isinstance(loss_weight, dict)):
+    raise ValueError(
+        "One of `loss` and `loss_weight` is neither a single element nor a "
+        "dict. This should never happen if they are valid MinDiff structures. "
+        "If you think this is a valid use case (e.g. if the definition has "
+        "changed but this piece of code is out of sync), please file an issue "
+        "so we can look at it and make the appropriate fix.")
+
+  # Save copy to not alter the original dict.
+  loss_weight = loss_weight.copy()
+
+  # First, we make sure to set defaults for any losses that do not have
+  # corresponding weights. Raise an error if there are weights with keys that
+  # don't correspond to losses.
+  if not set(loss_weight.keys()) <= set(loss.keys()):
+    raise ValueError(
+        "`loss_weight` contains keys that do not correspond to losses:"
+        "\n\nloss: {}\n\nloss_weight: {}".format(loss, loss_weight))
+
+  # Provide defaults for any missing weights.
+  for key in loss.keys():
+    if key not in loss_weight:
+      loss_weight[key] = default_value
+
+  # At this point, we should be guaranteed that the two structures match if they
+  # are valid MinDiff structures. However, in case they are not we assert that
+  # they match.
+  try:
+    tf.nest.assert_same_structure(loss, loss_weight)
+  except Exception as e:
+    raise ValueError(
+        "`loss` and `loss_weight` (potentially with default weights added) "
+        "do not have matching structures: \n{}".format(e))
+
+  return loss_weight

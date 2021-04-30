@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -164,10 +164,6 @@ class UtilTest(tf.test.TestCase):
         x=data_train['comment_text'], y=labels_train, batch_size=1, epochs=1)
     result = model.predict([0.1])
     self.assertTrue(result[0][0] < 1 and result[0][0] > 0)
-
-  def test_get_eval_results(self):
-    # TODO: Add testing.
-    pass
 
 
 if __name__ == '__main__':

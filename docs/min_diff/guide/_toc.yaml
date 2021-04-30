@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,3 +19,11 @@ toc:
   path: /responsible_ai/model_remediation/install
 - title: Usage requirements
   path: /responsible_ai/model_remediation/min_diff/guide/requirements
+- title: MinDiff Data Preparation
+  path: /responsible_ai/model_remediation/min_diff/guide/min_diff_data_preparation
+- title: Integrating MinDiff with MinDiffModel
+  path: /responsible_ai/model_remediation/min_diff/guide/integrating_min_diff_with_min_diff_model
+- title: Customizing MinDiffModel
+  path: /responsible_ai/model_remediation/min_diff/guide/customizing_min_diff_model
+- title: Integrating MinDiff without MinDiffModel
+  path: /responsible_ai/model_remediation/min_diff/guide/integrating_min_diff_without_min_diff_model

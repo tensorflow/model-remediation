@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
 
 """Utility functions and classes for integrating MinDiff."""
 
+from tensorflow_model_remediation.min_diff.keras.utils.input_utils import build_min_diff_dataset
 from tensorflow_model_remediation.min_diff.keras.utils.input_utils import MinDiffPackedInputs
 from tensorflow_model_remediation.min_diff.keras.utils.input_utils import pack_min_diff_data
 from tensorflow_model_remediation.min_diff.keras.utils.input_utils import unpack_min_diff_data
 from tensorflow_model_remediation.min_diff.keras.utils.input_utils import unpack_original_inputs
+
+from tensorflow_model_remediation.min_diff.keras.utils.structure_utils import validate_min_diff_structure

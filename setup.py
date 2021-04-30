@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,8 +18,13 @@ from setuptools import find_packages
 from setuptools import setup
 
 REQUIRED_PACKAGES = [
+    'dill',
+    # TODO: Look into removing mock from setup.
+    'mock',
+    'pandas',
     'six',
     'tensorflow>=2.0.0',
+    'tensorflow_hub',
 ]
 
 # Get version from version module.

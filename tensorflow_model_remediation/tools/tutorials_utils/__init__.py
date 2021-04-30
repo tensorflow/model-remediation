@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Version string for TensorFlow Model Remediation."""
+"""API for TensorFlow Model Remediation tutorial utils."""
 
-__version__ = "0.1.6.dev"
+from tensorflow_model_remediation.tools.tutorials_utils import min_diff_keras_utils
+from tensorflow_model_remediation.tools.tutorials_utils import uci

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 """Implementation of MinDiffLoss base class."""
 
 import abc
+import re
 from typing import Optional, Text, Tuple
 import dill
 
@@ -87,8 +88,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     """
     super(MinDiffLoss, self).__init__(
         reduction=tf.keras.losses.Reduction.NONE, name=name)
-    # TODO: Consider converting to snake case.
-    self.name = name or self.__class__.__name__
+    self.name = name or _to_snake_case(self.__class__.__name__)
     _validate_transform(membership_transform, 'membership_transform')
     self.membership_transform = (membership_transform)
     _validate_transform(predictions_transform, 'predictions_transform')
@@ -116,12 +116,8 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     Returns:
       Scalar `min_diff_loss`.
     """
-    with tf.name_scope(self.name):
+    with tf.name_scope(self.name + '_inputs'):
       loss = self.call(membership, predictions, sample_weight)
-
-      scalar_version = (
-          tf.summary.scalar
-          if tf.executing_eagerly() else tf.compat.v1.summary.scalar)
 
       # Calculate metrics.
       weights = (
@@ -132,14 +128,14 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
                                                                     membership)
       num_non_sensitive_group_min_diff_examples = (
           num_min_diff_examples - num_sensitive_group_min_diff_examples)
-      scalar_version('sensitive_group_min_diff_examples_count',
-                     num_sensitive_group_min_diff_examples)
-      scalar_version('non-sensitive_group_min_diff_examples_count',
-                     num_non_sensitive_group_min_diff_examples)
-      scalar_version('min_diff_examples_count', num_min_diff_examples)
+      tf.summary.scalar('sensitive_group_min_diff_examples_count',
+                        num_sensitive_group_min_diff_examples)
+      tf.summary.scalar('non-sensitive_group_min_diff_examples_count',
+                        num_non_sensitive_group_min_diff_examples)
+      tf.summary.scalar('min_diff_examples_count', num_min_diff_examples)
       # The following metric can capture when the model degenerates and all
       # predictions go towards zero or one.
-      scalar_version(
+      tf.summary.scalar(
           'min_diff_average_prediction',
           tf.math.divide_no_nan(
               tf.reduce_sum(tf.dtypes.cast(weights, tf.float32) * predictions),
@@ -313,15 +309,20 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     def _serialize_value(key, value):
       if key.endswith('transform'):
         return dill.dumps(value)
-      if key.endswith('kernel'):
-        return tf.keras.utils.serialize_keras_object(value)
       return value  # No transformation applied
 
     return {k: _serialize_value(k, v) for k, v in config.items()}
 
   @docs.do_not_doc_in_subclasses
   def get_config(self):
-    """Returns the config dictionary for the MinDiffLoss instance."""
+    """Creates a config dictionary for the `MinDiffLoss` instance.
+
+    Any subclass with additional attributes will need to override this method.
+    When doing so, users will mostly likely want to first call `super`.
+
+    Returns:
+      A config dictionary for the `MinDiffLoss` isinstance.
+    """
     config = {
         'membership_transform': self.membership_transform,
         'predictions_transform': self.predictions_transform,
@@ -349,8 +350,6 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
     def _deserialize_value(key, value):
       if key.endswith('transform'):
         return dill.loads(value)
-      if key.endswith('kernel'):
-        return tf.keras.utils.deserialize_keras_object(value)
       return value  # No transformation applied
 
     return {k: _deserialize_value(k, v) for k, v in config.items()}
@@ -359,11 +358,13 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
   @docs.do_not_doc_in_subclasses
   def from_config(cls, config):
 
-    """Creates a MinDiffLoss from the config.
+    """Creates a `MinDiffLoss` instance from the config.
 
     Any subclass with additional attributes or a different initialization
-    signature will need to override this method but must remember to call
-    `super`.
+    signature will need to override this method or `get_config`.
+
+    Returns:
+      A new `MinDiffLoss` instance corresponding to `config`.
     """
     config = cls._deserialize_config(config)
     return cls(**config)
@@ -379,3 +380,15 @@ def _validate_transform(transform: types.TensorTransformType,
   if not callable(transform):
     raise ValueError('`{}` should be a callable instance that can be applied '
                      'to a tensor, given: {}'.format(var_name, transform))
+
+
+# This is the same function as the one used in tf.keras.Layer
+def _to_snake_case(name):
+  intermediate = re.sub('(.)([A-Z][a-z0-9]+)', r'\1_\2', name)
+  insecure = re.sub('([a-z])([A-Z])', r'\1_\2', intermediate).lower()
+  # If the class is private the name starts with "_" which is not secure
+  # for creating scopes. We prefix the name with "private" in this case.
+  if insecure[0] != '_':
+    return insecure
+  return 'private' + insecure
+

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,5 +30,6 @@ Other Documentation:
 
 from tensorflow_model_remediation import common
 from tensorflow_model_remediation import min_diff
+from tensorflow_model_remediation import tools
 
 from tensorflow_model_remediation.version import __version__

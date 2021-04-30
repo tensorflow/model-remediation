@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ import tensorflow as tf
 
 from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
+
+
+_EPSILON = 1.0e-8
 
 
 @tf.keras.utils.register_keras_serializable()
@@ -55,7 +58,8 @@ class LaplacianKernel(base_kernel.MinDiffKernel):
 
   def call(self, x: types.TensorType, y: types.TensorType) -> types.TensorType:
     """Computes the Laplacian kernel."""
-    return tf.exp(-tf.norm(x - y, axis=2) / self.kernel_length)
+    # Epsilon is used to avoid non defined gradients.
+    return tf.exp(-tf.norm(x - y + _EPSILON, axis=2) / self.kernel_length)
 
   def get_config(self):
     """Returns the config dictionary for the LaplacianKernel instance."""

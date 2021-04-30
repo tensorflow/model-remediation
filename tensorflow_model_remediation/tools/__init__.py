@@ -13,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Version string for TensorFlow Model Remediation."""
+"""API for TensorFlow Model Remediation tools."""
 
-__version__ = "0.1.6.dev"
+from tensorflow_model_remediation.tools import tutorials_utils

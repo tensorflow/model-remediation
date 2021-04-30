@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -79,11 +79,21 @@ class MinDiffLossTest(tf.test.TestCase):
   def testLossName(self):
     # Default name.
     loss = CustomLoss()
-    self.assertEqual(loss.name, 'CustomLoss')
+    self.assertEqual(loss.name, 'custom_loss')
 
     # Custom name.
     loss = CustomLoss(name='custom_name')
     self.assertEqual(loss.name, 'custom_name')
+
+    # Private class
+    class _CustomLoss(base_loss.MinDiffLoss):
+
+      def call(self):
+        pass
+
+    # Private name name.
+    loss = _CustomLoss()
+    self.assertEqual(loss.name, 'private__custom_loss')
 
   def testReduction(self):
     # MinDiffLoss should set the reduction to NONE.

@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Version string for TensorFlow Model Remediation."""
+"""API for TensorFlow Model Remediation tutorial utils for UCI income data."""
 
-__version__ = "0.1.6.dev"
+from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import df_to_dataset
+from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import get_uci_data
+from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import get_uci_min_diff_datasets
+from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import get_uci_model
+from tensorflow_model_remediation.tools.tutorials_utils.uci.utils import get_uci_with_min_diff_dataset

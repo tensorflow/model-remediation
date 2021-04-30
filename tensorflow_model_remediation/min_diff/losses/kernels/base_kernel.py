@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -115,16 +115,26 @@ class MinDiffKernel(abc.ABC):
 
   @docs.do_not_doc_in_subclasses
   def get_config(self):
-    """Returns the config dictionary for a MinDiffKernel instance.
+    """Creates a config dictionary for the `MinDiffKernel` instance.
 
-    Any subclass with additional attributes or a different initialization
-    signature will need to override this method but must remember to call
-    `super`.
+    Any subclass with additional attributes will need to override this method.
+    When doing so, users will mostly likely want to first call `super`.
+
+    Returns:
+      A config dictionary for the `MinDiffKernel` isinstance.
     """
     return {'tile_input': self.tile_input}
 
   @classmethod
   @docs.do_not_doc_in_subclasses
   def from_config(cls, config):
-    """Creates a MinDiffKernel fron the config."""
+
+    """Creates a `MinDiffKernel` instance fron the config.
+
+    Any subclass with additional attributes or a different initialization
+    signature will need to override this method or `get_config`.
+
+    Returns:
+      A new `MinDiffKernel` instance corresponding to `config`.
+    """
     return cls(**config)

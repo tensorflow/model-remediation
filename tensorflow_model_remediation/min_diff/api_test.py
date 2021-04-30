@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,11 +34,15 @@ class KerasAPITest(tf.test.TestCase):
     _ = min_diff.keras.MinDiffModel
     _ = min_diff.keras.models.MinDiffModel
 
-  def testUtilsAPI(self):
+  def testInputUtilsAPI(self):
+    _ = min_diff.keras.utils.build_min_diff_dataset
     _ = min_diff.keras.utils.MinDiffPackedInputs
     _ = min_diff.keras.utils.pack_min_diff_data
     _ = min_diff.keras.utils.unpack_min_diff_data
     _ = min_diff.keras.utils.unpack_original_inputs
+
+  def testStructureUtilsAPI(self):
+    _ = min_diff.keras.utils.validate_min_diff_structure
 
 
 class LossesAPITest(tf.test.TestCase):

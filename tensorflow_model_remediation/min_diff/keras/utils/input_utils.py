@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import collections
 
 import tensorflow as tf
 
+from tensorflow_model_remediation.min_diff.keras.utils import structure_utils
+
 
 # Convenience class to help with packing and unpacking.
 class MinDiffPackedInputs(
@@ -43,9 +45,10 @@ class MinDiffPackedInputs(
   """
 
 
-def pack_min_diff_data(
-    original_dataset: tf.data.Dataset, sensitive_group_dataset: tf.data.Dataset,
-    nonsensitive_group_dataset: tf.data.Dataset) -> tf.data.Dataset:
+def pack_min_diff_data(original_dataset: tf.data.Dataset,
+                       sensitive_group_dataset=None,
+                       nonsensitive_group_dataset=None,
+                       min_diff_dataset=None) -> tf.data.Dataset:
   # pyformat: disable
   """Packs `min_diff_data` with the `x` component of the original dataset.
 
@@ -53,18 +56,39 @@ def pack_min_diff_data(
     original_dataset: `tf.data.Dataset` that was used before applying min
       diff. The output should conform to the format used in
       `tf.keras.Model.fit`.
-    sensitive_group_dataset: `tf.data.Dataset` containing only examples that
-      belong to the sensitive group. The output should have the same structure
-      as that of `original_dataset`.
-    nonsensitive_group_dataset: `tf.data.Dataset` containing only examples that
-      do not belong to the sensitive group. The output should have the same
-      structure as that of `original_dataset.
+    sensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
+      (unnested dict) of `tf.data.Dataset`s containing only examples that
+      belong to the sensitive group.
+
+      This must be passed in if `nonsensitive_group_dataset` is passed in.
+      Furthermore, the `x` component for every batch should have the same
+      structure as that of the `original_dataset` batches' `x` components.
+    nonsensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
+      (unnested dict) of `tf.data.Dataset`s containing only examples that do
+      **not** belong to the sensitive group.
+
+      This must be passed in if `sensitive_group_dataset` is passed in.
+      Furthermore, the `x` component for every batch should have the same
+      structure as that of the `original_dataset` batches' `x` components.
+    min_diff_dataset: `tf.data.Dataset` or valid MinDiff structure (unnested
+      dict) of `tf.data.Dataset`s containing only examples to be used to
+      calculate the `min_diff_loss`.
+
+      This should only be set if neither `sensitive_group_dataset` or
+      `nonsensitive_group_dataset` is passed in.
+      Furthermore, the `x` component for every batch should have the same
+      structure as that of the `original_dataset` batches' `x` components.
 
   This function should be used to create the dataset that will be passed to
   `min_diff.keras.MinDiffModel` during training and, optionally, during
   evaluation.
 
-  Warning: All three input datasets should be batched **before** being passed in.
+  The inputs should either have both `sensitive_group_dataset` and
+  `nonsensitive_group_dataset` passed in and `min_diff_dataset` left unset or
+  vice versa. In the case of the former, `min_diff_data` will be built using
+  `utils.build_min_diff_dataset`.
+
+  Warning: All input datasets should be batched **before** being passed in.
 
   Each input dataset must output a tuple in the format used in
   `tf.keras.Model.fit`. Specifically the output must be a tuple of
@@ -77,65 +101,225 @@ def pack_min_diff_data(
   x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(batch)
   ```
 
-  Note: the `y` component of `sensitive_dataset` and `nonsensitive_dataset`
-  will be ignored completely so it can be set to `None` or any other arbitrary
-  value. If `sample_weight` is not included, it can be left out entirely.
-
-  The `tf.data.Dataset` returned will output a tuple of `(packed_inputs, y,
-  sample_weight)` where:
+  Every batch from the returned `tf.data.Dataset` will contain one batch from
+  each of the input datasets. Each returned batch will be a tuple of
+  `(packed_inputs, original_y, original_sample_weight)` matching the length of
+  `original_dataset` batches where:
 
   - `packed_inputs`: is an instance of `utils.MinDiffPackedInputs` containing:
 
-    - `original_inputs`: `x` component from the `original_dataset`.
-    - `min_diff_data`: data formed from `sensitive_group_dataset` and
-    `nonsensitive_group_dataset` as described below.
+    - `original_inputs`: `x` component taken directly from the
+        `original_dataset` batch.
+    - `min_diff_data`: batch of data formed from `sensitive_group_dataset` and
+      `nonsensitive_group_dataset` (as described in
+      `utils.build_min_diff_dataset`) or taken directly from `min_diff_dataset`.
 
-  - `y`: is the `y` component taken directly from `original_dataset`.
-  - `sample_weight`: is the `sample_weight` component taken directly from
-    `original_dataset`.
+  - `original_y`: is the `y` component taken directly from the
+    `original_dataset` batch.
+  - `original_sample_weight`: is the `sample_weight` component taken directly
+    from the `original_dataset` batch.
 
   `min_diff_data` will be used in `min_diff.keras.MinDiffModel` when calculating
-  the `min_diff_loss`. It is a tuple of `(min_diff_x, min_diff_membership,
-  min_diff_sample_weight)` where:
+  the `min_diff_loss`. It is a tuple or structure (matching the structure of the
+  inputs) of `(min_diff_x, min_diff_membership, min_diff_sample_weight)`.
 
-  - `min_diff_x`: is formed by concatenating the `x` components of
-    `sensitive_dataset` and `nonsensitive_dataset`.
+  Caution: If you are passing in `min_diff_dataset` make sure that each
+  `min_diff_data` batch contains about the same number of sensitive and
+  nonsensitive examples as indicated by `min_diff_membership` (when passing in
+  `sensitive_group_dataset` and `nonsensitive_group_dataset` this is determined
+  by their batch sizes).
+
+  Returns:
+    A `tf.data.Dataset` whose output is a tuple of (`packed_inputs`,
+      `original_y`, `original_sample_weight`) matching the output length
+      of `original_dataset`.
+  """
+  # pyformat: enable
+  # Either sensitive_group_dataset and nonsensitive_group_dataset are both set
+  # and min_diff_dataset is not or vice versa.
+  min_diff_dataset_present = min_diff_dataset is not None
+  sensitive_dataset_present = sensitive_group_dataset is not None
+  nonsensitive_dataset_present = nonsensitive_group_dataset is not None
+  # Case where min_diff_dataset is set and the others are not.
+  set_to_use_min_diff_dataset = (
+      min_diff_dataset_present and
+      not (sensitive_dataset_present or nonsensitive_dataset_present))
+  # Case where sensitive_group_dataset and nonsensitive_group_dataset are both
+  # set and min_diff_dataset is not.
+  set_to_construct_min_diff_dataset = ((sensitive_dataset_present and
+                                        nonsensitive_dataset_present) and
+                                       not min_diff_dataset_present)
+  if not (set_to_use_min_diff_dataset or set_to_construct_min_diff_dataset):
+    raise ValueError(
+        "Invalid arguments: You must either pass in only the `min_diff_dataset`"
+        " (and leave `sensitive_group_dataset` and `nonsensitive_group_dataset`"
+        " as None) or set both `sensitive_group_dataset` and "
+        "`nonsensitive_group_dataset` (and leave `min_diff_dataset` as None), "
+        "given: \n"
+        "\n`sensitive_group_dataset`: {}"
+        "\n`nonsensitive_group_dataset`: {}"
+        "\n`min_diff_dataset`: {}".format(sensitive_group_dataset,
+                                          nonsensitive_group_dataset,
+                                          min_diff_dataset))
+
+  # First construct the min_diff_dataset if need be.
+  if set_to_construct_min_diff_dataset:
+    min_diff_dataset = build_min_diff_dataset(sensitive_group_dataset,
+                                              nonsensitive_group_dataset)
+  else:
+    # validate min_diff_dataset since it was passed in.
+    structure_utils.validate_min_diff_structure(
+        min_diff_dataset,
+        struct_name="min_diff_dataset",
+        element_type=tf.data.Dataset)
+
+  dataset = tf.data.Dataset.zip((original_dataset, min_diff_dataset))
+
+  def _map_fn(original_batch, min_diff_batch):
+    # Unpack original batch.
+    original_x, original_y, original_sample_weight = (
+        tf.keras.utils.unpack_x_y_sample_weight(original_batch))
+
+    # Assert that all min_diff_xs have the same structure as original_x.
+    # TODO: Should we assert that Tensor shapes are the same (other
+    #                    than number of examples).
+
+    min_diff_xs = [
+        tf.keras.utils.unpack_x_y_sample_weight(batch)[0]  # First element is x.
+        for batch in structure_utils._flatten_min_diff_structure(min_diff_batch)
+    ]
+    for min_diff_x in min_diff_xs:
+      try:
+        tf.nest.assert_same_structure(original_x, min_diff_x)
+      except Exception as e:
+        raise type(e)(
+            "The x component structure of (one of) the `min_diff_dataset`(s) "
+            "does not match that of the original x structure (original shown "
+            "first): {}".format(e))
+
+    # pack min_diff_batch with original_x
+    return _pack_as_original(
+        original_batch,
+        MinDiffPackedInputs(
+            original_inputs=original_x, min_diff_data=min_diff_batch),
+        original_y, original_sample_weight)
+
+  # Reshape dataset output.
+  return dataset.map(_map_fn)
+
+
+def _pack_as_original(original_batch, x, y, w):
+  """Packs x, y, w while conserving the shape of the original batch."""
+  if not isinstance(original_batch, tuple):
+    return x
+  length = len(original_batch)
+  return (x, y, w)[:length]
+
+
+def build_min_diff_dataset(sensitive_group_dataset,
+                           nonsensitive_group_dataset) -> tf.data.Dataset:
+  # pyformat: disable
+  """Build MinDiff dataset from sensitive and nonsensitive datasets.
+
+  Arguments:
+    sensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
+      (unnested dict) of `tf.data.Dataset`s containing only examples that
+      belong to the sensitive group.
+    nonsensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
+      (unnested dict) of `tf.data.Dataset`s containing only examples that do
+      **not** belong to the sensitive group.
+
+  This function builds a `tf.data.Dataset` containing examples that are meant to
+  only be used when calculating a `min_diff_loss`. This resulting dataset will
+  need to be packed with the original dataset used for the original task of the
+  model which can be done by calling `utils.pack_min_diff_data`.
+
+  Warning: All input datasets should be batched **before** being passed in.
+
+  Each input dataset must output a tuple in the format used in
+  `tf.keras.Model.fit`. Specifically the output must be a tuple of
+  length 1, 2 or 3 in the form `(x, y, sample_weight)`.
+
+  This output will be parsed internally in the following way:
+
+  ```
+  batch = ...  # Batch from any of the input datasets.
+  x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(batch)
+  ```
+
+  Note: the `y` component of input datasets will be ignored completely so it can
+  be set to `None` or any other arbitrary value. If `sample_weight` is not
+  included, it can be left out entirely.
+
+  Every batch from the returned `tf.data.Dataset` will contain one batch from
+  each of the input datasets. Each returned batch will be a tuple or structure
+  (matching the structure of the inputs) of `(min_diff_x, min_diff_membership,
+  min_diff_sample_weight)` where, for each pair of input datasets:
+
+  - `min_diff_x`: is formed by concatenating the `x` components of the paired
+    datasets. The structure of these must match. If they don't the dataset will
+    raise an error at the first batch.
   - `min_diff_membership`: is a tensor of size `[min_diff_batch_size, 1]`
     indicating which dataset each example comes from (`1.0` for
     `sensitive_group_dataset` and `0.0` for `nonsensitive_group_dataset`).
   - `min_diff_sample_weight`: is formed by concatenating the `sample_weight`
-    components of `sensitive_dataset`and `nonsensitive_dataset`. If both are
-    `None`, then this will be set to `None`. If only one is `None`, it is
-    replaced with a `Tensor` of ones of the appropriate shape.
+    components of the paired datasets. If both are `None`, then this will be set
+    to `None`. If only one is `None`, it is replaced with a `Tensor` of ones of
+    the appropriate shape.
 
   Returns:
-    A `tf.data.Dataset` whose output is a tuple of (`packed_inputs`, `y`,
-    `sample_weight`).
+    A `tf.data.Dataset` whose output is a tuple or structure (matching the
+      structure of the inputs) of `(min_diff_x, min_diff_membership,
+      min_diff_sample_weight)`.
+
+  Raises:
+    ValueError: If either `sensitive_group_dataset` or
+      `nonsensitive_group_dataset` is not a valid MinDiff structure (unnested
+      dict).
+    ValueError: If `sensitive_group_dataset` and `nonsensitive_group_dataset` do
+      not have the same structure.
   """
   # pyformat: enable
+  # validate structures.
+  structure_utils.validate_min_diff_structure(
+      sensitive_group_dataset,
+      struct_name="sensitive_group_dataset",
+      element_type=tf.data.Dataset)
+  structure_utils.validate_min_diff_structure(
+      nonsensitive_group_dataset,
+      struct_name="nonsensitive_group_dataset",
+      element_type=tf.data.Dataset)
+  try:
+
+    structure_utils._assert_same_min_diff_structure(sensitive_group_dataset,
+                                                    nonsensitive_group_dataset)
+  except Exception as e:
+    raise type(e)("`sensitive_group_dataset` and `nonsensitive_group_dataset` "
+                  "do not have the same structure:\n{}".format(e))
+
+  sensitive_group_dataset = tf.nest.map_structure(
+      lambda dataset: dataset.repeat(), sensitive_group_dataset)
+  nonsensitive_group_dataset = tf.nest.map_structure(
+      lambda dataset: dataset.repeat(), nonsensitive_group_dataset)
 
   dataset = tf.data.Dataset.zip(
-      (original_dataset, sensitive_group_dataset.repeat(),
-       nonsensitive_group_dataset.repeat()))
+      (sensitive_group_dataset, nonsensitive_group_dataset))
 
-  # TODO: Should we conserve the length of the tuples returned?
-  #                    Right now we always return a tuple of length 3 (with None
-  #                    if things are missing).
-  def _map_fn(original_batch, sensitive_batch, nonsensitive_batch):
-    # Unpack all three batches.
-    original_x, original_y, original_sample_weight = (
-        tf.keras.utils.unpack_x_y_sample_weight(original_batch))
+  def _build_single_batch(single_sensitive_batch, single_nonsensitive_batch):
+    # Unpack both batches.
     sensitive_x, _, sensitive_sample_weight = (
-        tf.keras.utils.unpack_x_y_sample_weight(sensitive_batch))
+        tf.keras.utils.unpack_x_y_sample_weight(single_sensitive_batch))
     nonsensitive_x, _, nonsensitive_sample_weight = (
-        tf.keras.utils.unpack_x_y_sample_weight(nonsensitive_batch))
+        tf.keras.utils.unpack_x_y_sample_weight(single_nonsensitive_batch))
 
-    # original_x, sensitive_x and nonsensitive_x all must have the same
-    # structure.
-    # TODO: Should we assert that Tensor shapes are the same (other
-    #                    than number of examples).
-    tf.nest.assert_same_structure(original_x, sensitive_x)
-    tf.nest.assert_same_structure(sensitive_x, nonsensitive_x)
+    # sensitive_x and nonsensitive_x must have the same structure.
+    try:
+      tf.nest.assert_same_structure(sensitive_x, nonsensitive_x)
+    except Exception as e:
+      raise type(e)("The x component structure of (one of) the "
+                    "`sensitive_group_dataset`(s) does not match that of the "
+                    "(corresponding) `nonsensitive_group_dataset` x structure "
+                    "(sensitive shown first): {}".format(e))
 
     # Create min_diff_data.
     # Merge sensitive_x and nonsensitive_x to form min_diff_x.
@@ -145,7 +329,7 @@ def pack_min_diff_data(
         tf.concat([t1, t2], axis=0)
         for t1, t2 in zip(flat_sensitive_x, flat_nonsensitive_x)
     ]
-    min_diff_x = tf.nest.pack_sequence_as(original_x, flat_min_diff_x)
+    min_diff_x = tf.nest.pack_sequence_as(sensitive_x, flat_min_diff_x)
 
     # min_diff_membership indicates which dataset each example comes from.
     sensitive_shape = [tf.shape(flat_sensitive_x[0])[0], 1]
@@ -168,15 +352,26 @@ def pack_min_diff_data(
       min_diff_sample_weight = tf.concat(
           [sensitive_sample_weight, nonsensitive_sample_weight], axis=0)
 
-    # Pack the three components into min_diff_data
-    min_diff_data = tf.keras.utils.pack_x_y_sample_weight(
-        min_diff_x, min_diff_membership, min_diff_sample_weight)
+    # Pack the three components and return them
+    return tf.keras.utils.pack_x_y_sample_weight(min_diff_x,
+                                                 min_diff_membership,
+                                                 min_diff_sample_weight)
 
-    # pack min_diff_data with original_x
-    return tf.keras.utils.pack_x_y_sample_weight(
-        MinDiffPackedInputs(
-            original_inputs=original_x, min_diff_data=min_diff_data),
-        original_y, original_sample_weight)
+  def _map_fn(sensitive_batch, nonsensitive_batch):
+
+    flat_sensitive_batch = structure_utils._flatten_min_diff_structure(
+        sensitive_batch)
+    flat_nonsensitive_batch = structure_utils._flatten_min_diff_structure(
+        nonsensitive_batch)
+
+    flat_min_diff_data = [
+        _build_single_batch(single_sensitive_batch, single_nonsensitive_batch)
+        for single_sensitive_batch, single_nonsensitive_batch in zip(
+            flat_sensitive_batch, flat_nonsensitive_batch)
+    ]
+
+    return structure_utils._pack_min_diff_sequence_as(sensitive_batch,
+                                                      flat_min_diff_data)
 
   # Reshape dataset output.
   return dataset.map(_map_fn)

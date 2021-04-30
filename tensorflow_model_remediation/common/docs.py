@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,11 +37,17 @@ def _no_op_decorator(obj):
   return obj
 
 
-try:
-  doc_private = doc_controls.doc_private
-  do_not_doc_in_subclasses = doc_controls.do_not_doc_in_subclasses
-  doc_in_current_and_subclasses = doc_controls.doc_in_current_and_subclasses
-except AttributeError:
-  doc_private = _no_op_decorator
-  do_not_doc_in_subclasses = _no_op_decorator
-  doc_in_current_and_subclasses = _no_op_decorator
+def _get_safe_decorator(decorator_name):
+
+  try:
+    return getattr(doc_controls, decorator_name)
+  except AttributeError:
+
+    return _no_op_decorator
+
+
+do_not_generate_docs = _get_safe_decorator("do_not_generate_docs")
+doc_private = _get_safe_decorator("doc_private")
+do_not_doc_in_subclasses = _get_safe_decorator("do_not_doc_in_subclasses")
+doc_in_current_and_subclasses = _get_safe_decorator(
+    "doc_in_current_and_subclasses")

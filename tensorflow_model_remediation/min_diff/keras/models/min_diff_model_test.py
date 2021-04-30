@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,10 +39,6 @@ class DummyLoss(losses.MinDiffLoss):
     return _loss_fn(x, y, w)
 
 
-def _get_sequential():
-  return tf.keras.Sequential([tf.keras.layers.Dense(1, activation="softmax")])
-
-
 class MinDiffModelTest(tf.test.TestCase):
 
   def setUp(self):
@@ -65,24 +61,40 @@ class MinDiffModelTest(tf.test.TestCase):
         (self.x, self.y1, self.w)).batch(self.batch_size)
 
     self.min_diff_x = tf.expand_dims(tf.range(200.0, 250.0), axis=-1)
+    self.min_diff_x_alt = tf.expand_dims(tf.range(250.0, 300.0), axis=-1)
     self.min_diff_mem = tf.constant([[1.0]] * 25 + [[0.0]] * 25)
     self.min_diff_w = tf.expand_dims(tf.range(0.99, 0.0, -0.02), axis=-1)
     self.min_diff_data = (self.min_diff_x, self.min_diff_mem)
+    self.min_diff_data_alt = (self.min_diff_x_alt, self.min_diff_mem)
     self.min_diff_weighted_data = (self.min_diff_x, self.min_diff_mem,
                                    self.min_diff_w)
+    self.multi_min_diff_data = {
+        "k1": self.min_diff_weighted_data,
+        "k2": self.min_diff_data_alt
+    }
 
     # Dataset with min_diff packed in.
     self.min_diff_dataset = tf.data.Dataset.from_tensor_slices(
         (utils.MinDiffPackedInputs(
             original_inputs=self.x,
             min_diff_data=self.min_diff_data), self.y1)).batch(self.batch_size)
+    self.multi_min_diff_dataset = tf.data.Dataset.from_tensor_slices(
+        (utils.MinDiffPackedInputs(
+            original_inputs=self.x, min_diff_data=self.multi_min_diff_data),
+         self.y1)).batch(self.batch_size)
     # Multi output dataset with min_diff packed in.
-    self.min_diff_multi_dataset = tf.data.Dataset.from_tensor_slices(
+    self.min_diff_multi_output_dataset = tf.data.Dataset.from_tensor_slices(
         (utils.MinDiffPackedInputs(
             original_inputs=self.x, min_diff_data=self.min_diff_data), {
                 "y1": self.y1,
                 "y2": self.y2
             })).batch(self.batch_size)
+    self.multi_min_diff_multi_output_dataset = (
+        tf.data.Dataset.from_tensor_slices((utils.MinDiffPackedInputs(
+            original_inputs=self.x, min_diff_data=self.multi_min_diff_data), {
+                "y1": self.y1,
+                "y2": self.y2
+            })).batch(self.batch_size))
     # Dataset with weights and min_diff packed in.
     self.min_diff_weighted_dataset = tf.data.Dataset.from_tensor_slices(
         (utils.MinDiffPackedInputs(
@@ -117,6 +129,214 @@ class MinDiffModelTest(tf.test.TestCase):
         "predictions_transform.*must be callable.*{}".format(bad_fn)):
       _ = min_diff_model.MinDiffModel(
           tf.keras.Sequential(), DummyLoss(), predictions_transform=bad_fn)
+
+  def testUniqueMetricNameHelper(self):
+    existing_metrics = [
+        tf.keras.metrics.Mean("mean"),
+        tf.keras.metrics.MeanSquaredError("mean_1"),
+        tf.keras.metrics.Mean("mean_2"),
+        tf.keras.metrics.Mean("metric_1"),
+        tf.keras.metrics.Mean("unrelated_name"),
+    ]
+    # Completely new name is unchanged.
+    unique_name = min_diff_model._unique_metric_name("unique", existing_metrics)
+    self.assertEqual(unique_name, "unique")
+    # Name that is a prefix of others but not included itself is unchanged.
+    unique_name = min_diff_model._unique_metric_name("metric", existing_metrics)
+    self.assertEqual(unique_name, "metric")
+    # Name that already exists should increment until unique.
+    unique_name = min_diff_model._unique_metric_name("mean", existing_metrics)
+    self.assertEqual(unique_name, "mean_3")
+
+  def testUniqueMetricNameInModel(self):
+    original_model = tf.keras.Sequential()
+    # Nest MinDiffModels to create potentially duplicate metrics.
+    model = min_diff_model.MinDiffModel(original_model, DummyLoss())
+    model = min_diff_model.MinDiffModel(model, DummyLoss())
+    metric_names = [metric.name for metric in model.metrics]
+    self.assertSetEqual(
+        set(metric_names), set(["min_diff_loss", "min_diff_loss_1"]))
+
+    # Test with CustomModel that has colliding metric names.
+    class CustomModel(tf.keras.Sequential):
+
+      def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._metric1 = tf.keras.metrics.Mean("min_diff_loss")
+        self._metric2 = tf.keras.metrics.Mean("min_diff_loss_1")
+
+    original_model = CustomModel()
+    model = min_diff_model.MinDiffModel(original_model, DummyLoss())
+    self.assertEqual(model._min_diff_loss_metric.name, "min_diff_loss_2")
+
+  def testBadLossStructureRaisesError(self):
+    # Assert bad structure (nested dict) raises an error.
+    with self.assertRaisesRegex(
+        ValueError, "loss.*not a recognized "
+        "MinDiff structure.*unnested.*Given.*"):
+      _ = min_diff_model.MinDiffModel(tf.keras.Sequential(), {
+          "k1": DummyLoss(),
+          "k2": {
+              "k": DummyLoss()
+          }
+      })
+    # Assert bad structure (list) raises an error.
+    with self.assertRaisesRegex(
+        TypeError, "loss.*not a recognized "
+        "MinDiff structure.*type.*Given.*list"):
+      _ = min_diff_model.MinDiffModel(tf.keras.Sequential(),
+                                      [DummyLoss(), DummyLoss()])
+
+  def testConformWeightsHelperForSingleLoss(self):
+    loss = "fake_loss"
+    default = 3.0
+    weight = 2.0
+
+    # weight value should be used if available otherwise default.
+    res = min_diff_model._conform_weights_to_losses(loss, weight, default)
+    self.assertEqual(res, weight)
+    res = min_diff_model._conform_weights_to_losses(loss, None, default)
+    self.assertEqual(res, default)
+
+    # Error raised if loss is unnested but weight is not.
+    with self.assertRaisesRegex(
+        ValueError, "loss.*loss_weight.*do not have matching structures"
+        "(.|\n)*fake_loss(.|\n)*k1.*"):
+      _ = min_diff_model._conform_weights_to_losses(loss, {"k1": weight},
+                                                    default)
+
+  def testConformWeightsHelperForDictLoss(self):
+    loss = {"k1": "fake_loss1", "k2": "fake_loss2"}
+    default = 3.0
+    weight = 2.0
+
+    # Values should be broadcast if weight is single element.
+    res = min_diff_model._conform_weights_to_losses(loss, weight, default)
+    self.assertDictEqual(res, {"k1": weight, "k2": weight})
+    res = min_diff_model._conform_weights_to_losses(loss, None, default)
+    self.assertDictEqual(res, {"k1": default, "k2": default})
+
+    # Dict of weights i matched correctly.
+    res = min_diff_model._conform_weights_to_losses(loss, {
+        "k1": weight,
+        "k2": weight + 1
+    }, default)
+    self.assertDictEqual(res, {"k1": weight, "k2": weight + 1})
+
+    # Missing values filled in with defaults.
+    res = min_diff_model._conform_weights_to_losses(loss, {"k1": weight},
+                                                    default)
+    self.assertDictEqual(res, {"k1": weight, "k2": default})
+
+    # Error raised if weight has unmatched keys.
+    with self.assertRaisesRegex(
+        ValueError, "loss_weight.*keys.*do not correspond to losses"
+        "(.|\n)*(k[12].*){2}(.|\n)*k3"):
+      _ = min_diff_model._conform_weights_to_losses(loss, {"k3": weight},
+                                                    default)
+
+    # Error raised if loss_weight is not a single element or a dict (when weight
+    # is a dict).
+    with self.assertRaisesRegex(ValueError,
+                                "neither a single element nor a dict"):
+      _ = min_diff_model._conform_weights_to_losses(loss, [weight, weight],
+                                                    default)
+
+    # Error raised if loss is an invalid dict.
+    with self.assertRaisesRegex(
+        ValueError, "loss.*loss_weight.*with default "
+        "weights.*do not have matching structure"):
+      _ = min_diff_model._conform_weights_to_losses(loss, {"k1": {
+          "k": weight
+      }}, default)
+
+  def testConformWeightsHelperBadLossRaisesError(self):
+    bad_loss = ["fake_loss1"]
+    # Error raised if loss is not a valid MinDiff structure.
+    with self.assertRaisesRegex(
+        TypeError, "loss.*not a recognized "
+        "MinDiff structure.*type.*Given.*list"):
+      _ = min_diff_model._conform_weights_to_losses(bad_loss, None, None)
+
+  def testWeightDefaults(self):
+    # Assert single loss is matched by single float of value 1.0
+    model = min_diff_model.MinDiffModel(tf.keras.Sequential(), DummyLoss())
+    self.assertEqual(model._loss_weight, 1.0)
+
+    # Assert multiple losses is matched by multiple floats each of value 1.0.
+    model = min_diff_model.MinDiffModel(tf.keras.Sequential(), {
+        "k1": DummyLoss(),
+        "k2": DummyLoss()
+    })
+    self.assertDictEqual(model._loss_weight, {"k1": 1.0, "k2": 1.0})
+
+  def testWeightPartialDefaults(self):
+    # Assert single loss is matched by single float of value 1.0
+    model = min_diff_model.MinDiffModel(tf.keras.Sequential(), DummyLoss())
+    self.assertEqual(model._loss_weight, 1.0)
+
+    # Assert missing weights are get a value of 1.0 .
+    model = min_diff_model.MinDiffModel(
+        tf.keras.Sequential(), {
+            "k1": DummyLoss(),
+            "k2": DummyLoss(),
+            "k3": DummyLoss()
+        },
+        loss_weight={"k2": 2.0})
+    self.assertDictEqual(model._loss_weight, {"k1": 1.0, "k2": 2.0, "k3": 1.0})
+
+  def testWeightsGetBroadcast(self):
+    # Assert all weights are get a value of 1.0 .
+    model = min_diff_model.MinDiffModel(
+        tf.keras.Sequential(), {
+            "k1": DummyLoss(),
+            "k2": DummyLoss()
+        },
+        loss_weight=2.0)
+    self.assertDictEqual(model._loss_weight, {"k1": 2.0, "k2": 2.0})
+
+  def testBadWeightStructureRaisesError(self):
+    # Assert bad structure (nested dict) raises an error.
+    with self.assertRaisesRegex(
+        ValueError, "loss_weight.*not a recognized "
+        "MinDiff structure.*unnested.*Given.*"):
+      _ = min_diff_model.MinDiffModel(
+          tf.keras.Sequential(), {
+              "k1": DummyLoss(),
+              "k2": DummyLoss()
+          },
+          loss_weight={"k3": {
+              "k": 2.0
+          }})
+    # Assert bad structure (list) raises an error.
+    with self.assertRaisesRegex(
+        TypeError, "loss_weight.*not a recognized "
+        "MinDiff structure.*type.*Given.*list"):
+      _ = min_diff_model.MinDiffModel(
+          tf.keras.Sequential(), {
+              "k1": DummyLoss(),
+              "k2": DummyLoss()
+          },
+          loss_weight=[2.0, 3.0])
+
+  def testMismatchedStructureRaisesError(self):
+    # Assert error raised if unmatched keys in loss_weight.
+    with self.assertRaisesRegex(
+        ValueError, "loss_weight.*keys.*do not correspond to losses"
+        "(.|\n)*(k[12].*){2}(.|\n)*k3"):
+      _ = min_diff_model.MinDiffModel(
+          tf.keras.Sequential(), {
+              "k1": DummyLoss(),
+              "k2": DummyLoss()
+          },
+          loss_weight={"k3": 2.0})
+
+    # Assert error raised if loss_weight a dict but loss is a single element.
+    with self.assertRaisesRegex(
+        ValueError, "loss.*loss_weight.*do not have matching structures"
+        "(.|\n)*DummyLoss(.|\n)*k1.*"):
+      _ = min_diff_model.MinDiffModel(tf.keras.Sequential(), DummyLoss(),
+                                      {"k1": 2.0})
 
   def testGetDataFns(self):
     original_model = tf.keras.Sequential()
@@ -174,6 +394,43 @@ class MinDiffModelTest(tf.test.TestCase):
     original_model.call.assert_called_once_with(
         self.min_diff_x, training=True, mask=None)
     self.assertAllClose(loss, _loss_fn(predictions, self.min_diff_mem))
+
+  def testComputeMultipleMinDiffLosses(self):
+    original_model = tf.keras.Sequential()
+    predictions1 = tf.expand_dims(tf.range(1.0, 51), axis=-1)
+    predictions2 = tf.expand_dims(tf.range(51.0, 101), axis=-1)
+
+    # Mock original_model's call function.
+
+    def _mock_loss(x, **kwargs):
+      if x[0] == 200.0:
+        return predictions1
+      return predictions2
+
+    original_model.call = mock.MagicMock(
+        # side_effect=[predictions1, predictions2])
+        side_effect=_mock_loss)
+
+    model = min_diff_model.MinDiffModel(original_model, {
+        "k1": DummyLoss(),
+        "k2": DummyLoss()
+    })
+
+    # Assert correct inference call and calculated loss.
+    loss = model.compute_min_diff_loss(self.multi_min_diff_data, training=True)
+    self.assertEqual(original_model.call.call_count, 2)
+    original_model.call.assert_has_calls(
+        calls=[
+            mock.call(self.min_diff_x, training=True, mask=None),
+            mock.call(self.min_diff_x_alt, training=True, mask=None)
+        ],
+        any_order=True)
+    self.assertAllClose(
+        sorted(loss),
+        sorted([
+            _loss_fn(predictions1, self.min_diff_mem, self.min_diff_w),
+            _loss_fn(predictions2, self.min_diff_mem)
+        ]))
 
   def testComputeMinDiffLossWithWeights(self):
     original_model = tf.keras.Sequential()
@@ -260,6 +517,43 @@ class MinDiffModelTest(tf.test.TestCase):
     model.compute_min_diff_loss.assert_not_called()
     self.assertEmpty(model.losses)
     self.assertAllClose(preds, predictions)
+
+  def testEvalOutputs(self):
+    original_model = tf.keras.Sequential(
+        [tf.keras.layers.Dense(1, activation="softmax")])
+    model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss("gauss"))
+
+    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["acc"])
+
+    # Evaluate with min_diff_data.
+    output_metrics = model.test_step(iter(self.min_diff_dataset).get_next())
+    self.assertSetEqual(
+        set(output_metrics.keys()), set(["loss", "acc", "min_diff_loss"]))
+
+    # Evaluate without min_diff_data.
+    output_metrics = model.test_step(iter(self.original_dataset).get_next())
+    self.assertSetEqual(set(output_metrics.keys()), set(["loss", "acc"]))
+
+  def testMultipleApplicationsEvalOutputs(self):
+    original_model = tf.keras.Sequential(
+        [tf.keras.layers.Dense(1, activation="softmax")])
+    model = min_diff_model.MinDiffModel(original_model, {
+        "k1": losses.MMDLoss(),
+        "k2": losses.MMDLoss()
+    })
+
+    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["acc"])
+
+    # Evaluate with min_diff_data.
+    output_metrics = model.test_step(
+        iter(self.multi_min_diff_dataset).get_next())
+    self.assertSetEqual(
+        set(output_metrics.keys()),
+        set(["loss", "acc", "k1_min_diff_loss", "k2_min_diff_loss"]))
+
+    # Evaluate without min_diff_data.
+    output_metrics = model.test_step(iter(self.original_dataset).get_next())
+    self.assertSetEqual(set(output_metrics.keys()), set(["loss", "acc"]))
 
   def testTrainingWithoutMinDiffDataRaisesError(self):
     original_model = tf.keras.Sequential()
@@ -349,10 +643,10 @@ class MinDiffModelTest(tf.test.TestCase):
 
   # TODO: consider testing actual output. This is not currently
   # done because the disproportionate amount of complexity this would add.
-  def testSingleOutputModel(self):
+  def testWithSequentialModel(self):
     original_model = tf.keras.Sequential(
         [tf.keras.layers.Dense(1, activation="softmax")])
-    model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss("gauss"))
+    model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss())
 
     model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["acc"])
 
@@ -366,6 +660,80 @@ class MinDiffModelTest(tf.test.TestCase):
     # Evaluate and run inference without min_diff_data.
     model.evaluate(self.original_dataset)
     model.predict(self.original_dataset)
+
+  def testMultipleApplicationsWithSequentialModel(self):
+    original_model = tf.keras.Sequential(
+        [tf.keras.layers.Dense(1, activation="softmax")])
+    model = min_diff_model.MinDiffModel(original_model, {
+        "k1": losses.MMDLoss(),
+        "k2": losses.MMDLoss()
+    })
+
+    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["acc"])
+
+    history = model.fit(self.multi_min_diff_dataset)
+    self.assertSetEqual(
+        set(history.history.keys()),
+        set(["loss", "acc", "k1_min_diff_loss", "k2_min_diff_loss"]))
+
+    # Evaluate with min_diff_data.
+    model.evaluate(self.multi_min_diff_dataset)
+
+    # Evaluate and run inference without min_diff_data.
+    model.evaluate(self.original_dataset)
+    model.predict(self.original_dataset)
+
+  def testWithFunctionalModel(self):
+    inputs = tf.keras.Input(1)
+    outputs = tf.keras.layers.Dense(1, activation="softmax")(inputs)
+    original_model = tf.keras.Model(inputs=inputs, outputs=outputs)
+
+    model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss())
+
+    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["acc"])
+
+    history = model.fit(self.min_diff_dataset)
+    self.assertSetEqual(
+        set(history.history.keys()), set(["loss", "acc", "min_diff_loss"]))
+
+    # Evaluate with min_diff_data.
+    model.evaluate(self.min_diff_dataset)
+
+    # Evaluate and run inference without min_diff_data.
+    model.evaluate(self.original_dataset)
+    model.predict(self.original_dataset)
+
+  def testMultipleApplicationsWithFunctionalModel(self):
+    inputs = tf.keras.Input(1)
+    outputs = tf.keras.layers.Dense(1, activation="softmax")(inputs)
+    original_model = tf.keras.Model(inputs=inputs, outputs=outputs)
+    model = min_diff_model.MinDiffModel(original_model, {
+        "k1": losses.MMDLoss(),
+        "k2": losses.MMDLoss()
+    })
+
+    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["acc"])
+
+    history = model.fit(self.multi_min_diff_dataset)
+    self.assertSetEqual(
+        set(history.history.keys()),
+        set(["loss", "acc", "k1_min_diff_loss", "k2_min_diff_loss"]))
+
+    # Evaluate with min_diff_data.
+    model.evaluate(self.multi_min_diff_dataset)
+
+    # Evaluate and run inference without min_diff_data.
+    model.evaluate(self.original_dataset)
+    model.predict(self.original_dataset)
+
+  def testMinDiffModelRaisesErrorWithBadKwarg(self):
+    original_model = tf.keras.Sequential(
+        [tf.keras.layers.Dense(1, activation="softmax")])
+
+    with self.assertRaisesRegex(
+        TypeError, "problem initializing the MinDiffModel instance"):
+      _ = min_diff_model.MinDiffModel(
+          original_model, losses.MMDLoss(), bad_kwarg="some value")
 
   def testBadPredictionsTransformReturnValueRaisesError(self):
     original_model = tf.keras.Sequential(
@@ -383,7 +751,7 @@ class MinDiffModelTest(tf.test.TestCase):
         ".*predictions_transform.*does not return a Tensor".format(bad_value)):
       _ = model.fit(self.min_diff_dataset)
 
-  def testMultiOutputModel(self):
+  def testWithFunctionalMultiOutputModel(self):
     # Create multi output Functional model.
     inputs = tf.keras.Input(1)
     output_1 = tf.keras.layers.Dense(1, activation="softmax")(inputs)
@@ -406,14 +774,53 @@ class MinDiffModelTest(tf.test.TestCase):
         optimizer="adam",
         metrics=["acc"])
 
-    history = model.fit(self.min_diff_multi_dataset)
+    history = model.fit(self.min_diff_multi_output_dataset)
     self.assertSetEqual(
         set(history.history.keys()),
         set(["loss", "y1_loss", "y1_acc", "y2_loss", "y2_acc",
              "min_diff_loss"]))
 
     # Evaluate with min_diff_data.
-    model.evaluate(self.min_diff_multi_dataset)
+    model.evaluate(self.min_diff_multi_output_dataset)
+
+    # Evaluate and run inference without min_diff_data.
+    model.evaluate(self.original_multi_dataset)
+    model.predict(self.original_multi_dataset)
+
+  def testMultipleApplicationsWithFunctionalMultiOutputModel(self):
+    # Create multi output Functional model.
+    inputs = tf.keras.Input(1)
+    output_1 = tf.keras.layers.Dense(1, activation="softmax")(inputs)
+    output_2 = tf.keras.layers.Dense(1, activation="softmax")(inputs)
+    original_model = tf.keras.Model(
+        inputs=inputs, outputs={
+            "y1": output_1,
+            "y2": output_2,
+        })
+    model = min_diff_model.MinDiffModel(
+        original_model, {
+            "k1": DummyLoss(),
+            "k2": DummyLoss()
+        },
+        predictions_transform=lambda preds: preds["y1"])
+    model.compile(
+        loss={
+            "y1": "binary_crossentropy",
+            "y2": "binary_crossentropy",
+        },
+        optimizer="adam",
+        metrics=["acc"])
+
+    history = model.fit(self.multi_min_diff_multi_output_dataset)
+    self.assertSetEqual(
+        set(history.history.keys()),
+        set([
+            "loss", "y1_loss", "y1_acc", "y2_loss", "y2_acc",
+            "k1_min_diff_loss", "k2_min_diff_loss"
+        ]))
+
+    # Evaluate with min_diff_data.
+    model.evaluate(self.multi_min_diff_multi_output_dataset)
 
     # Evaluate and run inference without min_diff_data.
     model.evaluate(self.original_multi_dataset)
@@ -444,7 +851,7 @@ class MinDiffModelTest(tf.test.TestCase):
     with self.assertRaisesRegex(
         ValueError, "predictions.*must be a Tensor.*y1.*y2.*\n.*original_model"
         ".*does not return a Tensor.*pass in.*predictions_transform"):
-      _ = model.fit(self.min_diff_multi_dataset)
+      _ = model.fit(self.min_diff_multi_output_dataset)
 
   def testCustomModelWithSequential(self):
 
@@ -487,7 +894,70 @@ class MinDiffModelTest(tf.test.TestCase):
 
     # Evaluate and run inference without min_diff_data.
     model.evaluate(self.original_dataset)
+
+  def testCustomModelWithFunctional(self):
+
+    class CustomModel(tf.keras.Model):
+
+      def __init__(self, *args, **kwargs):
+        super(CustomModel, self).__init__(*args, **kwargs)
+        # Variable will be incremented in the custom train_step.
+        self.train_step_cnt = 0
+
+      def train_step(self, data):
+        self.train_step_cnt += 1
+        return super(CustomModel, self).train_step(data)
+
+    inputs = tf.keras.Input(1)
+    outputs = tf.keras.layers.Dense(1, activation="softmax")(inputs)
+    original_model = CustomModel(inputs=inputs, outputs=outputs)
+
+    class CustomMinDiffModel(min_diff_model.MinDiffModel, CustomModel):
+      pass
+
+    model = CustomMinDiffModel(original_model, DummyLoss())
+
+    # Compile with `run_eagerly=True` so that we can expect the number of times
+    # `train_step` is called to be the same as the number of batches passed in.
+    model.compile(
+        loss="binary_crossentropy",
+        optimizer="adam",
+        metrics=["acc"],
+        run_eagerly=True)
+
+    history = model.fit(self.min_diff_dataset)
+    self.assertSetEqual(
+        set(history.history.keys()), set(["loss", "acc", "min_diff_loss"]))
+    # There are 10 batches so the custom train step should have been called 10
+    # times.
+    self.assertEqual(model.train_step_cnt, 10)
+
+    # Evaluate with min_diff_data.
+    model.evaluate(self.min_diff_dataset)
+
+    # Evaluate and run inference without min_diff_data.
+    model.evaluate(self.original_dataset)
     model.predict(self.original_dataset)
+
+  def testCustomModelWithFunctionalRaisesErrorIfNoSkipInit(self):
+
+    class CustomModel(tf.keras.Model):
+
+      def __init__(self, *args, **kwargs):
+        # Explicitly don't pass in other kwargs. This causes problems when
+        # model is used via the Functional API.
+        super(CustomModel, self).__init__(kwargs["inputs"], kwargs["outputs"])
+
+    inputs = tf.keras.Input(1)
+    outputs = tf.keras.layers.Dense(1, activation="softmax")(inputs)
+    original_model = CustomModel(inputs=inputs, outputs=outputs)
+
+    class CustomMinDiffModel(min_diff_model.MinDiffModel, CustomModel):
+      pass
+
+    with self.assertRaisesRegex(
+        ValueError, "problem initializing the MinDiffModel subclass instance"):
+      _ = CustomMinDiffModel(original_model, DummyLoss())
 
   def testWithRegularizationInOriginalModel(self):
     original_model = tf.keras.Sequential([
@@ -558,7 +1028,7 @@ class MinDiffModelTest(tf.test.TestCase):
     original_model = tf.keras.Sequential([
         tf.keras.layers.Dense(1, activation="softmax"),
     ])
-    model = min_diff_model.MinDiffModel(original_model, DummyLoss())
+    model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss())
 
     model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["acc"])
 
@@ -570,16 +1040,15 @@ class MinDiffModelTest(tf.test.TestCase):
 
       loaded_model = tf.keras.models.load_model(path)
 
-    # TODO: see whether this is something that should be fixed.
-    # The assertion below currently breaks. the loaded model is an instance of
-    # `...keras.saving.saved_model.load.MinDiffModel` which must dynamically
-    # created when the model is saved.
-    # self.assertIsInstance(loaded_model, min_diff_model.MinDiffModel)
+    self.assertIsInstance(loaded_model, min_diff_model.MinDiffModel)
 
     # Run more training on loaded_model.
     loaded_model.fit(self.min_diff_dataset)
 
-  def testSaveForInference(self):
+    # Run inference on loaded_model.
+    loaded_model.predict(self.original_dataset)
+
+  def testSaveOriginalModel(self):
     original_model = tf.keras.Sequential([
         tf.keras.layers.Dense(1, activation="softmax"),
     ])
@@ -600,7 +1069,10 @@ class MinDiffModelTest(tf.test.TestCase):
     # Run inference on loaded_model.
     loaded_model.predict(self.original_dataset)
 
-  def testSaveForInferenceThenRewrap(self):
+    # Run more training but now without min_diff_data.
+    loaded_model.fit(self.original_dataset)
+
+  def testSaveOriginalThenRewrap(self):
     original_model = tf.keras.Sequential([
         tf.keras.layers.Dense(1, activation="softmax"),
     ])
@@ -659,6 +1131,176 @@ class MinDiffModelTest(tf.test.TestCase):
     model.evaluate(self.original_dataset)
     model.predict(self.original_dataset)
 
+  def testSerialization(self):
+    original_model = tf.keras.Sequential([
+        tf.keras.layers.Dense(1, activation="softmax"),
+    ])
+    loss_weight = 2.3  # Arbitrary value.
+    model_name = "custom_model_name"  # Arbitrary name.
+    model = min_diff_model.MinDiffModel(
+        original_model,
+        losses.MMDLoss(),
+        loss_weight=loss_weight,
+        name=model_name)
+
+    serialized_model = tf.keras.utils.serialize_keras_object(model)
+    deserialized_model = tf.keras.layers.deserialize(serialized_model)
+
+    self.assertIsInstance(deserialized_model, min_diff_model.MinDiffModel)
+    self.assertIsNone(deserialized_model._predictions_transform)
+    self.assertIsInstance(deserialized_model._loss, losses.MMDLoss)
+    self.assertEqual(deserialized_model._loss_weight, loss_weight)
+    self.assertEqual(deserialized_model.name, model_name)
+
+  def testSerializationForMultipleApplications(self):
+    original_model = tf.keras.Sequential([
+        tf.keras.layers.Dense(1, activation="softmax"),
+    ])
+
+    # Arbitrary losses.
+    loss = {"k1": losses.MMDLoss(), "k2": losses.AbsoluteCorrelationLoss()}
+    # Arbitrary values.
+    loss_weight = {"k1": 3.4, "k2": 2.9}
+    model_name = "custom_model_name"  # Arbitrary name.
+    model = min_diff_model.MinDiffModel(
+        original_model, loss, loss_weight, name=model_name)
+
+    serialized_model = tf.keras.utils.serialize_keras_object(model)
+    deserialized_model = tf.keras.layers.deserialize(serialized_model)
+
+    self.assertIsInstance(deserialized_model, min_diff_model.MinDiffModel)
+    self.assertIsNone(deserialized_model._predictions_transform)
+
+    self.assertDictEqual(deserialized_model._loss, loss)
+    self.assertDictEqual(deserialized_model._loss_weight, loss_weight)
+    self.assertEqual(deserialized_model.name, model_name)
+
+  def testSerializationWithTransformAndKernel(self):
+    original_model = tf.keras.Sequential([
+        tf.keras.layers.Dense(1, activation="softmax"),
+    ])
+    predictions_fn = lambda x: x * 5.1  # Arbitrary operation.
+
+    loss_weight = 2.3  # Arbitrary value.
+    model_name = "custom_model_name"  # Arbitrary name.
+    model = min_diff_model.MinDiffModel(
+        original_model,
+        losses.MMDLoss("laplacian"),  # Non-default Kernel.
+        loss_weight=loss_weight,
+        predictions_transform=predictions_fn,
+        name=model_name)
+
+    serialized_model = tf.keras.utils.serialize_keras_object(model)
+    deserialized_model = tf.keras.layers.deserialize(serialized_model)
+
+    self.assertIsInstance(deserialized_model, min_diff_model.MinDiffModel)
+    val = 7  # Arbitrary value.
+    self.assertEqual(
+        deserialized_model._predictions_transform(val), predictions_fn(val))
+    self.assertIsInstance(deserialized_model._loss, losses.MMDLoss)
+    self.assertIsInstance(deserialized_model._loss.predictions_kernel,
+                          losses.LaplacianKernel)
+    self.assertEqual(deserialized_model._loss_weight, loss_weight)
+    self.assertEqual(deserialized_model.name, model_name)
+
+  def testConfig(self):
+    original_model = tf.keras.Sequential([
+        tf.keras.layers.Dense(1, activation="softmax"),
+    ])
+
+    model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss())
+
+    config = model.get_config()
+
+    self.assertSetEqual(
+        set(config.keys()),
+        set(["original_model", "loss", "loss_weight", "name"]))
+
+    # Test building the model from the config.
+    model_from_config = min_diff_model.MinDiffModel.from_config(config)
+    self.assertIsInstance(model_from_config, min_diff_model.MinDiffModel)
+    self.assertIsInstance(model_from_config.original_model, tf.keras.Sequential)
+
+  def testConfigForMultipleApplications(self):
+    original_model = tf.keras.Sequential([
+        tf.keras.layers.Dense(1, activation="softmax"),
+    ])
+
+    # Arbitrary losses.
+    loss = {"k1": losses.MMDLoss(), "k2": losses.AbsoluteCorrelationLoss()}
+    # Arbitrary values.
+    loss_weight = {"k1": 3.4, "k2": 2.9}
+    model = min_diff_model.MinDiffModel(original_model, loss, loss_weight)
+
+    config = model.get_config()
+
+    self.assertSetEqual(
+        set(config.keys()),
+        set(["original_model", "loss", "loss_weight", "name"]))
+
+    self.assertDictEqual(config["loss"], loss)
+    self.assertDictEqual(config["loss_weight"], loss_weight)
+
+    # Test building the model from the config.
+    model_from_config = min_diff_model.MinDiffModel.from_config(config)
+    self.assertIsInstance(model_from_config, min_diff_model.MinDiffModel)
+    self.assertIsInstance(model_from_config.original_model, tf.keras.Sequential)
+
+    self.assertDictEqual(model_from_config._loss, loss)
+    self.assertDictEqual(model_from_config._loss_weight, loss_weight)
+
+  def testConfigWithCustomBaseImplementation(self):
+
+    class CustomModel(tf.keras.Model):
+
+      def __init__(self, val, **kwargs):
+        super(CustomModel, self).__init__(**kwargs)
+        self.val = val
+
+      def get_config(self):
+        return {"val": self.val}
+
+    class CustomMinDiffModel(min_diff_model.MinDiffModel, CustomModel):
+      pass  # No additional implementation needed.
+
+    original_val = 4  # Arbitrary value passed in.
+    original_model = CustomModel(original_val)
+
+    min_diff_model_val = 5  # Different arbitrary value passed in.
+    model = CustomMinDiffModel(
+        original_model=original_model,
+        loss=losses.MMDLoss(),
+        val=min_diff_model_val)
+    self.assertEqual(model.val, min_diff_model_val)
+
+    config = model.get_config()
+
+    self.assertSetEqual(
+        set(config.keys()),
+        set(["original_model", "loss", "loss_weight", "name", "val"]))
+    self.assertEqual(config["val"], model.val)
+    self.assertEqual(config["original_model"].val, original_model.val)
+
+    # Test building the model from the config.
+    model_from_config = CustomMinDiffModel.from_config(config)
+    self.assertIsInstance(model_from_config, CustomMinDiffModel)
+    self.assertIsInstance(model_from_config.original_model, CustomModel)
+    self.assertEqual(model_from_config.val, min_diff_model_val)
+    self.assertEqual(model_from_config.original_model.val, original_val)
+
+  def testGetConfigErrorFromOriginalModel(self):
+
+    class CustomModel(tf.keras.Model):
+      pass  # No need to add any other implementation for this test.
+
+    original_model = CustomModel()
+
+    model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss())
+
+    with self.assertRaisesRegex(
+        NotImplementedError, "MinDiffModel cannot create a config.*"
+        "original_model.*not implemented get_config.*or has an error"):
+      _ = model.get_config()
 
 if __name__ == "__main__":
   tf.test.main()

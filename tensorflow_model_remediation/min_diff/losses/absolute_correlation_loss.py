@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Google LLC.
+# Copyright 2021 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import tensorflow as tf
 
 from tensorflow_model_remediation.common import types
 from tensorflow_model_remediation.min_diff.losses import base_loss
+
+
+_EPSILON = 1.0e-7
 
 
 @tf.keras.utils.register_keras_serializable()
@@ -74,10 +77,11 @@ class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
         (sensitive_group_labels - weighted_mean_sensitive_group_labels) *
         (y_pred - weighted_mean_y_pred))
 
+    # Epsilon is used to avoid non defined gradients.
     corr = tf.math.divide_no_nan(
         weighted_covar,
-        tf.sqrt(weighted_var_sensitive_group_labels) *
-        tf.sqrt(weighted_var_y_pred))
+        tf.sqrt(weighted_var_sensitive_group_labels + _EPSILON) *
+        tf.sqrt(weighted_var_y_pred + _EPSILON))
 
     loss = tf.abs(corr)
     return loss
