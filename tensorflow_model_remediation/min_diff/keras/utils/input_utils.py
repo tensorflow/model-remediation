@@ -221,7 +221,7 @@ def build_min_diff_dataset(sensitive_group_dataset,
   # pyformat: disable
   """Build MinDiff dataset from sensitive and nonsensitive datasets.
 
-  Arguments:
+  Args:
     sensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
       (unnested dict) of `tf.data.Dataset`s containing only examples that
       belong to the sensitive group.
