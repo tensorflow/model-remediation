@@ -38,7 +38,7 @@ class MinDiffModel(tf.keras.Model):
 
   Inherits from: `tf.keras.Model`
 
-  Arguments:
+  Args:
     original_model: Instance of `tf.keras.Model` that will be trained with the
       additional `min_diff_loss`.
     loss: `dict` or single element of string(s) (name of loss) or
@@ -313,7 +313,7 @@ class MinDiffModel(tf.keras.Model):
     # pyformat: disable
     """Extracts original_inputs from `inputs`.
 
-    Arguments:
+    Args:
       inputs: `inputs` as described in `MinDiffModel.call`.
 
     Identifies whether `min_diff_data` is included in `inputs`. If it is, then
@@ -353,7 +353,7 @@ class MinDiffModel(tf.keras.Model):
     # pyformat: disable
     """Extracts `min_diff_data` from `inputs` if present or returns `None`.
 
-    Arguments:
+    Args:
       inputs: `inputs` as described in `MinDiffModel.call`.
 
 
@@ -396,6 +396,7 @@ class MinDiffModel(tf.keras.Model):
     Arguments:
       min_diff_data: Tuple of data or valid MinDiff structure of tuples as
         described below.
+
       training: Boolean indicating whether to run in training or inference mode.
         See `tf.keras.Model.call` for details.
       mask: Mask or list of masks as described in `tf.keras.Model.call`. These
