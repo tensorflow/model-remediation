@@ -21,8 +21,7 @@ import tensorflow as tf
 
 from tensorflow_model_remediation import min_diff
 
-_UCI_DATA_URL_TEMPLATE = (
-    'https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.{}')
+_UCI_DATA_URL_TEMPLATE = ('https://storage.googleapis.com/uci_dataset/adult.{}')
 
 # Column Names corresponding to the UCI data.
 _UCI_COLUMN_NAMES = [
@@ -259,7 +258,7 @@ def get_uci_model(model_class=tf.keras.Model):
           bins=[18, 25, 30, 35, 40, 45, 50, 55, 60, 65])(age_input))
   encoded_feature = (
       tf.keras.layers.experimental.preprocessing.CategoryEncoding(
-          max_tokens=10)(bucketized_age_feature))
+          max_tokens=12)(bucketized_age_feature))
   _add_input_feature(age_input, encoded_feature)
 
   # Categorical inputs.
