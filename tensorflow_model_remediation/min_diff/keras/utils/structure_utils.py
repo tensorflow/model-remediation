@@ -27,7 +27,7 @@ def _flatten_min_diff_structure(struct, run_validation=False):
   # pyformat: disable
   """Flattens a MinDiff structure after optionally validating it.
 
-  Args:
+  Arguments:
     struct: structure to be flattened. Must be a single element (including a
       tuple) or an unnested dict.
     run_validation: Boolean indicating whether to run validation. If `True`
@@ -59,7 +59,7 @@ def _pack_min_diff_sequence_as(struct, flat_sequence):
   # pyformat: disable
   """Pack `flat_sequence` into the same structure as `struct`.
 
-  Args:
+  Arguments:
     struct: structure that `flat_sequence` will be packed as. Must be a single
       element (including a tuple) or an unnested dict.
     flat_sequence: Flat sequence of elements to be packed.
@@ -107,7 +107,7 @@ def _assert_same_min_diff_structure(struct1, struct2):
   # pyformat: disable
   """Asserts that the two MinDiff structures are the same.
 
-  Args:
+  Arguments:
     struct1: First MinDiff structure. Must be a single element (including a
       tuple) or an unnested dict.
     struct2: Second MinDiff structure. Must be a single element (including a
@@ -187,7 +187,7 @@ def validate_min_diff_structure(struct,
   # pyformat: disable
   """Validates that `struct` is a valid MinDiff structure.
 
-  Args:
+  Arguments:
     struct: Structure that will be validated.
     struct_name: Name of struct, used only for error messages.
     element_type: Type of elements. If `None`, types are not checked.

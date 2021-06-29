@@ -30,7 +30,7 @@ class LaplacianKernel(base_kernel.MinDiffKernel):
   # pyformat: disable
   """Laplacian kernel class.
 
-  Args:
+  Arguments:
     kernel_length: Length (sometimes also called 'width') of the kernel.
       Defaults to `0.1`. This parameter essentially describes how far apart
       points can be and still affect each other.

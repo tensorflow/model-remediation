@@ -29,7 +29,7 @@ class MinDiffKernel(abc.ABC):
   # pyformat: disable
   """MinDiffKernel abstract base class.
 
-  Args:
+  Arguments:
     tile_input: Boolean indicating whether to tile inputs before computing the
       kernel (see below for details).
 
@@ -64,7 +64,7 @@ class MinDiffKernel(abc.ABC):
     # pyformat: disable
     """Invokes the kernel instance.
 
-    Args:
+    Arguments:
       x: `tf.Tensor` of shape `[N, D]` (if tiling input) or `[N, M, D]` (if not
         tiling input).
       y: Optional `tf.Tensor` of shape `[M, D]` (if tiling input) or `[N, M, D]`
@@ -96,7 +96,7 @@ class MinDiffKernel(abc.ABC):
     # pyformat: disable
     """Invokes the `MinDiffKernel` instance.
 
-    Args:
+    Arguments:
       x: `tf.Tensor` of shape `[N, M, D]`.
       y: `tf.Tensor` of shape `[N, M, D]`.
 

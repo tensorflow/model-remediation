@@ -52,7 +52,7 @@ def pack_min_diff_data(original_dataset: tf.data.Dataset,
   # pyformat: disable
   """Packs `min_diff_data` with the `x` component of the original dataset.
 
-  Args:
+  Arguments:
     original_dataset: `tf.data.Dataset` that was used before applying min
       diff. The output should conform to the format used in
       `tf.keras.Model.fit`.
@@ -221,7 +221,7 @@ def build_min_diff_dataset(sensitive_group_dataset,
   # pyformat: disable
   """Build MinDiff dataset from sensitive and nonsensitive datasets.
 
-  Args:
+  Arguments:
     sensitive_group_dataset: `tf.data.Dataset` or valid MinDiff structure
       (unnested dict) of `tf.data.Dataset`s containing only examples that
       belong to the sensitive group.
@@ -380,7 +380,7 @@ def build_min_diff_dataset(sensitive_group_dataset,
 def unpack_original_inputs(inputs):
   """Unpacks `original_inputs` from a `utils.MinDiffPackedInputs` instance.
 
-  Args:
+  Arguments:
     inputs: Data to be unpacked, if possible.
 
   Returns:
@@ -395,7 +395,7 @@ def unpack_original_inputs(inputs):
 def unpack_min_diff_data(inputs):
   """Unpacks `min_diff_data` from a `utils.MinDiffPackedInputs` instance.
 
-  Args:
+  Arguments:
     inputs: Data to be unpacked, if possible.
 
   Returns:

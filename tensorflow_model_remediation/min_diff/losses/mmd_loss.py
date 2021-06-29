@@ -29,7 +29,7 @@ class MMDLoss(base_loss.MinDiffLoss):
   # pyformat: disable
   """Maximum Mean Discrepency between predictions on two groups of examples.
 
-  Args:
+  Arguments:
     kernel: String (name of kernel) or `losses.MinDiffKernel` instance to be
       applied on the predictions. Defaults to `'gaussian'` and it is recommended
       that this be either
