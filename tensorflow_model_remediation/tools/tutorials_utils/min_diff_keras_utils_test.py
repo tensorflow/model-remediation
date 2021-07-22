@@ -162,7 +162,7 @@ class UtilTest(tf.test.TestCase):
 
     model.fit(
         x=data_train['comment_text'], y=labels_train, batch_size=1, epochs=1)
-    result = model.predict([0.1])
+    result = model.predict([[0.1]])
     self.assertTrue(result[0][0] < 1 and result[0][0] > 0)
 
 
