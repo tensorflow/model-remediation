@@ -216,6 +216,14 @@ def _pack_as_original(original_batch, x, y, w):
   return (x, y, w)[:length]
 
 
+def _tensor_concat(t1, t2):
+  """Concatenates (sparse or dense) tensors."""
+  if isinstance(t1, tf.SparseTensor):
+    return tf.sparse.concat(axis=0, sp_inputs=[t1, t2])
+  else:
+    return tf.concat([t1, t2], axis=0)
+
+
 def build_min_diff_dataset(sensitive_group_dataset,
                            nonsensitive_group_dataset) -> tf.data.Dataset:
   # pyformat: disable
@@ -326,7 +334,7 @@ def build_min_diff_dataset(sensitive_group_dataset,
     flat_sensitive_x = tf.nest.flatten(sensitive_x)
     flat_nonsensitive_x = tf.nest.flatten(nonsensitive_x)
     flat_min_diff_x = [
-        tf.concat([t1, t2], axis=0)
+        _tensor_concat(t1, t2)
         for t1, t2 in zip(flat_sensitive_x, flat_nonsensitive_x)
     ]
     min_diff_x = tf.nest.pack_sequence_as(sensitive_x, flat_min_diff_x)

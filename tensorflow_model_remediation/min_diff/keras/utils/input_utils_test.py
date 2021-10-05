@@ -24,11 +24,17 @@ def _get_batch(tensors, batch_size, batch_num):
   if isinstance(tensors, dict):
     return {k: _get_batch(v, batch_size, batch_num) for k, v in tensors.items()}
 
-  total_examples = len(tensors)
+  if isinstance(tensors, tf.SparseTensor):
+    total_examples = tensors.dense_shape[0]
+  else:
+    total_examples = len(tensors)
   start_ind = (batch_size * batch_num) % total_examples
   end_ind = start_ind + batch_size
   # Double tensor to enable repeating inputs.
-  return tensors[start_ind:end_ind]
+  if isinstance(tensors, tf.SparseTensor):
+    return tf.sparse.slice(tensors, [start_ind, 0], [batch_size, 2])
+  else:
+    return tensors[start_ind:end_ind]
 
 
 def _get_min_diff_batch(sensitive_tensors, nonsensitive_tensors,
@@ -40,10 +46,11 @@ def _get_min_diff_batch(sensitive_tensors, nonsensitive_tensors,
                                   batch_num)
   if isinstance(sensitive_batch, dict):
     return {
-        key: tf.concat([sensitive_batch[key], nonsensitive_batch[key]], axis=0)
+        key: input_utils._tensor_concat(sensitive_batch[key],
+                                        nonsensitive_batch[key])
         for key in sensitive_batch.keys()
     }
-  return tf.concat([sensitive_batch, nonsensitive_batch], axis=0)
+  return input_utils._tensor_concat(sensitive_batch, nonsensitive_batch)
 
 
 def _get_min_diff_membership_batch(sensitive_batch_size,
@@ -58,12 +65,34 @@ def _get_min_diff_membership_batch(sensitive_batch_size,
 
 class MinDiffInputUtilsTestCase(tf.test.TestCase):
 
+  def assertAllClose(self, a, b):
+    """Recursive comparison that handles SparseTensors."""
+    if isinstance(a, dict):
+      for key, a_value in a.items():
+        b_value = b.get(key)
+        self.assertIsNotNone(b_value)
+        self.assertAllClose(a_value, b_value)
+    elif isinstance(a, tf.SparseTensor):
+      self.assertAllEqual(a.indices, b.indices)
+      super().assertAllClose(a.values, b.values)
+      self.assertAllEqual(a.dense_shape, b.dense_shape)
+    else:
+      super().assertAllClose(a, b)
+
   def setUp(self):
     super().setUp()
+
+    def to_sparse(tensor):
+      """Helper to create a SparseTensor from a dense Tensor."""
+      values = tf.reshape(tensor, [-1])
+      indices = tf.where(tensor)
+      shape = tf.shape(tensor, out_type=tf.int64)
+      return tf.SparseTensor(indices=indices, values=values, dense_shape=shape)
     # Original inputs with 25 examples. Values go from 100.0 to 299.0.
     self.original_x = {
         "f1": tf.reshape(tf.range(100.0, 175.0), [25, 3]),
         "f2": tf.reshape(tf.range(175.0, 225.0), [25, 2]),
+        "f2_sparse": to_sparse(tf.reshape(tf.range(175.0, 225.0), [25, 2]))
     }
     self.original_y = tf.reshape(tf.range(225.0, 275.0), [25, 2])
     self.original_w = tf.reshape(tf.range(275.0, 300.0), [25, 1])
@@ -72,6 +101,7 @@ class MinDiffInputUtilsTestCase(tf.test.TestCase):
     self.sensitive_x = {
         "f1": tf.reshape(tf.range(300.0, 345.0), [15, 3]),
         "f2": tf.reshape(tf.range(345.0, 375.0), [15, 2]),
+        "f2_sparse": to_sparse(tf.reshape(tf.range(345.0, 375.0), [15, 2]))
     }
     self.sensitive_w = tf.reshape(tf.range(375.0, 390.0), [15, 1])
 
@@ -79,6 +109,7 @@ class MinDiffInputUtilsTestCase(tf.test.TestCase):
     self.nonsensitive_x = {
         "f1": tf.reshape(tf.range(400.0, 430.0), [10, 3]),
         "f2": tf.reshape(tf.range(430.0, 450.0), [10, 2]),
+        "f2_sparse": to_sparse(tf.reshape(tf.range(430.0, 450.0), [10, 2]))
     }
     self.nonsensitive_w = tf.reshape(tf.range(450.0, 460.0), [10, 1])
 

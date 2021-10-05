@@ -5,6 +5,8 @@
 ## Major Features and Improvements
 
 ## Bug fixes and other small changes
+* `build_min_diff_dataset` now supports SparseTensors.
+
 
 ## Breaking changes
 
