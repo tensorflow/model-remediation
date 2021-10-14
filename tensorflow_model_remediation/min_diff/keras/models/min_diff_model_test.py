@@ -364,8 +364,6 @@ class MinDiffModelTest(tf.test.TestCase):
 
     # Training unset.
     _ = model.compute_min_diff_loss(self.min_diff_data)
-    original_model.call.assert_called_once_with(
-        self.min_diff_x, training=None, mask=None)
     model._loss.assert_called_once_with(
         predictions=pred_mock, membership=self.min_diff_mem, sample_weight=None)
 
@@ -374,8 +372,6 @@ class MinDiffModelTest(tf.test.TestCase):
     model._loss.reset_mock()
     _ = model.compute_min_diff_loss(
         self.min_diff_weighted_data, training=True, mask="mask")
-    original_model.call.assert_called_once_with(
-        self.min_diff_x, training=True, mask="mask")
     model._loss.assert_called_once_with(
         predictions=pred_mock,
         membership=self.min_diff_mem,
@@ -391,8 +387,6 @@ class MinDiffModelTest(tf.test.TestCase):
 
     # Assert correct inference call and calculated loss.
     loss = model.compute_min_diff_loss(self.min_diff_data, training=True)
-    original_model.call.assert_called_once_with(
-        self.min_diff_x, training=True, mask=None)
     self.assertAllClose(loss, _loss_fn(predictions, self.min_diff_mem))
 
   def testComputeMultipleMinDiffLosses(self):
@@ -408,7 +402,6 @@ class MinDiffModelTest(tf.test.TestCase):
       return predictions2
 
     original_model.call = mock.MagicMock(
-        # side_effect=[predictions1, predictions2])
         side_effect=_mock_loss)
 
     model = min_diff_model.MinDiffModel(original_model, {
@@ -419,12 +412,6 @@ class MinDiffModelTest(tf.test.TestCase):
     # Assert correct inference call and calculated loss.
     loss = model.compute_min_diff_loss(self.multi_min_diff_data, training=True)
     self.assertEqual(original_model.call.call_count, 2)
-    original_model.call.assert_has_calls(
-        calls=[
-            mock.call(self.min_diff_x, training=True, mask=None),
-            mock.call(self.min_diff_x_alt, training=True, mask=None)
-        ],
-        any_order=True)
     self.assertAllClose(
         sorted(loss),
         sorted([
@@ -443,8 +430,6 @@ class MinDiffModelTest(tf.test.TestCase):
     # Assert correct inference call and calculated loss.
     loss = model.compute_min_diff_loss(
         self.min_diff_weighted_data, training=True)
-    original_model.call.assert_called_once_with(
-        self.min_diff_x, training=True, mask=None)
     self.assertAllClose(
         loss, _loss_fn(predictions, self.min_diff_mem, self.min_diff_w))
 
@@ -464,7 +449,6 @@ class MinDiffModelTest(tf.test.TestCase):
 
     # Training and mask unset.
     _ = model(packed_inputs)
-    original_model.call.assert_called_once_with(x, training=None, mask=None)
     model.compute_min_diff_loss.assert_called_once_with(
         min_diff_data, training=None)
 
@@ -473,7 +457,6 @@ class MinDiffModelTest(tf.test.TestCase):
     model.compute_min_diff_loss.reset_mock()
     model._clear_losses()
     _ = model(packed_inputs, training=True, mask=False)
-    original_model.call.assert_called_once_with(x, training=True, mask=False)
     model.compute_min_diff_loss.assert_called_once_with(
         min_diff_data, training=True)
 
@@ -493,8 +476,6 @@ class MinDiffModelTest(tf.test.TestCase):
     # Assert correct calls are made, correct loss is added, and correct
     # predictions returned.
     preds = model(packed_inputs, training=True, mask=False)
-    original_model.call.assert_called_once_with(
-        self.x, training=True, mask=False)
     model.compute_min_diff_loss.assert_called_once_with(
         self.min_diff_data, training=True)
     self.assertAllClose(model.losses, [loss_val])
@@ -512,8 +493,6 @@ class MinDiffModelTest(tf.test.TestCase):
     # Assert correct calls are made, correct loss is added, and correct
     # predictions returned.
     preds = model(self.x, training=False, mask=True)
-    original_model.call.assert_called_once_with(
-        self.x, training=False, mask=True)
     model.compute_min_diff_loss.assert_not_called()
     self.assertEmpty(model.losses)
     self.assertAllClose(preds, predictions)
@@ -567,13 +546,13 @@ class MinDiffModelTest(tf.test.TestCase):
 
     mock_call = mock.MagicMock(return_value=tf.constant(1.0))
 
-    class CustomModel1(tf.keras.Model):
+    class CustomModel(tf.keras.Model):
 
       def call(self, inputs, training=None):
         # Use mock to track call.
         return mock_call(inputs, training=training)
 
-    original_model = CustomModel1()
+    original_model = CustomModel()
 
     model = min_diff_model.MinDiffModel(original_model, DummyLoss())
 
@@ -587,6 +566,41 @@ class MinDiffModelTest(tf.test.TestCase):
     mock_call.reset_mock()
     _ = model(self.x, training=False)
     mock_call.assert_called_once_with(self.x, training=False)
+
+  def testOriginalModelSignatureWithKerasModelCall(self):
+    mock_call = mock.MagicMock(return_value=tf.constant(1.0))
+
+    class CustomModel(tf.keras.Model):
+
+      def call(self, inputs, training=None, mask=None):
+        # Use mock to track call.
+        return mock_call(inputs, training=training, mask=mask)
+
+    original_model = CustomModel()
+    model = min_diff_model.MinDiffModel(original_model, DummyLoss())
+
+    # Assert different call signature doesn't break and still receives the right
+    # value.
+    _ = model.compute_min_diff_loss(
+        self.min_diff_data, mask=True)
+    mock_call.assert_called_once_with(self.min_diff_x, training=None, mask=True)
+
+  def testOriginalModelSignatureWithCustomCall(self):
+    mock_call = mock.MagicMock(return_value=tf.constant(1.0))
+
+    class CustomModelSignature(tf.keras.Model):
+
+      def call(self, inputs, training=None, foo=None):
+        # Use mock to track call.
+        return mock_call(inputs, training=training, foo=foo)
+
+    original_model = CustomModelSignature()
+    model = min_diff_model.MinDiffModel(original_model, DummyLoss())
+
+    # Assert call doesn't break if an abstracted Keras model uses a different
+    # call signature from tf.keras.Model.
+    _ = model.compute_min_diff_loss(self.min_diff_data)
+    mock_call.assert_called_once_with(self.min_diff_x, training=None, foo=None)
 
   def testCustomModelWithoutTrainingInCallSignature(self):
 
@@ -636,8 +650,6 @@ class MinDiffModelTest(tf.test.TestCase):
     # Assert correct calls are made, correct loss is added, and correct
     # predictions returned.
     _ = model(x)
-    original_model.call.assert_called_once_with(
-        "x_custom_original_inputs", training=None, mask=None)
     model.compute_min_diff_loss.assert_called_once_with(
         "x_min_diff_data", training=None)
 

@@ -19,7 +19,7 @@ This Module provides the implementation of a MinDiffModel, a Model that
 delegates its call method to another Model and adds a `min_diff_loss`
 during training and optionally during evaluation.
 """
-
+import inspect
 import dill
 
 import tensorflow as tf
@@ -303,9 +303,12 @@ class MinDiffModel(tf.keras.Model):
     """Calls the original model with appropriate args."""
 
     arg_tuples = [("training", training,
-                   self.original_model._expects_training_arg),
-                  ("mask", mask, self.original_model._expects_mask_arg)]
+                   self.original_model._expects_training_arg)]
 
+    # Check if the original model call signature uses "mask" and pass mask to
+    # the original model if present.
+    if "mask" in inspect.getfullargspec((self.original_model.call)).args:
+      arg_tuples.append(("mask", mask, self.original_model._expects_mask_arg))
     kwargs = {name: value for name, value, expected in arg_tuples if expected}
     return self.original_model(inputs, **kwargs)
 
@@ -497,7 +500,7 @@ class MinDiffModel(tf.keras.Model):
     predictions = self.predictions_transform(predictions)
     if not isinstance(predictions, tf.Tensor):
       err_msg = (
-          "MinDiff `predictions` meant for calculating the `min_diff_loss`"
+          "MinDiff `predictions` meant for calculating the `min_diff_loss` "
           "must be a Tensor, given: {}\n".format(predictions))
       if self._predictions_transform is None:
         err_msg += (
