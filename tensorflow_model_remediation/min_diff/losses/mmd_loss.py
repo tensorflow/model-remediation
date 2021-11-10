@@ -27,7 +27,7 @@ from tensorflow_model_remediation.min_diff.losses import base_loss
 class MMDLoss(base_loss.MinDiffLoss):
 
   # pyformat: disable
-  """Maximum Mean Discrepency between predictions on two groups of examples.
+  """Maximum Mean Discrepancy between predictions on two groups of examples.
 
   Arguments:
     kernel: String (name of kernel) or `losses.MinDiffKernel` instance to be
@@ -72,20 +72,25 @@ class MMDLoss(base_loss.MinDiffLoss):
         predictions_kernel=kernel,
         name=name or "mmd_loss")
 
-  def call(self,
-           membership: types.TensorType,
-           predictions: types.TensorType,
-           sample_weight: Optional[types.TensorType] = None):
-    """Computes MMD the loss value."""
-
+  def _preprocess(self,
+                  membership: types.TensorType,
+                  predictions: types.TensorType,
+                  sample_weight: Optional[types.TensorType] = None):
+    """Preprocess inputs before computing losses."""
     membership, predictions, normed_weights = self._preprocess_inputs(
         membership, predictions, sample_weight)
     _, predictions_kernel = self._apply_kernels(membership, predictions)
 
-    weights_ij = tf.matmul(normed_weights, tf.transpose(normed_weights))
-
     pos_mask = tf.cast(tf.equal(membership, 1.0), tf.float32)
     neg_mask = tf.cast(tf.equal(membership, 0.0), tf.float32)
+
+    return predictions_kernel, normed_weights, pos_mask, neg_mask
+
+  def _calculate_mean(self, predictions_kernel: types.TensorType,
+                      normed_weights: types.TensorType,
+                      pos_mask: types.TensorType, neg_mask):
+    """Calculate means of groups."""
+    weights_ij = tf.matmul(normed_weights, tf.transpose(normed_weights))
 
     pos_mean_mask = tf.matmul(pos_mask, tf.transpose(pos_mask))
     pos_mean_weights = weights_ij * pos_mean_mask
@@ -103,6 +108,19 @@ class MMDLoss(base_loss.MinDiffLoss):
     pos_neg_mean = tf.math.divide_no_nan(
         tf.reduce_sum(pos_neg_mean_weights * predictions_kernel),
         tf.reduce_sum(pos_neg_mean_weights))
+
+    return pos_mean, neg_mean, pos_neg_mean
+
+  def call(self,
+           membership: types.TensorType,
+           predictions: types.TensorType,
+           sample_weight: Optional[types.TensorType] = None):
+    """Computes MMD the loss value."""
+    predictions_kernel, normed_weights, pos_mask, neg_mask = self._preprocess(
+        membership, predictions, sample_weight)
+
+    pos_mean, neg_mean, pos_neg_mean = self._calculate_mean(
+        predictions_kernel, normed_weights, pos_mask, neg_mask)
 
     # MMD is actually the square root of the following quatity. However, the
     # derivative of sqrt is easy to blow up when the value is close to 0. So we

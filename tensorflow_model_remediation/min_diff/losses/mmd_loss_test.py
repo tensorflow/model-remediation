@@ -282,6 +282,5 @@ class MMDLossTest(tf.test.TestCase):
                           laplacian_kernel.LaplacianKernel)
     self.assertEqual(deserialized_loss.name, loss.name)
 
-
 if __name__ == "__main__":
   tf.test.main()
