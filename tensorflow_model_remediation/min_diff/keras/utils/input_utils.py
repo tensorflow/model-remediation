@@ -219,6 +219,10 @@ def _pack_as_original(original_batch, x, y, w):
 def _tensor_concat(t1, t2):
   """Concatenates (sparse or dense) tensors."""
   if isinstance(t1, tf.SparseTensor):
+    # Ensure SparseTensors have the same non-batch dim before concatenating.
+    max_shape = tf.math.maximum(t1.dense_shape[1], t2.dense_shape[1])
+    t1 = tf.sparse.reset_shape(t1, [t1.dense_shape[0], max_shape])
+    t2 = tf.sparse.reset_shape(t2, [t2.dense_shape[0], max_shape])
     return tf.sparse.concat(axis=0, sp_inputs=[t1, t2])
   else:
     return tf.concat([t1, t2], axis=0)

@@ -15,6 +15,7 @@
 
 """Tests for input_utils functions."""
 
+import copy
 import tensorflow as tf
 
 from tensorflow_model_remediation.min_diff.keras.utils import input_utils
@@ -196,6 +197,27 @@ class BuildMinDiffDatasetTest(MinDiffInputUtilsTestCase):
             _get_min_diff_batch(self.sensitive_w, self.nonsensitive_w,
                                 sensitive_batch_size, nonsensitive_batch_size,
                                 batch_ind))
+
+  def testWithVariableSizeSparseTensors(self):
+    sensitive_batch_size = 3
+    sensitive_dataset = tf.data.Dataset.from_tensor_slices(
+        (self.sensitive_x, self.sensitive_w, None)).batch(sensitive_batch_size)
+
+    nonsensitive_batch_size = 2
+    nonsensitive_x = copy.copy(self.nonsensitive_x)
+    # Modify so that f2_sparse has a different dense shape in non_sensitive
+    # than in sensitive.
+    nonsensitive_x["f2_sparse"] = tf.sparse.reset_shape(
+        nonsensitive_x["f2_sparse"], [10, 5])
+    nonsensitive_dataset = tf.data.Dataset.from_tensor_slices(
+        (nonsensitive_x, None,
+         self.nonsensitive_w)).batch(nonsensitive_batch_size)
+
+    dataset = input_utils.build_min_diff_dataset(sensitive_dataset,
+                                                 nonsensitive_dataset)
+    for _, min_diff_batch in enumerate(dataset.take(10)):
+      min_diff_x, _, _ = tf.keras.utils.unpack_x_y_sample_weight(min_diff_batch)
+      self.assertEqual(min_diff_x["f2_sparse"].dense_shape[1], 5)
 
   def testWithOnlySensitiveWeightsNone(self):
     sensitive_batch_size = 3
