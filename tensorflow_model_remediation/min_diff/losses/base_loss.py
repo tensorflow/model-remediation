@@ -141,6 +141,31 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
               tf.reduce_sum(tf.dtypes.cast(weights, tf.float32) * predictions),
               tf.cast(num_min_diff_examples, dtype=tf.float32)))
 
+      # Plot histogram of the MinDiff predictions.
+      summary_histogram = (
+          tf.summary.histogram
+          if tf.executing_eagerly() else tf.compat.v1.summary.histogram)
+
+      summary_histogram('min_diff_prediction_histogram', predictions)
+
+      # Plot histogram of the MinDiff predictions for each membership class.
+      # Pick out only min_diff head training data
+      pos_mask = tf.dtypes.cast(weights, tf.float32) * tf.cast(
+          tf.equal(membership, 1.0), tf.float32)
+      neg_mask = tf.dtypes.cast(weights, tf.float32) * tf.cast(
+          tf.equal(membership, 0.0), tf.float32)
+
+      if predictions.shape.dims:
+        sensitive_group_predictions = tf.squeeze(
+            tf.gather(predictions, indices=tf.where(pos_mask[:, 0])))
+        non_sensitive_group_predictions = tf.squeeze(
+            tf.gather(predictions, indices=tf.where(neg_mask[:, 0])))
+
+        summary_histogram('min_diff_sensitive_group_prediction_histogram',
+                          sensitive_group_predictions)
+        summary_histogram('min_diff_non-sensitive_group_prediction_histogram',
+                          non_sensitive_group_predictions)
+
       return loss
 
   @docs.doc_private
@@ -391,4 +416,3 @@ def _to_snake_case(name):
   if insecure[0] != '_':
     return insecure
   return 'private' + insecure
-
