@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2021 Google LLC.
+# Copyright 2022 Google LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1309,10 +1309,14 @@ class MinDiffModelTest(tf.test.TestCase):
 
     model = min_diff_model.MinDiffModel(original_model, losses.MMDLoss())
 
-    with self.assertRaisesRegex(
-        NotImplementedError, "MinDiffModel cannot create a config.*"
-        "original_model.*not implemented get_config.*or has an error"):
-      _ = model.get_config()
+    try:
+      self.assertEqual(
+          set(model.get_config().keys()),
+          set(["loss", "loss_weight", "name", "original_model"]))
+    except NotImplementedError:
+      # Integration test against latest TF2 hasn't picked up the behavior at
+      # head yet. TODO: Clean this up after the latest TF2 has picked up.
+      pass
 
 if __name__ == "__main__":
   tf.test.main()
