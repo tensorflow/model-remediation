@@ -254,10 +254,10 @@ def get_uci_model(model_class=tf.keras.Model):
   # Bucketized age feature.
   age_input = tf.keras.Input(shape=(1,), name='age')
   bucketized_age_feature = (
-      tf.keras.layers.experimental.preprocessing.Discretization(
+      tf.keras.layers.Discretization(
           bins=[18, 25, 30, 35, 40, 45, 50, 55, 60, 65])(age_input))
   encoded_feature = (
-      tf.keras.layers.experimental.preprocessing.CategoryEncoding(
+      tf.keras.layers.CategoryEncoding(
           max_tokens=12)(bucketized_age_feature))
   _add_input_feature(age_input, encoded_feature)
 
@@ -272,40 +272,31 @@ def get_uci_model(model_class=tf.keras.Model):
         tf.keras.Input(shape=(1,), name=col_name, dtype=tf.string))
     vocabulary = uci_df[col_name].unique()
     feature_index = (
-        tf.keras.layers.experimental.preprocessing.StringLookup(
+        tf.keras.layers.StringLookup(
             vocabulary=vocabulary, mask_token=None)(categorical_input))
     # Note that we need to add 1 to max_tokens to account for the 'UNK' token
     # that StringLookup adds.
     encoded_feature = (
-        tf.keras.layers.experimental.preprocessing.CategoryEncoding(
+        tf.keras.layers.CategoryEncoding(
             max_tokens=len(vocabulary) + 1)(feature_index))
     _add_input_feature(categorical_input, encoded_feature)
 
   # Crossed columns
   # cross: Education x Occupation
   num_bins = 1000
-  education_occupation_cross = (
-      tf.keras.layers.experimental.preprocessing.CategoryCrossing()(
-          [inputs['education'], inputs['occupation']]))
-  education_occupation_cross_hash = (
-      tf.keras.layers.experimental.preprocessing.Hashing(
-          num_bins=num_bins)(education_occupation_cross))
   encoded_feature = (
-      tf.keras.layers.experimental.preprocessing.CategoryEncoding(
-          max_tokens=num_bins)(education_occupation_cross_hash))
+      tf.keras.layers.experimental.preprocessing.HashedCrossing(
+          num_bins=num_bins,
+          output_mode='one_hot')([inputs['education'], inputs['occupation']]))
   features.append(encoded_feature)
 
   # cross: Education x Occupation x Age
   num_bins = 50000
-  age_education_occupation_cross = (
-      tf.keras.layers.experimental.preprocessing.CategoryCrossing()(
-          [inputs['education'], inputs['occupation'], bucketized_age_feature]))
-  age_education_occupation_cross_hash = (
-      tf.keras.layers.experimental.preprocessing.Hashing(
-          num_bins=num_bins)(age_education_occupation_cross))
   encoded_feature = (
-      tf.keras.layers.experimental.preprocessing.CategoryEncoding(
-          max_tokens=num_bins)(age_education_occupation_cross_hash))
+      tf.keras.layers.experimental.preprocessing.HashedCrossing(
+          num_bins=num_bins, output_mode='one_hot')([
+              inputs['education'], inputs['occupation'], bucketized_age_feature
+          ]))
   features.append(encoded_feature)
 
   # Build model from inputs.
