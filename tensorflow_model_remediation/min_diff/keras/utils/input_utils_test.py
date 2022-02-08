@@ -130,9 +130,7 @@ class BuildMinDiffDatasetTest(MinDiffInputUtilsTestCase):
     dataset = input_utils.build_min_diff_dataset(sensitive_dataset,
                                                  nonsensitive_dataset)
 
-    # The resulting dataset will repeat infinitely so we only take the first 20
-    # batches which corresponds to 2 full epochs of the nonsensitive dataset.
-    for batch_ind, min_diff_batch in enumerate(dataset.take(20)):
+    for batch_ind, min_diff_batch in enumerate(dataset):
       # Assert min_diff batch properly formed.
       min_diff_x, min_diff_membership, min_diff_w = min_diff_batch
 
@@ -169,10 +167,7 @@ class BuildMinDiffDatasetTest(MinDiffInputUtilsTestCase):
     dataset = input_utils.build_min_diff_dataset(sensitive_dataset,
                                                  nonsensitive_dataset)
 
-    # The resulting dataset will repeat infinitely so we only take the first 20
-    # batches which corresponds to at least 2 full epochs of the nonsensitive
-    # dataset.
-    for batch_ind, min_diff_batches in enumerate(dataset.take(20)):
+    for batch_ind, min_diff_batches in enumerate(dataset):
       min_diff_keys = sorted(min_diff_batches.keys())
       # Assert min_diff_batches has the right structure (i.e. set of keys).
       self.assertAllEqual(min_diff_keys, ["k1", "k2"])
@@ -232,9 +227,7 @@ class BuildMinDiffDatasetTest(MinDiffInputUtilsTestCase):
     dataset = input_utils.build_min_diff_dataset(sensitive_dataset,
                                                  nonsensitive_dataset)
 
-    # The resulting dataset will repeat infinitely so we only take the first 10
-    # batches which corresponds to 2 full epochs of the nonsensitive dataset.
-    for batch_ind, min_diff_batch in enumerate(dataset.take(10)):
+    for batch_ind, min_diff_batch in enumerate(dataset):
       # Skip all min_diff_data assertions except for weight.
       _, _, min_diff_w = tf.keras.utils.unpack_x_y_sample_weight(min_diff_batch)
       self.assertAllClose(
@@ -255,9 +248,7 @@ class BuildMinDiffDatasetTest(MinDiffInputUtilsTestCase):
     dataset = input_utils.build_min_diff_dataset(sensitive_dataset,
                                                  nonsensitive_dataset)
 
-    # The resulting dataset will repeat infinitely so we only take the first 10
-    # batches which corresponds to 2 full epochs of the nonsensitive dataset.
-    for batch_ind, min_diff_batch in enumerate(dataset.take(10)):
+    for batch_ind, min_diff_batch in enumerate(dataset):
       # Skip all min_diff_data assertions except for weight.
       _, _, min_diff_w = tf.keras.utils.unpack_x_y_sample_weight(min_diff_batch)
       self.assertAllClose(
@@ -588,7 +579,7 @@ class PackMinDiffDataTest(MinDiffInputUtilsTestCase):
     for batch in dataset:
       # Only validate original batch weights (other tests cover others).
       # Should be of length 2.
-      self.assertEqual(len(batch), 2)
+      self.assertLen(batch, 2)
       _, _, w = tf.keras.utils.unpack_x_y_sample_weight(batch)
 
       self.assertIsNone(w)
@@ -639,7 +630,7 @@ class PackMinDiffDataTest(MinDiffInputUtilsTestCase):
     for batch in dataset:
       # Only validate original batch weights (other tests cover others).
       # Should be of length 3 despite sample_weight being None.
-      self.assertEqual(len(batch), 3)
+      self.assertLen(batch, 3)
       _, _, w = tf.keras.utils.unpack_x_y_sample_weight(batch)
 
       self.assertIsNone(w)

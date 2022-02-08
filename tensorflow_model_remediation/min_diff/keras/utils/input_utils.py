@@ -310,9 +310,9 @@ def build_min_diff_dataset(sensitive_group_dataset,
                   "do not have the same structure:\n{}".format(e))
 
   sensitive_group_dataset = tf.nest.map_structure(
-      lambda dataset: dataset.repeat(), sensitive_group_dataset)
+      lambda dataset: dataset, sensitive_group_dataset)
   nonsensitive_group_dataset = tf.nest.map_structure(
-      lambda dataset: dataset.repeat(), nonsensitive_group_dataset)
+      lambda dataset: dataset, nonsensitive_group_dataset)
 
   dataset = tf.data.Dataset.zip(
       (sensitive_group_dataset, nonsensitive_group_dataset))
