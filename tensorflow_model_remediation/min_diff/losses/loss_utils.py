@@ -15,7 +15,7 @@
 
 """Utility functions for MinDiff losses."""
 
-from typing import Text, Union
+from typing import Union
 
 import six
 
@@ -39,8 +39,8 @@ _register_loss_names(abs_corr_loss.AbsoluteCorrelationLoss,
 _register_loss_names(mmd_loss.MMDLoss, ['mmd', 'maximum_mean_discrepancy'])
 
 
-def _get_loss(loss: Union[base_loss.MinDiffLoss, Text],
-              loss_var_name: Text = 'loss') -> base_loss.MinDiffLoss:
+def _get_loss(loss: Union[base_loss.MinDiffLoss, str],
+              loss_var_name: str = 'loss') -> base_loss.MinDiffLoss:
   """Returns a `losses.MinDiffLoss` instance corresponding to `loss`.
 
   If `loss` is an instance of `losses.MinDiffLoss` then it is returned

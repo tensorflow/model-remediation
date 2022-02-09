@@ -15,7 +15,7 @@
 
 """Utils for MinDiff kernels."""
 
-from typing import Text, Union
+from typing import Union
 
 import six
 
@@ -38,8 +38,8 @@ _register_kernel_names(laplacian_kernel.LaplacianKernel,
                        ['laplace', 'laplacian'])
 
 
-def _get_kernel(kernel: Union[base_kernel.MinDiffKernel, Text],
-                kernel_var_name: Text = 'kernel'):
+def _get_kernel(kernel: Union[base_kernel.MinDiffKernel, str],
+                kernel_var_name: str = 'kernel'):
   """Returns a `losses.MinDiffKernel` instance corresponding to `kernel`.
 
   If `kernel` is an instance of `losses.MinDiffKernel` then it is returned

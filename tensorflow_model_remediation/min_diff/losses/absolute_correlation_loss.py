@@ -15,7 +15,7 @@
 
 """Implementation of the Absolute Correlation Loss."""
 
-from typing import Optional, Text
+from typing import Optional
 
 import tensorflow as tf
 
@@ -48,7 +48,7 @@ class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
   """
   # pyformat: enable
 
-  def __init__(self, name: Optional[Text] = None):
+  def __init__(self, name: Optional[str] = None):
     """Initialize Loss."""
     super(AbsoluteCorrelationLoss,
           self).__init__(name=name or 'absolute_correlation_loss')

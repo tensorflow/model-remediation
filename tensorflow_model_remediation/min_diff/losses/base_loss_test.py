@@ -129,12 +129,12 @@ class MinDiffLossTest(tf.test.TestCase):
     with self.assertRaisesRegex(ValueError, 'should be a callable instance'):
       _ = CustomLoss(predictions_transform='not callable')
 
-  def testkernelAttributesDefaultsToNone(self):
+  def testKernelAttributesDefaultsToNone(self):
     loss = CustomLoss()
     self.assertIsNone(loss.membership_kernel)
     self.assertIsNone(loss.predictions_kernel)
 
-  def testkernelAttributes(self):
+  def testKernelAttributes(self):
     loss = CustomLoss(membership_kernel='gauss', predictions_kernel='laplace')
     self.assertIsInstance(loss.membership_kernel,
                           gaussian_kernel.GaussianKernel)

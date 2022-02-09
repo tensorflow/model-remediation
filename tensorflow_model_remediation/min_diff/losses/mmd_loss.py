@@ -15,7 +15,7 @@
 
 """Implementation of MMD Loss."""
 
-from typing import Optional, Text
+from typing import Optional
 
 import tensorflow as tf
 
@@ -65,7 +65,7 @@ class MMDLoss(base_loss.MinDiffLoss):
   def __init__(self,
                kernel="gaussian",
                predictions_transform=None,
-               name: Optional[Text] = None):
+               name: Optional[str] = None):
     """Initialize an instance of MMDLoss."""
     super(MMDLoss, self).__init__(
         predictions_transform=predictions_transform,

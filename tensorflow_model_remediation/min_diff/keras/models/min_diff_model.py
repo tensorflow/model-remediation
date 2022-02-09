@@ -816,6 +816,7 @@ def _conform_weights_to_losses(loss, loss_weight, default_value):
     try:
       tf.nest.assert_same_structure(loss, loss_weight)
     except Exception as e:
+
       raise ValueError("`loss` and `loss_weight` do not have matching "
                        "structures: \n{}".format(e))
 
@@ -856,6 +857,7 @@ def _conform_weights_to_losses(loss, loss_weight, default_value):
   try:
     tf.nest.assert_same_structure(loss, loss_weight)
   except Exception as e:
+
     raise ValueError(
         "`loss` and `loss_weight` (potentially with default weights added) "
         "do not have matching structures: \n{}".format(e))

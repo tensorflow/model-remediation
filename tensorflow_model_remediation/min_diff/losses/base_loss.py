@@ -17,7 +17,7 @@
 
 import abc
 import re
-from typing import Optional, Text, Tuple
+from typing import Optional, Tuple
 import dill
 
 import tensorflow as tf
@@ -78,7 +78,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
                predictions_transform=None,
                membership_kernel=None,
                predictions_kernel=None,
-               name: Optional[Text] = None):
+               name: Optional[str] = None):
 
     """Initialize `MinDiffLoss` instance.
 
@@ -399,7 +399,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
 
 
 def _validate_transform(transform: types.TensorTransformType,
-                        var_name: Text) -> None:
+                        var_name: str) -> None:
   if transform is None:
     return
   if not callable(transform):

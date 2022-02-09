@@ -993,11 +993,11 @@ class MinDiffModelTest(tf.test.TestCase):
     _ = model.fit(self.min_diff_dataset)
 
     # We expect only 1 regularization element in the original model's training.
-    self.assertEqual(len(original_model.losses), 1)
+    self.assertLen(original_model.losses, 1)
     # We expect 2 regularization elements in the min_diff model's training. The
     # first corresponds to the min_diff loss, the second is the original_model's
     # regularization loss.
-    self.assertEqual(len(model.losses), 2)
+    self.assertLen(model.losses, 2)
 
     # The regularization elements should be the same.
     self.assertAllClose(original_model.losses[-1], model.losses[-1])
@@ -1027,11 +1027,11 @@ class MinDiffModelTest(tf.test.TestCase):
     _ = model.fit(self.min_diff_dataset)
 
     # We expect only 1 regularization element in the original model's training.
-    self.assertEqual(len(original_model.losses), 1)
+    self.assertLen(original_model.losses, 1)
     # We expect 2 regularization elements in the min_diff model's training. The
     # first corresponds to the min_diff loss, the second is the original_model's
     # regularization loss.
-    self.assertEqual(len(model.losses), 2)
+    self.assertLen(model.losses, 2)
 
     # The regularization elements should be the same.
     self.assertAllClose(original_model.losses[-1], model.losses[-1])

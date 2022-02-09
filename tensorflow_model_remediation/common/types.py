@@ -15,12 +15,12 @@
 
 """Useful constants for typing the TensorFlow Model Remediation library."""
 
-from typing import Callable, Dict, Text, Tuple, Union
+from typing import Callable, Dict, Tuple, Union
 
 import tensorflow as tf
 
 TensorType = Union[tf.Tensor, tf.SparseTensor]
-FeatureOrLabelType = Union[TensorType, Dict[Text, TensorType]]
+FeatureOrLabelType = Union[TensorType, Dict[str, TensorType]]
 FeatureOrLabelTransformType = Callable[[FeatureOrLabelType], FeatureOrLabelType]
 InputFnType = Callable[[], Tuple[FeatureOrLabelType, FeatureOrLabelType]]
 OptimizerType = tf.keras.optimizers.Optimizer
