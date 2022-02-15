@@ -34,6 +34,12 @@ class MMDLossTest(tf.test.TestCase):
     loss_fn = mmd_lib.MMDLoss(name="custom_loss")
     self.assertEqual(loss_fn.name, "custom_loss")
 
+  def testEnableSummaryHistogram(self):
+    loss = mmd_lib.MMDLoss()
+    self.assertTrue(loss.enable_summary_histogram)
+    loss = mmd_lib.MMDLoss(enable_summary_histogram=False)
+    self.assertFalse(loss.enable_summary_histogram)
+
   def testGaussianKernelNoWeights(self):
     loss_fn = mmd_lib.MMDLoss(predictions_transform=tf.sigmoid)
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])

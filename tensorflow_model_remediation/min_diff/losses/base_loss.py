@@ -48,6 +48,8 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
       `min_diff.losses.MinDiffKernel` to be applied on `predictions`. If `None`
       is passed in, then `predictions` is left untouched when applying kernels.
     name: Name used for logging and tracking.
+    enable_summary_histogram: Boolean indicating if histogram summary should be
+      written. Defaults to `True`.
 
   To be implemented by subclasses:
 
@@ -78,7 +80,8 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
                predictions_transform=None,
                membership_kernel=None,
                predictions_kernel=None,
-               name: Optional[str] = None):
+               name: Optional[str] = None,
+               enable_summary_histogram: Optional[bool] = True):
 
     """Initialize `MinDiffLoss` instance.
 
@@ -98,6 +101,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
                                                       'membership_kernel')
     self.predictions_kernel = kernel_utils._get_kernel(predictions_kernel,
                                                        'predictions_kernel')
+    self.enable_summary_histogram = enable_summary_histogram
 
   def __call__(self,
                membership: types.TensorType,
@@ -141,30 +145,31 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
               tf.reduce_sum(tf.dtypes.cast(weights, tf.float32) * predictions),
               tf.cast(num_min_diff_examples, dtype=tf.float32)))
 
-      # Plot histogram of the MinDiff predictions.
-      summary_histogram = (
-          tf.summary.histogram
-          if tf.executing_eagerly() else tf.compat.v1.summary.histogram)
+      if self.enable_summary_histogram:
+        # Plot histogram of the MinDiff predictions.
+        summary_histogram = (
+            tf.summary.histogram
+        )
 
-      summary_histogram('min_diff_prediction_histogram', predictions)
+        summary_histogram('min_diff_prediction_histogram', predictions)
 
-      # Plot histogram of the MinDiff predictions for each membership class.
-      # Pick out only min_diff head training data
-      pos_mask = tf.dtypes.cast(weights, tf.float32) * tf.cast(
-          tf.equal(membership, 1.0), tf.float32)
-      neg_mask = tf.dtypes.cast(weights, tf.float32) * tf.cast(
-          tf.equal(membership, 0.0), tf.float32)
+        # Plot histogram of the MinDiff predictions for each membership class.
+        # Pick out only min_diff head training data
+        pos_mask = tf.dtypes.cast(weights, tf.float32) * tf.cast(
+            tf.equal(membership, 1.0), tf.float32)
+        neg_mask = tf.dtypes.cast(weights, tf.float32) * tf.cast(
+            tf.equal(membership, 0.0), tf.float32)
 
-      if predictions.shape.dims:
-        sensitive_group_predictions = tf.squeeze(
-            tf.gather(predictions, indices=tf.where(pos_mask[:, 0])))
-        non_sensitive_group_predictions = tf.squeeze(
-            tf.gather(predictions, indices=tf.where(neg_mask[:, 0])))
+        if predictions.shape.dims:
+          sensitive_group_predictions = tf.squeeze(
+              tf.gather(predictions, indices=tf.where(pos_mask[:, 0])))
+          non_sensitive_group_predictions = tf.squeeze(
+              tf.gather(predictions, indices=tf.where(neg_mask[:, 0])))
 
-        summary_histogram('min_diff_sensitive_group_prediction_histogram',
-                          sensitive_group_predictions)
-        summary_histogram('min_diff_non-sensitive_group_prediction_histogram',
-                          non_sensitive_group_predictions)
+          summary_histogram('min_diff_sensitive_group_prediction_histogram',
+                            sensitive_group_predictions)
+          summary_histogram('min_diff_non-sensitive_group_prediction_histogram',
+                            non_sensitive_group_predictions)
 
       return loss
 

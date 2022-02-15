@@ -35,6 +35,8 @@ class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
   Arguments:
     name: Name used for logging or tracking. Defaults to
       `'absolute_correlation_loss'`.
+    enable_summary_histogram: Optional bool indicating if `tf.summary.histogram`
+      should be included within the loss. Defaults to True.
 
   Absolute correlation measures how correlated predictions are with membership
   (regardless of direction). The metric guarantees that the result is 0 if and
@@ -48,10 +50,12 @@ class AbsoluteCorrelationLoss(base_loss.MinDiffLoss):
   """
   # pyformat: enable
 
-  def __init__(self, name: Optional[str] = None):
+  def __init__(self, name: Optional[str] = None,
+               enable_summary_histogram: Optional[bool] = True):
     """Initialize Loss."""
     super(AbsoluteCorrelationLoss,
-          self).__init__(name=name or 'absolute_correlation_loss')
+          self).__init__(name=name or 'absolute_correlation_loss',
+                         enable_summary_histogram=enable_summary_histogram)
 
   def call(
       self,

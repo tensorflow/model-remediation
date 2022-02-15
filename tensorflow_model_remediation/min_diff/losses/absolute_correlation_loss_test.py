@@ -32,6 +32,12 @@ class AbsoluteCorrelationLossTest(tf.test.TestCase):
     loss_fn = loss_lib.AbsoluteCorrelationLoss(name='custom_loss')
     self.assertEqual(loss_fn.name, 'custom_loss')
 
+  def testEnableSummaryHistogram(self):
+    loss = loss_lib.AbsoluteCorrelationLoss()
+    self.assertTrue(loss.enable_summary_histogram)
+    loss = loss_lib.AbsoluteCorrelationLoss(enable_summary_histogram=False)
+    self.assertFalse(loss.enable_summary_histogram)
+
   def testNoWeights(self):
     loss_fn = loss_lib.AbsoluteCorrelationLoss()
     membership = tf.constant([[1.0], [0.0], [1.0], [0.0], [1.0]])

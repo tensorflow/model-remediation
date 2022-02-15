@@ -47,6 +47,8 @@ class MMDLoss(base_loss.MinDiffLoss):
       predictions. In some cases, such as regression, not having any transform
       is more likely to yield successful results.
     name: Name used for logging and tracking. Defaults to `'mmd_loss'`.
+    enable_summary_histogram: Optional bool indicating if `tf.summary.histogram`
+      should be included within the loss. Defaults to True.
 
   The Maximum Mean Discrepancy (MMD) is a measure of the distance between the
   distributions of prediction scores on two groups of examples. The metric
@@ -65,12 +67,14 @@ class MMDLoss(base_loss.MinDiffLoss):
   def __init__(self,
                kernel="gaussian",
                predictions_transform=None,
-               name: Optional[str] = None):
+               name: Optional[str] = None,
+               enable_summary_histogram: Optional[bool] = True):
     """Initialize an instance of MMDLoss."""
     super(MMDLoss, self).__init__(
         predictions_transform=predictions_transform,
         predictions_kernel=kernel,
-        name=name or "mmd_loss")
+        name=name or "mmd_loss",
+        enable_summary_histogram=enable_summary_histogram)
 
   def _preprocess(self,
                   membership: types.TensorType,
