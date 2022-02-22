@@ -22,7 +22,6 @@ REQUIRED_PACKAGES = [
     # TODO: Look into removing mock from setup.
     'mock',
     'pandas',
-    'six',
     'tensorflow>=2.0.0',
     'tensorflow_hub',
 ]

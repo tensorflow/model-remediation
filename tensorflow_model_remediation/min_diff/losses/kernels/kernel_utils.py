@@ -17,8 +17,6 @@
 
 from typing import Union
 
-import six
-
 from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
@@ -59,7 +57,7 @@ def _get_kernel(kernel: Union[base_kernel.MinDiffKernel, str],
     return None
   if isinstance(kernel, base_kernel.MinDiffKernel):
     return kernel
-  if isinstance(kernel, six.string_types):
+  if isinstance(kernel, str):
     lower_case_kernel = kernel.lower()
     if lower_case_kernel in _STRING_TO_KERNEL_DICT:
       return _STRING_TO_KERNEL_DICT[lower_case_kernel]()

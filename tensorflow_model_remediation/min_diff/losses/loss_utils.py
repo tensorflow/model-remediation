@@ -17,8 +17,6 @@
 
 from typing import Union
 
-import six
-
 from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as abs_corr_loss
 from tensorflow_model_remediation.min_diff.losses import base_loss
 from tensorflow_model_remediation.min_diff.losses import mmd_loss
@@ -64,7 +62,7 @@ def _get_loss(loss: Union[base_loss.MinDiffLoss, str],
     return None
   if isinstance(loss, base_loss.MinDiffLoss):
     return loss
-  if isinstance(loss, six.string_types):
+  if isinstance(loss, str):
     lower_case_loss = loss.lower()
     if lower_case_loss in _STRING_TO_LOSS_DICT:
       return _STRING_TO_LOSS_DICT[lower_case_loss]()
