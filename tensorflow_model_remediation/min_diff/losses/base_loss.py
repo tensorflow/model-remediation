@@ -132,14 +132,17 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
                                                                     membership)
       num_non_sensitive_group_min_diff_examples = (
           num_min_diff_examples - num_sensitive_group_min_diff_examples)
-      tf.summary.scalar('sensitive_group_min_diff_examples_count',
-                        num_sensitive_group_min_diff_examples)
-      tf.summary.scalar('non-sensitive_group_min_diff_examples_count',
-                        num_non_sensitive_group_min_diff_examples)
-      tf.summary.scalar('min_diff_examples_count', num_min_diff_examples)
+      summary_scalar = (
+          tf.summary.scalar
+      )
+      summary_scalar('sensitive_group_min_diff_examples_count',
+                     num_sensitive_group_min_diff_examples)
+      summary_scalar('non-sensitive_group_min_diff_examples_count',
+                     num_non_sensitive_group_min_diff_examples)
+      summary_scalar('min_diff_examples_count', num_min_diff_examples)
       # The following metric can capture when the model degenerates and all
       # predictions go towards zero or one.
-      tf.summary.scalar(
+      summary_scalar(
           'min_diff_average_prediction',
           tf.math.divide_no_nan(
               tf.reduce_sum(tf.dtypes.cast(weights, tf.float32) * predictions),
@@ -170,7 +173,7 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
                             sensitive_group_predictions)
           summary_histogram('min_diff_non-sensitive_group_prediction_histogram',
                             non_sensitive_group_predictions)
-
+      summary_scalar('min_diff_loss', loss)
       return loss
 
   @docs.doc_private

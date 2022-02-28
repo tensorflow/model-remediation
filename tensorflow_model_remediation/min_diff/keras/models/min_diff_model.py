@@ -473,6 +473,7 @@ class MinDiffModel(tf.keras.Model):
     # If there is only one application return a scalar rather than a list.
     if len(min_diff_losses) == 1:
       min_diff_losses = min_diff_losses[0]
+
     return min_diff_losses
 
   def _compute_single_min_diff_loss(self,
@@ -522,7 +523,6 @@ class MinDiffModel(tf.keras.Model):
         membership=membership,
         sample_weight=sample_weight)
     min_diff_loss_metric.update_state(min_diff_loss)
-
     return min_diff_loss
 
   @docs.do_not_doc_in_subclasses
