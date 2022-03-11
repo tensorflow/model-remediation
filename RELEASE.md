@@ -8,6 +8,7 @@
 * `build_min_diff_dataset` now supports SparseTensors.
 * Adding an enable/disable feature for summary_histogram.
 * Moving TensorFlow Model Remediation to support Python 3 only.
+* Adding a new MinDiff loss of Adjusted MMD Loss
 
 
 ## Breaking changes

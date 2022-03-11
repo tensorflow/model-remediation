@@ -18,6 +18,7 @@
 from typing import Union
 
 from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as abs_corr_loss
+from tensorflow_model_remediation.min_diff.losses import adjusted_mmd_loss
 from tensorflow_model_remediation.min_diff.losses import base_loss
 from tensorflow_model_remediation.min_diff.losses import mmd_loss
 
@@ -34,6 +35,7 @@ def _register_loss_names(loss_class, names):
 
 _register_loss_names(abs_corr_loss.AbsoluteCorrelationLoss,
                      ['abs_corr', 'absolute_correlation'])
+_register_loss_names(adjusted_mmd_loss.AdjustedMMDLoss, ['adjusted_mmd'])
 _register_loss_names(mmd_loss.MMDLoss, ['mmd', 'maximum_mean_discrepancy'])
 
 

@@ -18,6 +18,7 @@
 import tensorflow as tf
 
 from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as abscorrloss
+from tensorflow_model_remediation.min_diff.losses import adjusted_mmd_loss
 from tensorflow_model_remediation.min_diff.losses import base_loss
 from tensorflow_model_remediation.min_diff.losses import loss_utils as utils
 from tensorflow_model_remediation.min_diff.losses import mmd_loss
@@ -55,6 +56,18 @@ class GetMinDiffLossTest(tf.test.TestCase):
     loss_name = 'custom_name'
     loss = utils._get_loss(mmd_loss.MMDLoss(name=loss_name))
     self.assertIsInstance(loss, mmd_loss.MMDLoss)
+    self.assertEqual(loss.name, loss_name)
+
+  def testForAdjustedMMDLoss(self):
+    loss = utils._get_loss('adjusted_mmd')
+    self.assertIsInstance(loss, adjusted_mmd_loss.AdjustedMMDLoss)
+    loss = utils._get_loss('adjusted_mmd_loss')
+    self.assertIsInstance(loss, adjusted_mmd_loss.AdjustedMMDLoss)
+    loss = utils._get_loss(mmd_loss.MMDLoss())
+    self.assertIsInstance(loss, mmd_loss.MMDLoss)
+    loss_name = 'custom_name'
+    loss = utils._get_loss(adjusted_mmd_loss.AdjustedMMDLoss(name=loss_name))
+    self.assertIsInstance(loss, adjusted_mmd_loss.AdjustedMMDLoss)
     self.assertEqual(loss.name, loss_name)
 
   def testForCustomLoss(self):

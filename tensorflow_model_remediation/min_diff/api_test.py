@@ -51,6 +51,7 @@ class LossesAPITest(tf.test.TestCase):
     _ = min_diff.losses.MinDiffLoss
     _ = min_diff.losses.AbsoluteCorrelationLoss
     _ = min_diff.losses.MMDLoss
+    _ = min_diff.losses.AdjustedMMDLoss
 
   def testKernelsAPI(self):
     _ = min_diff.losses.MinDiffKernel
