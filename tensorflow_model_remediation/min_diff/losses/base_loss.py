@@ -164,10 +164,11 @@ class MinDiffLoss(tf.keras.losses.Loss, abc.ABC):
             tf.equal(membership, 0.0), tf.float32)
 
         if predictions.shape.dims:
-          sensitive_group_predictions = tf.squeeze(
-              tf.gather(predictions, indices=tf.where(pos_mask[:, 0])))
-          non_sensitive_group_predictions = tf.squeeze(
-              tf.gather(predictions, indices=tf.where(neg_mask[:, 0])))
+
+          sensitive_group_predictions = tf.reshape(
+              tf.gather(predictions, indices=tf.where(pos_mask[:, 0])), [-1])
+          non_sensitive_group_predictions = tf.reshape(
+              tf.gather(predictions, indices=tf.where(neg_mask[:, 0])), [-1])
 
           summary_histogram('min_diff_sensitive_group_prediction_histogram',
                             sensitive_group_predictions)
