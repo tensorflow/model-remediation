@@ -21,6 +21,7 @@
 from tensorflow_model_remediation.min_diff.losses.absolute_correlation_loss import AbsoluteCorrelationLoss
 from tensorflow_model_remediation.min_diff.losses.base_loss import MinDiffLoss
 from tensorflow_model_remediation.min_diff.losses.mmd_loss import MMDLoss
+from tensorflow_model_remediation.min_diff.losses.adjusted_mmd_loss import AdjustedMMDLoss
 
 # Kernels
 from tensorflow_model_remediation.min_diff.losses import kernels
