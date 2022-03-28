@@ -1,15 +1,14 @@
 <!-- mdlint off(HEADERS_TOO_MANY_H1) -->
 
-# Current Version (Still in Development)
+# Version 0.1.6
 
 ## Major Features and Improvements
+* Adding a new MinDiff loss of Adjusted MMD Loss
 
 ## Bug fixes and other small changes
 * `build_min_diff_dataset` now supports SparseTensors.
 * Adding an enable/disable feature for summary_histogram.
 * Moving TensorFlow Model Remediation to support Python 3 only.
-* Adding a new MinDiff loss of Adjusted MMD Loss
-
 
 ## Breaking changes
 
