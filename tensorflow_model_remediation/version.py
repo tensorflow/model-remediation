@@ -15,4 +15,4 @@
 
 """Version string for TensorFlow Model Remediation."""
 
-__version__ = "0.1.6"
+__version__ = "0.1.7.dev"
