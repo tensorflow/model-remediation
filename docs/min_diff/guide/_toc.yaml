@@ -17,9 +17,10 @@ toc:
   path: /responsible_ai/model_remediation/
 - title: Install
   path: /responsible_ai/model_remediation/install
+- heading: MinDiff
 - title: Usage requirements
   path: /responsible_ai/model_remediation/min_diff/guide/requirements
-- title: MinDiff Data Preparation
+- title: Data preparation
   path: /responsible_ai/model_remediation/min_diff/guide/min_diff_data_preparation
 - title: Integrating MinDiff with MinDiffModel
   path: /responsible_ai/model_remediation/min_diff/guide/integrating_min_diff_with_min_diff_model
@@ -27,3 +28,5 @@ toc:
   path: /responsible_ai/model_remediation/min_diff/guide/customizing_min_diff_model
 - title: Integrating MinDiff without MinDiffModel
   path: /responsible_ai/model_remediation/min_diff/guide/integrating_min_diff_without_min_diff_model
+- title: Use MinDiff with Keras
+  path: /responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras
