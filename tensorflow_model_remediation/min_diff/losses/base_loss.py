@@ -18,8 +18,8 @@
 import abc
 import re
 from typing import Optional, Tuple
-import dill
 
+import dill
 import tensorflow as tf
 
 from tensorflow_model_remediation.common import docs
