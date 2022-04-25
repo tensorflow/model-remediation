@@ -29,32 +29,28 @@ from tensorflow_model_remediation.counterfactual.keras.utils import structure_ut
 
 class CounterfactualPackedInputs(
     collections.namedtuple("CounterfactualPackedInputs", [
-        "original_x", "original_y", "original_sample_weight",
-        "counterfactual_x", "counterfactual_sample_weight"
+        "original_dataset",
+        "counterfactual_dataset",
     ])):
   """Named tuple containing inputs for the original and counterfactual data.
 
-  `CounterfactualModel` default implementations and `utils.(un)pack_*` functions
-  use this class to pack and unpack the separate components required for
-  Counterfactual and regular training.
+  `CounterfactualModel` default implementations functions use this class to pack
+  and unpack the separate components required for Counterfactual and regular
+  training.
 
   Attributes:
-    original_x: Batch of inputs that would originally (i.e. without
+    original_dataset: Batch of inputs that would originally (i.e. without
       applying Counterfactual) be passed in to a model's `Model.call` method.
       This corresponds to the `x` component described in `tf.keras.Model.fit`.
-    original_y: Original `y` of the original dataset.
-    original_sample_weight: Original `weight` of the original dataset.
-    counterfactual_x: Counterfactual value based on `original_x` that has been
-      modified. This value and original_x will be used to calculate
-      `CounterfactualLoss`.
-    counterfactual_sample_weight: Weight value assigned to `counterfactual_x`.
+    counterfactual_dataset: Counterfactual value based on `original_x` that has
+      been modified. Should be the form `(orginal_x, counterfactual_x,
+      counterfactual_samle_weight)`.
   """
 
 
 def pack_counterfactual_data(
     original_dataset: tf.data.Dataset,
-    counterfactual_dataset: tf.data.Dataset,
-    cf_sample_weight: Optional[complex] = None) -> tf.data.Dataset:
+    counterfactual_dataset: tf.data.Dataset) -> CounterfactualPackedInputs:
   """Packs `counterfactual_dataset` with the `original_dataset`.
 
   Arguments:
@@ -64,8 +60,6 @@ def pack_counterfactual_data(
     counterfactual_dataset: `tf.data.Dataset` or valid Counterfactual structure
       (unnested dict) of `tf.data.Dataset`s containing only examples to be used
       to calculate the `counterfactual_loss`.
-    cf_sample_weight: Optional sample weight to add to the Counterfactual
-      dataset.
 
   This function should be used to create the dataset that will be passed to
   `counterfactual.keras.CounterfactualModel` during training and, optionally,
@@ -82,6 +76,7 @@ def pack_counterfactual_data(
   `(packed_inputs, original_y, original_sample_weight, counterfactual_x)`
   matching the length of `original_dataset` batches where:
 
+  TODO: Update docstring with the API changes.
   - `packed_inputs`: is an instance of `utils.CounterfactualPackedInputs`
      containing:
 
@@ -141,26 +136,9 @@ def pack_counterfactual_data(
   dataset = tf.data.Dataset.zip((original_dataset, counterfactual_dataset))
 
   def _map_fn(original_batch, counterfactual_batch):
-    # Unpack original batch.
-    original_x, original_y, original_sample_weight = (
-        tf.keras.utils.unpack_x_y_sample_weight(original_batch))
-    counterfactual_x, _, counterfactual_sample_weight = (
-        tf.keras.utils.unpack_x_y_sample_weight(counterfactual_batch))
-
-    nonlocal cf_sample_weight
-    if cf_sample_weight is not None:
-      flat_counterfactual_x = tf.nest.flatten(counterfactual_x)
-      counterfactual_sample_weight = tf.fill(
-          [tf.shape(flat_counterfactual_x[0])[0], 1], cf_sample_weight)
-
     return CounterfactualPackedInputs(
-        original_x=original_x,
-        original_y=original_y,
-        original_sample_weight=original_sample_weight,
-        counterfactual_x=counterfactual_x,
-        counterfactual_sample_weight=counterfactual_sample_weight)
-
-  # Reshape dataset output.
+        original_dataset=original_batch,
+        counterfactual_dataset=counterfactual_batch)
   return dataset.map(_map_fn)
 
 
@@ -179,7 +157,9 @@ def build_counterfactual_dataset(
     sensitive_terms_to_remove: List of terms that will be removed or a
       dictionary of terms that will be replaced within the original dataset.
     custom_counterfactual_function: Optional custom function to apply
-      to `tf.data.Dataset.map` to build a custom counterfactual dataset.
+      to `tf.data.Dataset.map` to build a custom counterfactual dataset. Note
+      that Needs return dataset must be in the form of `(original_x,
+      counterfactual_x, cf_weight)`
 
   This function builds a `tf.data.Dataset` containing examples that are meant to
   only be used when calculating a `counterfactual_loss`. This resulting dataset
@@ -215,7 +195,7 @@ def build_counterfactual_dataset(
   Returns:
     A `tf.data.Dataset` whose output is a tuple or structure (matching the
       structure of the inputs) of `main: (x, y, w,)
-      counterfactual: (x, weight)`.
+      counterfactual: `(x, counterfactual_x, sample_weight)`.
 
   Raises:
     ValueError: If both `custom_counterfactual_function` and
@@ -248,7 +228,10 @@ def build_counterfactual_dataset(
     # `custom_counterfactual_function`.
     list_regex = "(%s)" % "|".join(sensitive_terms_to_remove)
     counterfactual_x = tf.strings.regex_replace(original_x, list_regex, "")
-    return tf.keras.utils.pack_x_y_sample_weight(counterfactual_x)
+    # TODO: Limit the return values to only the ones that are changed
+    # and reshape to return the same size tensor as the original.
+    return tf.keras.utils.pack_x_y_sample_weight(
+        original_x, counterfactual_x, tf.ones_like(original_x, tf.float32))
 
   def _map_fn(orginal_batch):
     counterfactual_func = (
@@ -256,111 +239,3 @@ def build_counterfactual_dataset(
         is not None else _create_counterfactual_dataset)
     return counterfactual_func(orginal_batch)
   return counterfactual_dataset.map(_map_fn)
-
-
-def unpack_original_x(inputs):
-  """Unpacks `original_x` from a `CounterfactualPackedInputs` instance.
-
-  Arguments:
-    inputs: CounterfactualPackedInputs to be unpacked, if possible.
-
-  Returns:
-    `original_x` if `inputs` is an instance of
-      `CounterfactualPackedInputs`, otherwise returns `None`.
-  """
-  if not isinstance(inputs, CounterfactualPackedInputs):
-    return None  # Default to returning None directly.
-  return inputs.original_x
-
-
-def unpack_original_y(inputs):
-  """Unpacks `original_y` from a `CounterfactualPackedInputs` instance.
-
-  Arguments:
-    inputs: CounterfactualPackedInputs to be unpacked, if possible.
-
-  Returns:
-    `original_y` if `inputs` is an instance of
-      `CounterfactualPackedInputs`, otherwise returns `None`.
-  """
-  if not isinstance(inputs, CounterfactualPackedInputs):
-    return None  # Default to returning None directly.
-  return inputs.original_y
-
-
-def unpack_original_sample_weight(inputs):
-  """Unpacks `original_sample_weight` from a `CounterfactualPackedInputs`.
-
-  Arguments:
-    inputs: CounterfactualPackedInputs to be unpacked, if possible.
-
-  Returns:
-    `original_sample_weight` if `inputs` is an instance of
-      `CounterfactualPackedInputs`, otherwise returns `None`.
-  """
-  if not isinstance(inputs, CounterfactualPackedInputs):
-    return None  # Default to returning None directly.
-  return inputs.original_sample_weight
-
-
-def unpack_counterfactual_x(inputs):
-  """Unpacks `counterfactual_x` from a `CounterfactualPackedInputs` instance.
-
-  Arguments:
-    inputs: Data to be unpacked, if possible.
-
-  Returns:
-    `counterfactual_x` if `inputs` is an instance of
-      `CounterfactualPackedInputs`, otherwise returns `None`.
-  """
-  if not isinstance(inputs, CounterfactualPackedInputs):
-    return None  # Default to returning None.
-  return inputs.counterfactual_x
-
-
-def unpack_counterfactual_sample_weight(inputs):
-  """Unpacks `counterfactual_sample_weight` from a `CounterfactualPackedInputs`.
-
-  Arguments:
-    inputs: CounterfactualPackedInputs to be unpacked, if possible.
-
-  Returns:
-    `counterfactual_sample_weight` if `inputs` is an instance of
-      `CounterfactualPackedInputs`, otherwise returns `None`.
-  """
-  if not isinstance(inputs, CounterfactualPackedInputs):
-    return None  # Default to returning None.
-  return inputs.counterfactual_sample_weight
-
-
-def unpack_x_y_sample_weight_cfx_cfsample_weight(data):
-  """Unpacks user-provided data tuple.
-
-  This is a convenience utility to be used when overriding
-  `Model.train_step`, `Model.test_step`, or `Model.predict_step`.
-  This utility makes it easy to support data of the form `(x,)`,
-  `(x, y)`, `(x, y, sample_weight)`, `(x, y, sample_weight, cfx)`, or
-  `(x, y, sample_weight, cfx, cfsample_weight)`.
-
-  Args:
-    data: A CounterfactualPackedInputs tuple of the form `(x,)`, `(x, y)`,
-      `(x, y, sample_weight)`, `(x, y, sample_weight, cfx)`, or
-      `(x, y, sample_weight, cfx, cfsample_weight)`.
-
-  Returns:
-    The unpacked tuple, with `None`s for tuple values that are not provided.
-
-  Raises:
-    TypeError: If the data is not an instance of CounterfactualPackedInputs.
-  """
-  if isinstance(data, CounterfactualPackedInputs):
-    return (unpack_original_x(data),
-            unpack_original_y(data),
-            unpack_original_sample_weight(data),
-            unpack_counterfactual_x(data),
-            unpack_counterfactual_sample_weight(data))
-  else:
-    error_msg = (
-        "Data is expected to be in a CounterfactualPackedInputs format of "
-        f"`(x, y, sample_weight, cfx, cfsample_weight)` found: {data}")
-    raise TypeError(error_msg)

@@ -38,12 +38,6 @@ class KerasAPITest(tf.test.TestCase):
     _ = counterfactual.keras.utils.build_counterfactual_dataset
     _ = counterfactual.keras.utils.CounterfactualPackedInputs
     _ = counterfactual.keras.utils.pack_counterfactual_data
-    _ = counterfactual.keras.utils.unpack_original_x
-    _ = counterfactual.keras.utils.unpack_original_y
-    _ = counterfactual.keras.utils.unpack_original_sample_weight
-    _ = counterfactual.keras.utils.unpack_counterfactual_x
-    _ = counterfactual.keras.utils.unpack_counterfactual_sample_weight
-    _ = counterfactual.keras.utils.unpack_x_y_sample_weight_cfx_cfsample_weight
 
   def testStructureUtilsAPI(self):
     _ = counterfactual.keras.utils.validate_counterfactual_structure

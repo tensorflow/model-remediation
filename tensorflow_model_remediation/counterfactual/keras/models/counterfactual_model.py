@@ -229,17 +229,18 @@ class CounterfactualModel(tf.keras.Model):
     """
     return self._original_model
 
-  def compute_total_loss(self, y, y_pred, y_pred_counterfactual, sample_weight,
+  def compute_total_loss(self, y, y_pred, y_pred_original,
+                         y_pred_counterfactual, sample_weight,
                          cf_sample_weight):
     compiled_loss = self.compiled_loss(y, y_pred, sample_weight)
     total_loss = compiled_loss
 
     counterfactual_loss = None
     if y_pred_counterfactual is not None:
+      # Compiled counterfactual losses.
       counterfactual_loss = self.compute_counterfactual_loss(
-          y_pred, y_pred_counterfactual, cf_sample_weight)
+          y_pred_original, y_pred_counterfactual, cf_sample_weight)
       total_loss += counterfactual_loss
-
     return total_loss, counterfactual_loss, compiled_loss
 
   def compute_counterfactual_loss(self, original_predictions,
@@ -295,15 +296,21 @@ class CounterfactualModel(tf.keras.Model):
   def train_step(self, data):
     if not isinstance(data, utils.CounterfactualPackedInputs):
       raise ValueError(
-          "Training data must be an instance of CounterfactualPackedInputs.")
-    x, y, sample_weight, cf_x, cf_sample_weight = (
-        utils.unpack_x_y_sample_weight_cfx_cfsample_weight(data))
+          "Training data must be an instance of CounterfactualPackedInputs. "
+          f"Received: {data}")
+    x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(
+        data.original_dataset)
+    original_x, cf_x, cf_sample_weight = (
+        tf.keras.utils.unpack_x_y_sample_weight(data.counterfactual_dataset))
 
     with tf.GradientTape() as tape:
       y_pred = self.original_model(x)
-      y_pred_counterfactual = self.original_model(cf_x)
+      y_pred_original = self.original_model(original_x)
+      y_pred_counterfactual = self.original_model(
+          cf_x) if cf_x is not None else None
       total_loss, counterfactual_loss, compiled_loss = self.compute_total_loss(
-          y, y_pred, y_pred_counterfactual, sample_weight, cf_sample_weight)
+          y, y_pred, y_pred_original, y_pred_counterfactual, sample_weight,
+          cf_sample_weight)
 
     # Compute gradients
     trainable_vars = self.original_model.trainable_variables
@@ -330,19 +337,26 @@ class CounterfactualModel(tf.keras.Model):
     exception that it removes the 'counterfactual_loss' metric(s) if
     `counterfactual_data` is not available.
     """
-    y, y_pred, y_pred_counterfactual, sample_weight, cf_sample_weight = (
-        None, None, None, None, None)
     if isinstance(data, utils.CounterfactualPackedInputs):
-      x, y, sample_weight, cf_x, cf_sample_weight = (
-          utils.unpack_x_y_sample_weight_cfx_cfsample_weight(data))
-      y_pred_counterfactual = self.original_model(cf_x)
+      x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(
+          data.original_dataset)
+      original_x, cf_x, cf_sample_weight = (
+          tf.keras.utils.unpack_x_y_sample_weight(data.counterfactual_dataset))
       y_pred = self.original_model(x)
+      y_pred_original = self.original_model(original_x)
+      y_pred_counterfactual = self.original_model(cf_x)
     else:
       x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(data)
       y_pred = self.original_model(x)
 
+      # Set Counterfactual metrics to None.
+      y_pred_original = None
+      y_pred_counterfactual = None
+      cf_sample_weight = None
+
     total_loss, counterfactual_loss, compiled_loss = self.compute_total_loss(
-        y, y_pred, y_pred_counterfactual, sample_weight, cf_sample_weight)
+        y, y_pred, y_pred_original, y_pred_counterfactual,
+        sample_weight, cf_sample_weight)
     self.update_metrics(y, y_pred, sample_weight, total_loss, compiled_loss,
                         counterfactual_loss)
     metrics_to_return = []

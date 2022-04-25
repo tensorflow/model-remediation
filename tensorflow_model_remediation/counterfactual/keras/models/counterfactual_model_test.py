@@ -60,15 +60,16 @@ class CounterfactualModelTest(tf.test.TestCase):
     super(CounterfactualModelTest, self).setUp()
     self.original_x = tf.constant([[-1.0, -2.0, -3.0], [-4.0, -5.0, -6.0],
                                    [-7.0, -8.0, -9.0], [-10.0, -11.0, -12.0]])
+    self.y = tf.constant([0.0, 0.0, 0.0, 0.0])
+    self.w = tf.constant([5.0, 6.0, 7.0, 8.0])
     self.counterfactual_x = tf.constant([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0],
                                          [7.0, 8.0, 9.0], [10.0, 11.0, 12.0]])
-    self.w = tf.constant([5.0, 6.0, 7.0, 8.0])
     self.cf_w = tf.constant([1.0, 2.0, 3.0, 4.0])
-    self.y = tf.constant([0.0, 0.0, 0.0, 0.0])
+
     self.main_dataset = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.y, self.w))
     self.cf_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.counterfactual_x, self.cf_w))
+        (self.original_x, self.counterfactual_x, self.cf_w))
     self.packed_dataset = utils.pack_counterfactual_data(
         self.main_dataset, self.cf_dataset)
 
@@ -307,14 +308,16 @@ class CounterfactualModelTest(tf.test.TestCase):
 
     y = tf.constant([[1, 0, 0], [0, 1, 0]], dtype=tf.float32)
     y_pred = tf.constant([[1, 1, 1], [2, 2, 2]], dtype=tf.float32)
-    y_pred_cf = tf.constant([[-1, -1, -1], [-2, -2, -2]], dtype=tf.float32)
+    y_pred_original = tf.constant(
+        [[1, 1, 0], [-2, -3, -2]], dtype=tf.float32)
+    y_pred_cf = tf.constant([[-1, -1, -1], [-2, -3, -2]], dtype=tf.float32)
     cf_w = tf.constant([5, 7], dtype=tf.float32)
     w = tf.constant([1, 2], dtype=tf.float32)
 
     total_loss, cf_loss, compiled_loss = cf_model.compute_total_loss(
-        y, y_pred, y_pred_cf, w, cf_w)
+        y, y_pred, y_pred_original, y_pred_cf, w, cf_w)
     self.assertAllClose(total_loss, cf_loss + compiled_loss)
-    self.assertAllClose(cf_loss, cf_loss_obj(y_pred, y_pred_cf, cf_w))
+    self.assertAllClose(cf_loss, cf_loss_obj(y_pred_original, y_pred_cf, cf_w))
     self.assertAllClose(compiled_loss, compiled_loss_obj(y, y_pred, w))
 
   def testTrainModelMetrics(self):
@@ -334,7 +337,7 @@ class CounterfactualModelTest(tf.test.TestCase):
     cf_model.compile(loss="mae")
     with self.assertRaisesRegex(
         ValueError,
-        "Training data must be an instance of CounterfactualPackedInputs."):
+        "Training data must be an instance of CounterfactualPackedInputs.*"):
       _ = cf_model.fit(self.original_x)
 
   def testCFModelInferenceCallsOriginalModel(self):

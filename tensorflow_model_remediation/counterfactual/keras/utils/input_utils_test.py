@@ -118,11 +118,9 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
     dataset = input_utils.build_counterfactual_dataset(original_dataset,
                                                        counterfactual_list)
 
-    expected_counterfactual_dataset = tf.reshape(
-        # Expected counterfactual dataset should not include the word "bad".
+    expected_counterfactual_data = tf.reshape(
         tf.constant([" word" + str(i) for i in range(25)] +
-                    ["good word" + str(i) for i in range(50)]),
-        [25, 3])
+                    ["good word" + str(i) for i in range(50)]), [25, 3])
 
     for batch_ind, counterfactual_batch in enumerate(dataset):
       # Assert counterfactual batch properly formed.
@@ -130,10 +128,15 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
           tf.keras.utils.unpack_x_y_sample_weight(counterfactual_batch))
       self.assertTensorsAllClose(
           counterfactual_x,
-          _get_counterfactual_batch(expected_counterfactual_dataset,
+          _get_counterfactual_batch(self.original_x["f1"],
                                     original_batch_size, batch_ind))
-      self.assertIsNone(counterfactual_y)
-      self.assertIsNone(counterfactual_w)
+      self.assertTensorsAllClose(
+          counterfactual_y,
+          _get_counterfactual_batch(expected_counterfactual_data,
+                                    original_batch_size, batch_ind))
+      self.assertTensorsAllClose(
+          counterfactual_w,
+          tf.ones_like(self.original_x["f1"], tf.float32))
 
   def testBuildFromCustomCounterfactualDatasets(self):
     original_batch_size = 1
@@ -187,10 +190,7 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
           _get_counterfactual_batch(self.original_w,
                                     original_batch_size, batch_ind))
 
-  # TODO: Add tests that the original and counterfactual appear within
-  # the same batch only.
-
-  def testWithBothOriginalWeightsNone(self):
+  def testWithBothOriginalWeightsAreNotNone(self):
     original_batch_size = 3
     original_dataset = tf.data.Dataset.from_tensor_slices(
         (self.original_x["f1"], None, None)).batch(original_batch_size)
@@ -206,7 +206,7 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
       # Skip all counterfactual_data assertions except for weight.
       _, _, counterfactual_w = tf.keras.utils.unpack_x_y_sample_weight(
           counterfactual_batch)
-      self.assertIsNone(counterfactual_w)
+      self.assertIsNotNone(counterfactual_w)
 
   def testCounterfactualDatasetsWithOnlyDatasetError(self):
     original_batch_size = 1
@@ -240,125 +240,42 @@ class PackCounterfactualDataTest(CounterfactualInputUtilsTestCase):
   def testPackSingleDatasets(self):
     batch_size = 5
     original_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.original_x["f1"], self.original_y,
-         self.original_w)).batch(batch_size)
+        (self.original_x, self.original_y)).batch(batch_size)
 
     counterfactual_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.counterfactual_x["f1_counterfactual"], None,
-         self.counterfactual_w)).batch(batch_size)
+        (self.original_x, self.counterfactual_x["f1_counterfactual"],
+         tf.ones_like(self.original_x["f1"], tf.float32))).batch(batch_size)
 
     dataset = input_utils.pack_counterfactual_data(original_dataset,
                                                    counterfactual_dataset)
 
-    for batch_ind, counterfactual_packed_inputs in enumerate(dataset):
-      self.assertIsInstance(counterfactual_packed_inputs,
+    for batch_ind, counterfactual_batch in enumerate(dataset):
+      self.assertIsInstance(counterfactual_batch,
                             input_utils.CounterfactualPackedInputs)
+      original_x, original_y, original_w = (
+          tf.keras.utils.unpack_x_y_sample_weight(
+              counterfactual_batch.original_dataset))
+      original_x_in_counterfactual, counterfactual_x, counterfactual_w = (
+          tf.keras.utils.unpack_x_y_sample_weight(
+              counterfactual_batch.counterfactual_dataset))
+      self.assertLen(counterfactual_batch, 2)
       self.assertTensorsAllClose(
-          counterfactual_packed_inputs.original_x,
-          _get_batch(self.original_x["f1"], batch_size, batch_ind))
+          original_x,
+          _get_batch(self.original_x, batch_size, batch_ind))
       self.assertTensorsAllClose(
-          counterfactual_packed_inputs.original_y,
+          original_y,
           _get_batch(self.original_y, batch_size, batch_ind))
+      self.assertIsNone(original_w)
       self.assertTensorsAllClose(
-          counterfactual_packed_inputs.original_sample_weight,
-          _get_batch(self.original_w, batch_size, batch_ind))
+          original_x_in_counterfactual,
+          _get_batch(self.original_x, batch_size, batch_ind))
       self.assertTensorsAllClose(
-          counterfactual_packed_inputs.counterfactual_x,
+          counterfactual_x,
           _get_counterfactual_batch(self.counterfactual_x["f1_counterfactual"],
                                     batch_size, batch_ind))
       self.assertAllClose(
-          counterfactual_packed_inputs.counterfactual_sample_weight,
-          _get_counterfactual_batch(self.counterfactual_w,
-                                    batch_size, batch_ind))
-
-  def testPackSingleDatasetsWithDict(self):
-    batch_size = 5
-    original_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.original_x, self.original_y,
-         self.original_w)).batch(batch_size)
-
-    counterfactual_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.counterfactual_x, None, self.counterfactual_w)).batch(batch_size)
-
-    dataset = input_utils.pack_counterfactual_data(original_dataset,
-                                                   counterfactual_dataset)
-
-    for batch_ind, counterfactual_packed_inputs in enumerate(dataset):
-      self.assertIsInstance(counterfactual_packed_inputs,
-                            input_utils.CounterfactualPackedInputs)
-      self.assertTensorsAllClose(
-          counterfactual_packed_inputs.original_x,
-          _get_batch(self.original_x, batch_size, batch_ind))
-      self.assertTensorsAllClose(
-          counterfactual_packed_inputs.original_y,
-          _get_batch(self.original_y, batch_size, batch_ind))
-      self.assertTensorsAllClose(
-          counterfactual_packed_inputs.original_sample_weight,
-          _get_batch(self.original_w, batch_size, batch_ind))
-      self.assertTensorsAllClose(
-          counterfactual_packed_inputs.counterfactual_x,
-          _get_counterfactual_batch(self.counterfactual_x,
-                                    batch_size, batch_ind))
-      self.assertTensorsAllClose(
-          counterfactual_packed_inputs.counterfactual_sample_weight,
-          _get_counterfactual_batch(self.counterfactual_w,
-                                    batch_size, batch_ind))
-
-  def testWithoutOriginalWeights(self):
-    batch_size = 5
-    original_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.original_x, self.original_y)).batch(batch_size)
-
-    counterfactual_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.counterfactual_x["f1_counterfactual"], None,
-         self.counterfactual_w)).batch(batch_size)
-
-    dataset = input_utils.pack_counterfactual_data(original_dataset,
-                                                   counterfactual_dataset)
-
-    for batch in dataset:
-      # Only validate original batch weights (other tests cover others).
-      # Should be of length 5.
-      self.assertLen(batch, 5)
-      self.assertIsNone(batch.original_sample_weight)
-
-  def testWithoutCounterfactualWeights(self):
-    batch_size = 5
-    original_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.original_x, self.original_y)).batch(batch_size)
-
-    counterfactual_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.counterfactual_x["f1_counterfactual"], None,
-         None)).batch(batch_size)
-
-    dataset = input_utils.pack_counterfactual_data(original_dataset,
-                                                   counterfactual_dataset)
-
-    for batch in dataset:
-      self.assertLen(batch, 5)
-      self.assertIsNone(batch.counterfactual_sample_weight)
-
-  def testWithParameterCounterfactualWeights(self):
-    batch_size = 5
-    original_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.original_x, self.original_y)).batch(batch_size)
-
-    counterfactual_dataset = tf.data.Dataset.from_tensor_slices(
-        (self.counterfactual_x["f1_counterfactual"], None,
-         None)).batch(batch_size)
-
-    dataset = input_utils.pack_counterfactual_data(
-        original_dataset,
-        counterfactual_dataset,
-        cf_sample_weight=2.0)
-    expected_counterfactual_sample_weight = tf.fill([25, 1], 2.0)
-
-    for batch_ind, batch in enumerate(dataset):
-      self.assertLen(batch, 5)
-      self.assertTensorsAllClose(
-          batch.counterfactual_sample_weight,
-          _get_counterfactual_batch(expected_counterfactual_sample_weight,
-                                    batch_size, batch_ind))
+          counterfactual_w,
+          tf.ones_like(counterfactual_x, tf.float32))
 
   def testInvalidStructureRaisesError(self):
     batch_size = 5
@@ -378,249 +295,6 @@ class PackCounterfactualDataTest(CounterfactualInputUtilsTestCase):
         ValueError, ".*Original cardinality: 5\nCounterfactual cardinality: 3"):
       _ = input_utils.pack_counterfactual_data(
           original_dataset, short_counterfactual__dataset)
-
-
-class UnpackDataTest(tf.test.TestCase):
-
-  def testUnpackOriginalX(self):
-    # Tensor.
-    tensor = tf.fill([3, 4], 1.3)
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        tensor, None, None, None, None)
-    unpacked_tensor = input_utils.unpack_original_x(packed_inputs)
-    self.assertIs(unpacked_tensor, tensor)
-
-    # Dict of Tensors.
-    tensors = {"f1": tf.fill([1, 2], 2), "f2": tf.fill([4, 5], "a")}
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        tensors, None, None, None, None)
-    unpacked_tensors = input_utils.unpack_original_x(packed_inputs)
-    self.assertIs(unpacked_tensors, tensors)
-
-    # Arbitrary object.
-    obj = set(["a", "b", "c"])
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        obj, None, None, None, None)
-    unpacked_obj = input_utils.unpack_original_x(packed_inputs)
-    self.assertIs(unpacked_obj, obj)
-
-    # None.
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, None, None)
-    unpacked_obj = input_utils.unpack_original_x(packed_inputs)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackOriginalY(self):
-    # Tensor.
-    tensor = tf.fill([3, 4], 1.3)
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, tensor, None, None, None)
-    unpacked_tensor = input_utils.unpack_original_y(packed_inputs)
-    self.assertIs(unpacked_tensor, tensor)
-
-    # Tuple of Tensors.
-    tensors = ({
-        "f1": tf.fill([1, 2], 2),
-        "f2": tf.fill([4, 5], "a")
-    }, None, tf.fill([4, 1], 1.0))
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, tensors, None, None, None)
-    unpacked_tensors = input_utils.unpack_original_y(packed_inputs)
-    self.assertIs(unpacked_tensors, tensors)
-
-    # Arbitrary object.
-    obj = set(["a", "b", "c"])
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, obj, None, None, None)
-    unpacked_obj = input_utils.unpack_original_y(packed_inputs)
-    self.assertIs(unpacked_obj, obj)
-
-    # None.
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, None, None)
-    unpacked_obj = input_utils.unpack_original_y(packed_inputs)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackOriginalSampleWeight(self):
-    # Tensor.
-    tensor = tf.fill([3, 4], 1.3)
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, tensor, None, None)
-    unpacked_tensor = input_utils.unpack_original_sample_weight(packed_inputs)
-    self.assertIs(unpacked_tensor, tensor)
-
-    # Tuple of Tensors.
-    tensors = ({
-        "f1": tf.fill([1, 2], 2),
-        "f2": tf.fill([4, 5], "a")
-    }, None, tf.fill([4, 1], 1.0))
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, tensors, None, None)
-    unpacked_tensors = input_utils.unpack_original_sample_weight(packed_inputs)
-    self.assertIs(unpacked_tensors, tensors)
-
-    # Arbitrary object.
-    obj = set(["a", "b", "c"])
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, obj, None, None)
-    unpacked_obj = input_utils.unpack_original_sample_weight(packed_inputs)
-    self.assertIs(unpacked_obj, obj)
-
-    # None.
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, None, None)
-    unpacked_obj = input_utils.unpack_original_y(packed_inputs)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackCounterfactualXTensor(self):
-    tensor = tf.fill([3, 4], 1.3)
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, tensor, None)
-    unpacked_tensor = input_utils.unpack_counterfactual_x(packed_inputs)
-    self.assertIs(unpacked_tensor, tensor)
-
-  def testUnpackCounterfactualXTupleOfTensor(self):
-    tensors = ({
-        "f1": tf.fill([1, 2], 2),
-        "f2": tf.fill([4, 5], "a")
-    }, None, tf.fill([4, 1], 1.0))
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, tensors, None)
-    unpacked_tensors = input_utils.unpack_counterfactual_x(packed_inputs)
-    self.assertIs(unpacked_tensors, tensors)
-
-  def testUnpackCounterfactualXObject(self):
-    obj = set(["a", "b", "c"])
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, obj, None)
-    unpacked_obj = input_utils.unpack_counterfactual_x(packed_inputs)
-    self.assertIs(unpacked_obj, obj)
-
-  def testUnpackCounterfactualXNone(self):
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, None, None)
-    unpacked_obj = input_utils.unpack_counterfactual_x(packed_inputs)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackOriginalXDefaultsToNoneTensor(self):
-    tensor = tf.fill([3, 4], 1.3)
-    unpacked_tensor = input_utils.unpack_original_x(tensor)
-    self.assertIsNone(unpacked_tensor)
-
-  def testUnpackOriginalXDefaultsToINoneDictOfTensor(self):
-    tensors = {"f1": tf.fill([1, 2], 2), "f2": tf.fill([4, 5], "a")}
-    unpacked_tensors = input_utils.unpack_original_x(tensors)
-    self.assertIsNone(unpacked_tensors)
-
-  def testUnpackOriginalXDefaultsToNoneobject(self):
-    obj = set(["a", "b", "c"])
-    unpacked_obj = input_utils.unpack_original_x(obj)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackOriginalYDefaultsToNoneTensor(self):
-    tensor = tf.fill([3, 4], 1.3)
-    unpacked_tensor = input_utils.unpack_original_y(tensor)
-    self.assertIsNone(unpacked_tensor)
-
-  def testUnpackOriginalYDefaultsToNoneDictOfTensor(self):
-    tensors = {"f1": tf.fill([1, 2], 2), "f2": tf.fill([4, 5], "a")}
-    unpacked_tensors = input_utils.unpack_original_y(tensors)
-    self.assertIsNone(unpacked_tensors)
-
-  def testUnpackOriginalYDefaultsToNoneObject(self):
-    obj = set(["a", "b", "c"])
-    unpacked_obj = input_utils.unpack_original_y(obj)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackOriginalSampleWeightDefaultsToNoneTensor(self):
-    tensor = tf.fill([3, 4], 1.3)
-    unpacked_tensor = input_utils.unpack_original_sample_weight(tensor)
-    self.assertIsNone(unpacked_tensor)
-
-  def testUnpackOriginalSampleWeightDefaultsToNoneDictOfTensor(self):
-    tensors = {"f1": tf.fill([1, 2], 2), "f2": tf.fill([4, 5], "a")}
-    unpacked_tensors = input_utils.unpack_original_sample_weight(tensors)
-    self.assertIsNone(unpacked_tensors)
-
-  def testUnpackOriginalSampleWeightDefaultsToNoneObject(self):
-    obj = set(["a", "b", "c"])
-    unpacked_obj = input_utils.unpack_original_sample_weight(obj)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackCounterfactualSampleWeightTensor(self):
-    tensor = tf.fill([3, 4], 1.3)
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, None, tensor)
-    unpacked_tensor = input_utils.unpack_counterfactual_sample_weight(
-        packed_inputs)
-    self.assertIs(unpacked_tensor, tensor)
-
-  def testUnpackCounterfactualSampleWeightTupleOfTensor(self):
-    tensors = ({
-        "f1": tf.fill([1, 2], 2),
-        "f2": tf.fill([4, 5], "a")
-    }, None, tf.fill([4, 1], 1.0))
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, None, tensors)
-    unpacked_tensors = input_utils.unpack_counterfactual_sample_weight(
-        packed_inputs)
-    self.assertIs(unpacked_tensors, tensors)
-
-  def testUnpackCounterfactualSampleWeightObject(self):
-    obj = set(["a", "b", "c"])
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, None, obj)
-    unpacked_obj = input_utils.unpack_counterfactual_sample_weight(
-        packed_inputs)
-    self.assertIs(unpacked_obj, obj)
-
-  def testUnpackCounterfactualSampleWeightNone(self):
-    packed_inputs = input_utils.CounterfactualPackedInputs(
-        None, None, None, None, None)
-    unpacked_obj = input_utils.unpack_counterfactual_sample_weight(
-        packed_inputs)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackCounterfactualXToNoneTensor(self):
-    tensor = tf.fill([3, 4], 1.3)
-    unpacked_tensor = input_utils.unpack_counterfactual_x(tensor)
-    self.assertIsNone(unpacked_tensor)
-
-  def testUnpackCounterfactualXToNoneTupleOfTensor(self):
-    tensors = ({
-        "f1": tf.fill([1, 2], 2),
-        "f2": tf.fill([4, 5], "a")
-    }, None, tf.fill([4, 1], 1.0))
-    unpacked_tensors = input_utils.unpack_counterfactual_x(tensors)
-    self.assertIsNone(unpacked_tensors)
-
-  def testUnpackCounterfactualXToNoneObject(self):
-    obj = set(["a", "b", "c"])
-    unpacked_obj = input_utils.unpack_counterfactual_x(obj)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackCounterfactualSampleWeightToNoneTensor(self):
-    tensor = tf.fill([3, 4], 1.3)
-    unpacked_tensor = input_utils.unpack_counterfactual_sample_weight(tensor)
-    self.assertIsNone(unpacked_tensor)
-
-  def testUnpackCounterfactualSampleWeightToNoneTupleOfTensor(self):
-    tensors = ({
-        "f1": tf.fill([1, 2], 2),
-        "f2": tf.fill([4, 5], "a")
-    }, None, tf.fill([4, 1], 1.0))
-    unpacked_tensors = input_utils.unpack_counterfactual_sample_weight(tensors)
-    self.assertIsNone(unpacked_tensors)
-
-  def testUnpackCounterfactualSampleWeightToNoneObject(self):
-    obj = set(["a", "b", "c"])
-    unpacked_obj = input_utils.unpack_counterfactual_sample_weight(obj)
-    self.assertIsNone(unpacked_obj)
-
-  def testUnpackXySampleWeightCfxCfsampleWeightValueError(self):
-    with self.assertRaises(TypeError):
-      _ = input_utils.unpack_x_y_sample_weight_cfx_cfsample_weight("wrong type")
-
 
 if __name__ == "__main__":
   tf.test.main()
