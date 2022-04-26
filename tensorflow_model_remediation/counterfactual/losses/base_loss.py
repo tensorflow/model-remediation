@@ -36,7 +36,8 @@ class CounterfactualLoss(tf.keras.losses.Loss, abc.ABC):
   the value in the `counterfactual_weights` column.
 
   If the predictions between the two groups are indistinguishable, the loss
-  should be 0. The more different the two scores are, the higher the loss.
+  should be 0. The greater different between the two scores are, the higher the
+  loss.
   """
 
   def __init__(self, name: Optional[str] = None):

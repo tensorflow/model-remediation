@@ -32,7 +32,7 @@ from tensorflow_model_remediation.counterfactual.losses import loss_utils
 @tf.keras.utils.register_keras_serializable()
 class CounterfactualModel(tf.keras.Model):
 
-  """Model that adds one or more loss component(s) to another model during training.
+  """Model that adds a Counterfactual loss component to another model during training.
 
   Inherits from: `tf.keras.Model`
 
@@ -53,8 +53,7 @@ class CounterfactualModel(tf.keras.Model):
 
   ### <a id=constructing_counterfactualmodel></a>Construction
 
-  There are two ways to construct a `CounterfactualModel` instance, the first is
-   the simplest and the most common:
+  There are two ways to construct a `CounterfactualModel` instance:
 
   1 - Directly wrap your model with `CounterfactualModel`. This is the simplest
   usage and is most likely what you will want to use (unless your original model
@@ -222,7 +221,7 @@ class CounterfactualModel(tf.keras.Model):
 
   @property
   def original_model(self):
-    """`tf.keras.Model` to be trained with the additional `counterfactual_loss` term.
+    """`tf.keras.Model` to be trained with the additional `counterfactual_loss`.
 
     Inference and evaluation will also come from the results this model
     provides.
@@ -249,8 +248,8 @@ class CounterfactualModel(tf.keras.Model):
     """Computes `counterfactual_loss`(es) corresponding to `counterfactual_data`.
 
     Arguments:
-      original_predictions: Predictions on original data
-      counterfactual_predictions: Predictions of model on counterfactual data.
+      original_predictions: Predictions on original data.
+      counterfactual_predictions: Predictions of a model on counterfactual data.
       counterfactual_sample_weight: Per sample weight to scale counterfactual
         loss.
 
@@ -293,7 +292,14 @@ class CounterfactualModel(tf.keras.Model):
         sample_weight=counterfactual_sample_weight)
     return counterfactual_loss
 
+  @docs.do_not_doc_in_subclasses
   def train_step(self, data):
+
+    """The logic for one evaluation step.
+
+    Has the exact same behavior as `tf.keras.Model.train_step` with the one
+    exception that it adds the 'counterfactual_loss' per step.
+    """
     if not isinstance(data, utils.CounterfactualPackedInputs):
       raise ValueError(
           "Training data must be an instance of CounterfactualPackedInputs. "
@@ -367,8 +373,10 @@ class CounterfactualModel(tf.keras.Model):
       metrics_to_return.append(metric)
     return {m.name: m.result() for m in metrics_to_return}
 
+  @docs.do_not_doc_in_subclasses
   def update_metrics(self, y, y_pred, sample_weight, total_loss, compiled_loss,
                      counterfactual_loss):
+    """Updates mean metrics being tracked for Counterfactual losses."""
     self.compiled_metrics.update_state(y, y_pred, sample_weight)
     self._total_loss_metric.update_state(total_loss)
     self._main_loss_metric.update_state(compiled_loss)
@@ -406,9 +414,8 @@ class CounterfactualModel(tf.keras.Model):
 
     """Exports the `original_model`.
 
-    Exports the `original_model`. When loaded, this model will be the type of
-    `original_model` and will no longer be able to train or evaluate with
-    Counterfactual data.
+    This model will be the type of `original_model` and will no longer be able
+    to train or evaluate with Counterfactual data.
 
     Note: Since a model loaded from the output of
     `CounterfactualModel.save_original_model` will be an instance of the same

@@ -72,37 +72,44 @@ def pack_counterfactual_data(
   length 1, 2 or 3 in the form `(x, y, sample_weight)`.
 
   Every batch from the returned `tf.data.Dataset` will contain one batch from
-  each of the input datasets. Each returned batch will be a tuple of
-  `(packed_inputs, original_y, original_sample_weight, counterfactual_x)`
-  matching the length of `original_dataset` batches where:
+  each of the input datasets as a `CounterfactualPackedInputs`. Each returned
+  batch will be a tuple from the original dataset and counterfactual dataset
+  such that `((x, y, sample_weight), (original_x, counterfactual_y,
+  counterfactual_sample_weight))` matching the length of `original_dataset`
+  batches where:
 
-  TODO: Update docstring with the API changes.
-  - `packed_inputs`: is an instance of `utils.CounterfactualPackedInputs`
-     containing:
+  - `original_dataset`: is a `tf.data.Dataset` that contains:
+    - `x`: `x` component taken directly from the `original_dataset` batch.
+    - `y`: `y` component taken directly from the `original_dataset` batch.
+    - `sample_weight`: `sample_weight` component taken directly from the
+      `original_dataset` batch.
 
+  - `counterfactual_dataset`: is a `tf.data.Dataset` that contains:
     - `original_x`: `x` component taken directly from the
         `original_dataset` batch.
-    - `original_y`: `y` component taken directly from the
-        `original_dataset` batch.
-    - `original_sample_weight`: `sample_weight` component taken directly from
-        the `original_dataset` batch.
     - `counterfactual_x`: Batch dataset of data formed from
       `counterfactual_dataset` (as described in
       `utils.build_counterfactual_dataset`).
     - `counterfactual_sample_weight`: Batch of data formed from taken directly
-      from the `sample_weight` of `counterfactual_dataset` or passed in by the
-      user and created with `tf.fill`. A user provided parameter will override
-      the provided `sample_weight` in `counterfactual_dataset`.
+      from the `sample_weight` of `counterfactual_dataset`.
+
+  Note that the `original_x` should be an `x` value within the original dataset
+  that contains an attribute you're looking to apply Counterfactuals to.
+  Additionally, the counterfactual dataset should only include instances of `x`
+  values that have a difference `counterfactual_x`. The shape of the two
+  datasets should also be the same, but it is fine (and expected) and there are
+  duplicate rows within the counterfactual dataset to match the shape of the
+  original dataset.
 
   `counterfactual_data` will be used in
   `counterfactual.keras.CounterfactualModel` when calculating the
   `counterfactual_loss`.
 
   Returns:
-    A `tf.data.Dataset` whose output is a tuple of `CounterfactualPackedInputs`
-      that contains (`original_y`, `original_y`, `original_sample_weight`,
-      `counterfactual_x`, `counterfactual_sample_weight`) matching the output
-      length of `original_dataset`.
+    A tuple of `tf.data.Dataset` whose output contains ((`x`, `y`,
+      `sample_weight`), (`original_x`, `counterfactual_x`,
+      `counterfactual_sample_weight`)) matching the output length of
+      `original_dataset`.
 
   Raises:
     ValueError: If the original dataset and counterfactual dataset do not
@@ -143,7 +150,7 @@ def pack_counterfactual_data(
 
 
 def build_counterfactual_dataset(
-    original_dataset,
+    original_dataset: tf.data.Dataset,
     sensitive_terms_to_remove: Optional[List[str]] = None,
     custom_counterfactual_function: Optional[Callable[[Any], Any]] = None
     ) -> tf.data.Dataset:
@@ -195,12 +202,11 @@ def build_counterfactual_dataset(
   Returns:
     A `tf.data.Dataset` whose output is a tuple or structure (matching the
       structure of the inputs) of `main: (x, y, w,)
-      counterfactual: `(x, counterfactual_x, sample_weight)`.
+      counterfactual: (original_x, counterfactual_x, counterfactual_w)`.
 
   Raises:
     ValueError: If both `custom_counterfactual_function` and
       `sensitive_terms_to_remove` are not provided.
-    ValueError: If column name is not found within the original dataset.
   """
   # pyformat: enable
   if custom_counterfactual_function is None and not sensitive_terms_to_remove:

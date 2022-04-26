@@ -36,7 +36,8 @@ class PairwiseAbsoluteDifferenceLoss(base_loss.CounterfactualLoss):
 
   def __init__(self, name: Optional[str] = None):
     """Initialize an instance of Absolute Difference Loss."""
-    super().__init__(name=name or "pairwise_absolute_difference_loss")
+    super(PairwiseAbsoluteDifferenceLoss, self).__init__(
+        name=name or "pairwise_absolute_difference_loss")
 
   def call(
       self,
