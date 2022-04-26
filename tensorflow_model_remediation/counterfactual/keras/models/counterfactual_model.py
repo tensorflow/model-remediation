@@ -204,7 +204,7 @@ class CounterfactualModel(tf.keras.Model):
     self._counterfactual_loss_metrics = _create_unique_metrics(
         self._counterfactual_losses, self._original_model.metrics)
     self._total_loss_metric = tf.keras.metrics.Mean(name="total_loss")
-    self._main_loss_metric = tf.keras.metrics.Mean(name="main_loss")
+    self._original_loss_metric = tf.keras.metrics.Mean(name="original_loss")
 
   @property
   def metrics(self):
@@ -213,7 +213,7 @@ class CounterfactualModel(tf.keras.Model):
     # or at the start of `evaluate()`.
     all_metrics = [
         self._total_loss_metric, self._counterfactual_loss_metrics,
-        self._main_loss_metric
+        self._original_loss_metric
     ]
     if self.compiled_metrics is not None:
       all_metrics.extend(self.compiled_metrics.metrics)
@@ -379,7 +379,7 @@ class CounterfactualModel(tf.keras.Model):
     """Updates mean metrics being tracked for Counterfactual losses."""
     self.compiled_metrics.update_state(y, y_pred, sample_weight)
     self._total_loss_metric.update_state(total_loss)
-    self._main_loss_metric.update_state(compiled_loss)
+    self._original_loss_metric.update_state(compiled_loss)
     if counterfactual_loss is not None:
       self._counterfactual_loss_metrics.update_state(counterfactual_loss)
 

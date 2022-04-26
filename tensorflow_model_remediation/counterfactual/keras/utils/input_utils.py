@@ -201,8 +201,9 @@ def build_counterfactual_dataset(
 
   Returns:
     A `tf.data.Dataset` whose output is a tuple or structure (matching the
-      structure of the inputs) of `main: (x, y, w,)
-      counterfactual: (original_x, counterfactual_x, counterfactual_w)`.
+      structure of the inputs) of `main: (x, y, w)
+      counterfactual: (original_x, counterfactual_x,
+      counterfactual_sample_weight)`.
 
   Raises:
     ValueError: If both `custom_counterfactual_function` and
