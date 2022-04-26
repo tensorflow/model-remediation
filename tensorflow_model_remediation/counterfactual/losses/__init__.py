@@ -17,4 +17,5 @@
 
 from tensorflow_model_remediation.counterfactual.losses.base_loss import CounterfactualLoss
 from tensorflow_model_remediation.counterfactual.losses.pairwise_absolute_difference_loss import PairwiseAbsoluteDifferenceLoss
+from tensorflow_model_remediation.counterfactual.losses.pairwise_cosine_loss import PairwiseCosineLoss
 from tensorflow_model_remediation.counterfactual.losses.pairwise_mse_loss import PairwiseMSELoss

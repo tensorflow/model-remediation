@@ -49,6 +49,7 @@ class LossesAPITest(tf.test.TestCase):
     _ = counterfactual.losses.CounterfactualLoss
     _ = counterfactual.losses.PairwiseAbsoluteDifferenceLoss
     _ = counterfactual.losses.PairwiseMSELoss
+    _ = counterfactual.losses.PairwiseCosineLoss
 
 
 if __name__ == "__main__":
