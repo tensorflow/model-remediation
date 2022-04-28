@@ -19,6 +19,7 @@ from typing import Union
 
 from tensorflow_model_remediation.counterfactual.losses import base_loss
 from tensorflow_model_remediation.counterfactual.losses import pairwise_absolute_difference_loss
+from tensorflow_model_remediation.counterfactual.losses import pairwise_cosine_loss
 from tensorflow_model_remediation.counterfactual.losses import pairwise_mse_loss
 
 _STRING_TO_LOSS_DICT = {}
@@ -34,6 +35,9 @@ def _register_loss_names(loss_class, names):
 _register_loss_names(
     pairwise_absolute_difference_loss.PairwiseAbsoluteDifferenceLoss,
     ['pairwise_absolute_difference_loss'])
+_register_loss_names(
+    pairwise_cosine_loss.PairwiseCosineLoss,
+    ['pairwise_cosine_loss'])
 _register_loss_names(
     pairwise_mse_loss.PairwiseMSELoss,
     ['pairwise_mse_loss'])

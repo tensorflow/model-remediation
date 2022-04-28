@@ -16,9 +16,11 @@
 """Tests for loss_utils functions."""
 
 import tensorflow as tf
+
 from tensorflow_model_remediation.counterfactual.losses import base_loss
 from tensorflow_model_remediation.counterfactual.losses import loss_utils as utils
 from tensorflow_model_remediation.counterfactual.losses import pairwise_absolute_difference_loss
+from tensorflow_model_remediation.counterfactual.losses import pairwise_cosine_loss
 from tensorflow_model_remediation.counterfactual.losses import pairwise_mse_loss
 
 
@@ -45,6 +47,15 @@ class GetCounterfactualLossTest(tf.test.TestCase):
     loss_name = 'custom_name'
     loss = utils._get_loss(pairwise_mse_loss.PairwiseMSELoss(name=loss_name))
     self.assertIsInstance(loss, pairwise_mse_loss.PairwiseMSELoss)
+    self.assertEqual(loss.name, loss_name)
+
+  def testForPairwiseCosineLoss(self):
+    loss = utils._get_loss('pairwise_cosine_loss')
+    self.assertIsInstance(loss, pairwise_cosine_loss.PairwiseCosineLoss)
+    loss_name = 'custom_name'
+    loss = utils._get_loss(
+        pairwise_cosine_loss.PairwiseCosineLoss(name=loss_name))
+    self.assertIsInstance(loss, pairwise_cosine_loss.PairwiseCosineLoss)
     self.assertEqual(loss.name, loss_name)
 
   def testForPairwiseAbsoluteDifferenceLoss(self):
