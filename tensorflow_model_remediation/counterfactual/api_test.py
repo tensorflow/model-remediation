@@ -35,7 +35,7 @@ class KerasAPITest(tf.test.TestCase):
     _ = counterfactual.keras.models.CounterfactualModel
 
   def testInputUtilsAPI(self):
-    _ = counterfactual.keras.utils.build_counterfactual_dataset
+    _ = counterfactual.keras.utils.build_counterfactual_data
     _ = counterfactual.keras.utils.CounterfactualPackedInputs
     _ = counterfactual.keras.utils.pack_counterfactual_data
 

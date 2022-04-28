@@ -305,9 +305,9 @@ class CounterfactualModel(tf.keras.Model):
           "Training data must be an instance of CounterfactualPackedInputs. "
           f"Received: {data}")
     x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(
-        data.original_dataset)
+        data.original_input)
     original_x, cf_x, cf_sample_weight = (
-        tf.keras.utils.unpack_x_y_sample_weight(data.counterfactual_dataset))
+        tf.keras.utils.unpack_x_y_sample_weight(data.counterfactual_data))
 
     with tf.GradientTape() as tape:
       y_pred = self.original_model(x)
@@ -345,9 +345,9 @@ class CounterfactualModel(tf.keras.Model):
     """
     if isinstance(data, utils.CounterfactualPackedInputs):
       x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(
-          data.original_dataset)
+          data.original_input)
       original_x, cf_x, cf_sample_weight = (
-          tf.keras.utils.unpack_x_y_sample_weight(data.counterfactual_dataset))
+          tf.keras.utils.unpack_x_y_sample_weight(data.counterfactual_data))
       y_pred = self.original_model(x)
       y_pred_original = self.original_model(original_x)
       y_pred_counterfactual = self.original_model(cf_x)

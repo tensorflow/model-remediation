@@ -15,7 +15,7 @@
 
 """Utility functions and classes for integrating Counterfactual."""
 
-from tensorflow_model_remediation.counterfactual.keras.utils.input_utils import build_counterfactual_dataset
+from tensorflow_model_remediation.counterfactual.keras.utils.input_utils import build_counterfactual_data
 from tensorflow_model_remediation.counterfactual.keras.utils.input_utils import CounterfactualPackedInputs
 from tensorflow_model_remediation.counterfactual.keras.utils.input_utils import pack_counterfactual_data
 

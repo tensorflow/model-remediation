@@ -66,12 +66,12 @@ class CounterfactualModelTest(tf.test.TestCase):
                                          [7.0, 8.0, 9.0], [10.0, 11.0, 12.0]])
     self.cf_w = tf.constant([1.0, 2.0, 3.0, 4.0])
 
-    self.original_dataset = tf.data.Dataset.from_tensor_slices(
+    self.original_input = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.y, self.w))
     self.cf_dataset = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.counterfactual_x, self.cf_w))
     self.packed_dataset = utils.pack_counterfactual_data(
-        self.original_dataset, self.cf_dataset)
+        self.original_input, self.cf_dataset)
 
   def testIsModel(self):
     cf_model = counterfactual_model.CounterfactualModel(
@@ -377,7 +377,7 @@ class CounterfactualModelTest(tf.test.TestCase):
         original_model, losses.PairwiseMSELoss())
     cf_model.compile(loss="mae", optimizer="adam")
     output_metrics = cf_model.test_step(
-        iter(self.original_dataset.batch(1)).get_next())
+        iter(self.original_input.batch(1)).get_next())
     self.assertSetEqual(
         set(output_metrics.keys()), set(["total_loss", "original_loss"]))
     self.assertAllClose(output_metrics["total_loss"], 30)
@@ -409,7 +409,7 @@ class CounterfactualModelTest(tf.test.TestCase):
     original_model.compile(**compile_args)
     cf_model.compile(**compile_args)
 
-    _ = original_model.fit(self.original_dataset.batch(1))
+    _ = original_model.fit(self.original_input.batch(1))
     _ = cf_model.fit(self.packed_dataset.batch(1))
 
     # We expect only 1 regularization element in the original model's training.
@@ -555,8 +555,8 @@ class CounterfactualModelTest(tf.test.TestCase):
     cf_model.evaluate(self.packed_dataset.batch(2))
 
     # Evaluate and run inference without counterfactual_data.
-    cf_model.evaluate(self.original_dataset.batch(2))
-    cf_model.predict(self.original_dataset.batch(2))
+    cf_model.evaluate(self.original_input.batch(2))
+    cf_model.predict(self.original_input.batch(2))
 
   def testSaveCFModelAndLoadWeights(self):
     original_model = get_original_model()
@@ -590,8 +590,8 @@ class CounterfactualModelTest(tf.test.TestCase):
     cf_model.evaluate(self.packed_dataset.batch(2))
 
     # Evaluate and run inference without counterfactual_data.
-    cf_model.evaluate(self.original_dataset.batch(2))
-    cf_model.predict(self.original_dataset.batch(2))
+    cf_model.evaluate(self.original_input.batch(2))
+    cf_model.predict(self.original_input.batch(2))
 
   def testSerialization(self):
     original_model = tf.keras.Sequential([

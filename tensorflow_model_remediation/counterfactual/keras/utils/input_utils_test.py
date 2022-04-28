@@ -90,7 +90,7 @@ class CounterfactualInputUtilsTestCase(tf.test.TestCase):
     self.original_w = tf.reshape(tf.range(275.0, 300.0), [25, 1])
 
     # Counterfactual inputs with 25 examples.
-    expected_counterfactual_dataset = tf.reshape(
+    expected_counterfactual_data = tf.reshape(
         # Expected counterfactual dataset should not include the word "bad".
         tf.constant([" word" + str(i) for i in range(25)] +
                     ["good word" + str(i) for i in range(50)]),
@@ -99,7 +99,7 @@ class CounterfactualInputUtilsTestCase(tf.test.TestCase):
     self.counterfactual_x = {
         "f2": tf.reshape(tf.range(175.0, 225.0), [25, 2]),
         "f2_sparse": to_sparse(tf.reshape(tf.range(175.0, 225.0), [25, 2])),
-        "f1_counterfactual": expected_counterfactual_dataset
+        "f1_counterfactual": expected_counterfactual_data
     }
     self.counterfactual_w = tf.reshape(tf.range(275.0, 300.0), [25, 1])
 
@@ -108,15 +108,15 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
 
   def testBuildFromSingleDatasets(self):
     original_batch_size = 1
-    original_dataset = (
+    original_input = (
         tf.data.Dataset.from_tensor_slices(
             (self.original_x["f1"], None,
              self.original_w)).batch(original_batch_size))
 
     counterfactual_list = ["bad"]
 
-    dataset = input_utils.build_counterfactual_dataset(original_dataset,
-                                                       counterfactual_list)
+    dataset = input_utils.build_counterfactual_data(original_input,
+                                                    counterfactual_list)
 
     expected_counterfactual_data = tf.reshape(
         tf.constant([" word" + str(i) for i in range(25)] +
@@ -140,7 +140,7 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
 
   def testBuildFromCustomCounterfactualDatasets(self):
     original_batch_size = 1
-    original_dataset = (
+    original_input = (
         tf.data.Dataset.from_tensor_slices(
             (self.original_x, None,
              self.original_w)).batch(original_batch_size))
@@ -148,22 +148,22 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
     custom_feature_column = "f1"
     custom_replacement_dict = {"bad": "good"}
 
-    def _create_counterfactual_dataset(original_dataset):
+    def _create_counterfactual_data(original_input):
       original_x, original_y, original_sample_weight = (
-          tf.keras.utils.unpack_x_y_sample_weight(original_dataset))
+          tf.keras.utils.unpack_x_y_sample_weight(original_input))
       for sensitive_word, new_word in custom_replacement_dict.items():
-        counterfactual_dataset = tf.strings.regex_replace(
+        counterfactual_data = tf.strings.regex_replace(
             original_x.get(custom_feature_column), sensitive_word, new_word)
         original_x[custom_feature_column +
-                   "_counterfactual"] = counterfactual_dataset
+                   "_counterfactual"] = counterfactual_data
       original_x.pop(custom_feature_column)
       return original_x, original_y, original_sample_weight
 
-    dataset = input_utils.build_counterfactual_dataset(
-        original_dataset,
-        custom_counterfactual_function=_create_counterfactual_dataset)
+    dataset = input_utils.build_counterfactual_data(
+        original_input,
+        custom_counterfactual_function=_create_counterfactual_data)
 
-    expected_counterfactual_dataset = tf.reshape(
+    expected_counterfactual_data = tf.reshape(
         # Expected counterfactual dataset to replace "bad" with "good".
         tf.constant(["good word" + str(i) for i in range(25)] +
                     ["good word" + str(i) for i in range(50)]),
@@ -171,7 +171,7 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
     expected_dict = {
         "f2": tf.reshape(tf.range(175.0, 225.0), [25, 2]),
         "f2_sparse": to_sparse(tf.reshape(tf.range(175.0, 225.0), [25, 2])),
-        "f1_counterfactual": expected_counterfactual_dataset
+        "f1_counterfactual": expected_counterfactual_data
     }
     self.assertListEqual(list(expected_dict.keys()),
                          list(self.counterfactual_x.keys()))
@@ -192,13 +192,13 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
 
   def testWithBothOriginalWeightsAreNotNone(self):
     original_batch_size = 3
-    original_dataset = tf.data.Dataset.from_tensor_slices(
+    original_input = tf.data.Dataset.from_tensor_slices(
         (self.original_x["f1"], None, None)).batch(original_batch_size)
 
     counterfactual_list = ["bad"]
 
-    dataset = input_utils.build_counterfactual_dataset(original_dataset,
-                                                       counterfactual_list)
+    dataset = input_utils.build_counterfactual_data(original_input,
+                                                    counterfactual_list)
 
     # The resulting dataset will repeat infinitely so we only take the first 10
     # batches which corresponds to 2 full epochs of the counterfactual dataset.
@@ -210,7 +210,7 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
 
   def testCounterfactualDatasetsWithOnlyDatasetError(self):
     original_batch_size = 1
-    original_dataset = (
+    original_input = (
         tf.data.Dataset.from_tensor_slices(
             (self.original_x, None,
              self.original_w)).batch(original_batch_size))
@@ -219,11 +219,11 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
         "Either `custom_counterfactual_function` must be provided or .*\n"
         "Found:\nsensitive_terms_to_remove: None\n"
         "custom_counterfactual_function: None"):
-      _ = input_utils.build_counterfactual_dataset(original_dataset)
+      _ = input_utils.build_counterfactual_data(original_input)
 
   def testCounterfactualDatasetsWithOnlyFeatureColumnError(self):
     original_batch_size = 1
-    original_dataset = (
+    original_input = (
         tf.data.Dataset.from_tensor_slices(
             (self.original_x, None,
              self.original_w)).batch(original_batch_size))
@@ -232,32 +232,32 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
         "Either `custom_counterfactual_function` must be provided or .*\n"
         "Found:\nsensitive_terms_to_remove: None\n"
         "custom_counterfactual_function: None"):
-      _ = input_utils.build_counterfactual_dataset(original_dataset)
+      _ = input_utils.build_counterfactual_data(original_input)
 
 
 class PackCounterfactualDataTest(CounterfactualInputUtilsTestCase):
 
   def testPackSingleDatasets(self):
     batch_size = 5
-    original_dataset = tf.data.Dataset.from_tensor_slices(
+    original_input = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.original_y)).batch(batch_size)
 
-    counterfactual_dataset = tf.data.Dataset.from_tensor_slices(
+    counterfactual_data = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.counterfactual_x["f1_counterfactual"],
          tf.ones_like(self.original_x["f1"], tf.float32))).batch(batch_size)
 
-    dataset = input_utils.pack_counterfactual_data(original_dataset,
-                                                   counterfactual_dataset)
+    dataset = input_utils.pack_counterfactual_data(original_input,
+                                                   counterfactual_data)
 
     for batch_ind, counterfactual_batch in enumerate(dataset):
       self.assertIsInstance(counterfactual_batch,
                             input_utils.CounterfactualPackedInputs)
       original_x, original_y, original_w = (
           tf.keras.utils.unpack_x_y_sample_weight(
-              counterfactual_batch.original_dataset))
+              counterfactual_batch.original_input))
       original_x_in_counterfactual, counterfactual_x, counterfactual_w = (
           tf.keras.utils.unpack_x_y_sample_weight(
-              counterfactual_batch.counterfactual_dataset))
+              counterfactual_batch.counterfactual_data))
       self.assertLen(counterfactual_batch, 2)
       self.assertTensorsAllClose(
           original_x,
@@ -279,7 +279,7 @@ class PackCounterfactualDataTest(CounterfactualInputUtilsTestCase):
 
   def testInvalidStructureRaisesError(self):
     batch_size = 5
-    original_dataset = tf.data.Dataset.from_tensor_slices(
+    original_input = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.original_y)).batch(batch_size)
 
     short_original_x = {
@@ -294,7 +294,7 @@ class PackCounterfactualDataTest(CounterfactualInputUtilsTestCase):
     with self.assertRaisesRegex(
         ValueError, ".*Original cardinality: 5\nCounterfactual cardinality: 3"):
       _ = input_utils.pack_counterfactual_data(
-          original_dataset, short_counterfactual__dataset)
+          original_input, short_counterfactual__dataset)
 
 if __name__ == "__main__":
   tf.test.main()
