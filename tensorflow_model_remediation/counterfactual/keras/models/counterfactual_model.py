@@ -199,7 +199,7 @@ class CounterfactualModel(tf.keras.Model):
     self._counterfactual_losses = tf.nest.map_structure(loss_utils._get_loss,
                                                         loss)
     self._counterfactual_loss_weights = _conform_weights_to_losses(
-        self._counterfactual_losses, loss_weight, default_value=1.0)
+        self._counterfactual_losses, loss_weight)
     self._counterfactual_loss_metrics = []
     self._counterfactual_loss_metrics = _create_unique_metrics(
         self._counterfactual_losses, self._original_model.metrics)
@@ -536,7 +536,7 @@ def _create_unique_metrics(loss, existing_metrics):
   return tf.nest.pack_sequence_as(loss, counterfactual_metrics)
 
 
-def _conform_weights_to_losses(loss, loss_weight, default_value):
+def _conform_weights_to_losses(loss, loss_weight, default_value=1.0):
   """Conforms weights to match structure of losses.
 
   Shape weights to match the structure of `loss` if possible. If `loss_weight`
