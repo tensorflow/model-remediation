@@ -16,9 +16,12 @@
 # pyformat: disable
 """TensorFlow Model Remediation Library for addressing concerns in machine learning models.
 
-The library will ultimately contain a collection of techniques for addressing
-a wide range of concerns. For now, it has a single technique, MinDiff, which
-can help reduce performance gaps between example subgroups.
+The library contains a collection of techniques for addressing
+a wide range of concerns.
+
+Current TensorFlow Model Remediation techniques:
+* MinDiff: Reduces performance gaps between example subgroups.
+* Counterfactual: Reduces the difference between two similar pairs.
 
 Other Documentation:
 
@@ -29,6 +32,7 @@ Other Documentation:
 # pyformat: enable
 
 from tensorflow_model_remediation import common
+from tensorflow_model_remediation import counterfactual
 from tensorflow_model_remediation import min_diff
 from tensorflow_model_remediation import tools
 

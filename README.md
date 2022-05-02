@@ -20,31 +20,39 @@ Note: Make sure you are using TensorFlow 2.x.
 
 ## Documentation
 
-This library will ultimately contain a collection of techniques for addressing
-a wide range of concerns. For now it contains a single technique, MinDiff,
-which can help reduce performance gaps between example subgroups.
+This library contains a collection of machine learing remediation techniques for
+addressing potential bias in model.
+
+Currently TensorFlow Model Remediation contains the below techniques:
+* MinDiff: Reduces performance gaps between example subgroups.
+* Counterfactual: Reduces the difference between two similar pairs.
 
 
 We recommend starting with the
 [overview guide](https://www.tensorflow.org/responsible_ai/model_remediation)
-or trying it interactively in our
-[tutorial notebook](https://www.tensorflow.org/responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras).
+to get an idea of TensorFlow Model Remediation.
+
+Next try one of our interative guides like the
+[MinDiff tutorial notebook](https://www.tensorflow.org/responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras).
 
 
 
 ```python
-from tensorflow_model_remediation import min_diff
+import tensorflow_model_remediation as tfmr
 import tensorflow as tf
 
 # Start by defining a Keras model.
 original_model = ...
 
+# Next pick the remediation tequnique you'd like to use. For example, a
+# MinDiff implementation might look like the below:
+
 # Set the MinDiff weight and choose a loss.
-min_diff_loss = min_diff.losses.MMDLoss()
+min_diff_loss = tfmr.min_diff.losses.MMDLoss()
 min_diff_weight = 1.0  # Hyperparamater to be tuned.
 
 # Create a MinDiff model.
-min_diff_model = min_diff.keras.MinDiffModel(
+min_diff_model = tfmr.min_diff.keras.MinDiffModel(
     original_model, min_diff_loss, min_diff_weight)
 
 # Compile the MinDiff model as you normally would do with the original model.

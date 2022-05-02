@@ -770,11 +770,9 @@ class CounterfactualModelTest(tf.test.TestCase):
     self.assertEqual(model_from_config.original_model.val, original_val)
 
   def testGetConfigFromOriginalModel(self):
-
-    class CustomModel(tf.keras.Model):
-      pass  # No need to add any other implementation for this test.
-
-    original_model = CustomModel()
+    original_model = tf.keras.Sequential([
+        tf.keras.layers.Dense(1, activation="softmax"),
+    ])
 
     cf_model = counterfactual_model.CounterfactualModel(
         original_model, losses.PairwiseMSELoss())

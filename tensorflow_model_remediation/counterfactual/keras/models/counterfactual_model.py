@@ -459,7 +459,7 @@ class CounterfactualModel(tf.keras.Model):
       _ = self._original_model.get_config()
     except Exception as e:
       raise type(e)(
-          "CounterfactualModel cannot create a config because `original_model`"
+          "CounterfactualModel cannot create a config because `original_model` "
           "has not implemented get_config() or has an error in its "
           "implementation. \nError raised: {}".format(e))
 

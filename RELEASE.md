@@ -13,6 +13,7 @@
 # Version 0.1.6
 
 ## Major Features and Improvements
+* Adding Counterfactual to the TensorFlow Model Remediation library.
 * Adding a new MinDiff loss of Adjusted MMD Loss
 
 ## Bug fixes and other small changes
