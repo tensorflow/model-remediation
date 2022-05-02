@@ -59,7 +59,8 @@ def pack_counterfactual_data(
       `tf.keras.Model.fit`.
     counterfactual_data: `tf.data.Dataset` or valid Counterfactual structure
       (unnested dict) of `tf.data.Dataset`s containing only examples to be used
-      to calculate the `counterfactual_loss`.
+      to calculate the `counterfactual_loss`. This dataset is repeated to match
+      the number of examples in `original_input`.
 
   This function should be used to create the dataset that will be passed to
   `counterfactual.keras.CounterfactualModel` during training and, optionally,
@@ -109,10 +110,6 @@ def pack_counterfactual_data(
       `sample_weight`), (`original_x`, `counterfactual_x`,
       `counterfactual_sample_weight`)) matching the output length of
       `original_input`.
-
-  Raises:
-    ValueError: If the original dataset and counterfactual dataset do not
-      have the same cardinality.
   """
   # Validate original_input and counterfactual_data structure.
   structure_utils.validate_counterfactual_structure(
@@ -127,19 +124,7 @@ def pack_counterfactual_data(
   tf.nest.assert_same_structure(
       original_input, counterfactual_data)
 
-  original_input_cardinality = tf.data.experimental.cardinality(
-      original_input).numpy()
-  counterfactual_data_cardinality = tf.data.experimental.cardinality(
-      counterfactual_data).numpy()
-  if original_input_cardinality != counterfactual_data_cardinality:
-    raise ValueError(
-        "The cardinality of `original_input` and `counterfactual_data` "
-        "are different. There must be a matching counterfactual example for "
-        "each value within the original values. \n\nFound:\n"
-        f"Original cardinality: {original_input_cardinality}\n"
-        f"Counterfactual cardinality: {counterfactual_data_cardinality}")
-
-  dataset = tf.data.Dataset.zip((original_input, counterfactual_data))
+  dataset = tf.data.Dataset.zip((original_input, counterfactual_data.repeat()))
 
   def _map_fn(original_batch, counterfactual_batch):
     return CounterfactualPackedInputs(
@@ -234,14 +219,22 @@ def build_counterfactual_data(
     # `custom_counterfactual_function`.
     list_regex = "(%s)" % "|".join(sensitive_terms_to_remove)
     counterfactual_x = tf.strings.regex_replace(original_x, list_regex, "")
-    # TODO: Limit the return values to only the ones that are changed
-    # and reshape to return the same size tensor as the original.
     return tf.keras.utils.pack_x_y_sample_weight(
         original_x, counterfactual_x, tf.ones_like(original_x, tf.float32))
 
-  def _map_fn(orginal_batch):
+  def _map_fn(original_batch):
     counterfactual_func = (
         custom_counterfactual_function if custom_counterfactual_function
         is not None else _create_counterfactual_data)
-    return counterfactual_func(orginal_batch)
-  return counterfactual_data.map(_map_fn)
+    return counterfactual_func(original_batch)
+
+  def _filter_fn(original_batch):
+    original_x, _, _ = tf.keras.utils.unpack_x_y_sample_weight(original_batch)
+    list_regex = ".*(%s).*" % "|".join(sensitive_terms_to_remove)
+    return tf.math.reduce_all(
+        tf.strings.regex_full_match(original_x, list_regex))
+
+  if sensitive_terms_to_remove is None:
+    return counterfactual_data.map(_map_fn)
+
+  return counterfactual_data.filter(_filter_fn).map(_map_fn)

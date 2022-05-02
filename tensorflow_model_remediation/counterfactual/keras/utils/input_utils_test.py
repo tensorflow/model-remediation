@@ -277,7 +277,7 @@ class PackCounterfactualDataTest(CounterfactualInputUtilsTestCase):
           counterfactual_w,
           tf.ones_like(counterfactual_x, tf.float32))
 
-  def testInvalidStructureRaisesError(self):
+  def testCounterfactualDatasetIsRepeated(self):
     batch_size = 5
     original_input = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.original_y)).batch(batch_size)
@@ -291,10 +291,9 @@ class PackCounterfactualDataTest(CounterfactualInputUtilsTestCase):
     short_counterfactual__dataset = tf.data.Dataset.from_tensor_slices(
         (short_original_x, None, None)).batch(batch_size)
 
-    with self.assertRaisesRegex(
-        ValueError, ".*Original cardinality: 5\nCounterfactual cardinality: 3"):
-      _ = input_utils.pack_counterfactual_data(
-          original_input, short_counterfactual__dataset)
+    packed_dataset = input_utils.pack_counterfactual_data(
+        original_input, short_counterfactual__dataset)
+    self.assertEqual(packed_dataset.cardinality(), original_input.cardinality())
 
 if __name__ == "__main__":
   tf.test.main()
