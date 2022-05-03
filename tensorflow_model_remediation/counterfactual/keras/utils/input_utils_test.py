@@ -138,6 +138,25 @@ class BuildCounterfactualDatasetTest(CounterfactualInputUtilsTestCase):
           counterfactual_w,
           tf.ones_like(self.original_x["f1"], tf.float32))
 
+  def testRegexForSensitiveWordsDoesWordMatch(self):
+    original_dataset = tf.data.Dataset.from_tensor_slices(
+        tf.constant([
+            "He,", "here", " he.", " He .", "He is a doctor and she is a nurse"
+        ]))
+    counterfactual_list = ["he", "He", "she"]
+
+    cf_dataset = input_utils.build_counterfactual_data(original_dataset,
+                                                       counterfactual_list)
+    expected_dataset = tf.data.Dataset.from_tensor_slices(
+        tf.constant([",", "here", " .", "  .", " is a doctor and  is a nurse"]))
+
+    for counterfactual_batch, original_batch, expected_batch in zip(
+        cf_dataset, original_dataset, expected_dataset):
+      original_x, counterfactual_x, _ = (
+          tf.keras.utils.unpack_x_y_sample_weight(counterfactual_batch))
+      self.assertTensorsAllClose(counterfactual_x, expected_batch)
+      self.assertTensorsAllClose(original_x, original_batch)
+
   def testBuildFromCustomCounterfactualDatasets(self):
     original_batch_size = 1
     original_input = (

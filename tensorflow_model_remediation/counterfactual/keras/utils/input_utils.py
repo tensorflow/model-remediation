@@ -217,7 +217,7 @@ def build_counterfactual_data(
     # interested in modifying the dataset in a different fastion (e.g. replace
     # words) please look into passing a custom funciton via
     # `custom_counterfactual_function`.
-    list_regex = "(%s)" % "|".join(sensitive_terms_to_remove)
+    list_regex = "\\b(%s)\\b" % "|".join(sensitive_terms_to_remove)
     counterfactual_x = tf.strings.regex_replace(original_x, list_regex, "")
     return tf.keras.utils.pack_x_y_sample_weight(
         original_x, counterfactual_x, tf.ones_like(original_x, tf.float32))
@@ -230,7 +230,7 @@ def build_counterfactual_data(
 
   def _filter_fn(original_batch):
     original_x, _, _ = tf.keras.utils.unpack_x_y_sample_weight(original_batch)
-    list_regex = ".*(%s).*" % "|".join(sensitive_terms_to_remove)
+    list_regex = ".*(\\b%s\\b).*" % "|".join(sensitive_terms_to_remove)
     return tf.math.reduce_all(
         tf.strings.regex_full_match(original_x, list_regex))
 
