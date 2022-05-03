@@ -23,7 +23,7 @@ REQUIRED_PACKAGES = [
     'mock',
     'pandas',
     'tensorflow>=2.0.0',
-    'tensorflow_hub',
+    'tensorflow-hub',
 ]
 
 # Get version from version module.
