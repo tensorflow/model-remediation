@@ -21,15 +21,6 @@
 
 ## Deprecations
 
-## Major Features and Improvements
-* Adding Counterfactual to the TensorFlow Model Remediation library.
-
-## Bug fixes and other small changes
-
-## Breaking changes
-
-## Deprecations
-
 # Version 0.1.6
 
 ## Major Features and Improvements

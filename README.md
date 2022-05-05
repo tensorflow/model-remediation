@@ -30,8 +30,8 @@ Currently TensorFlow Model Remediation contains the below techniques:
 
 *   MinDiff technique: Typically used to ensure that a model predicts the
     preferred label equally well for all values of a sensitive attribute.
-    Helpful when trying to achieve (equality of
-    opportunity)[https://developers.google.com/machine-learning/glossary/fairness#equality-of-opportunity].
+    Helpful when trying to achieve [equality of
+    opportunity](https://developers.google.com/machine-learning/glossary/fairness#equality-of-opportunity).
 
 *   Counterfactual Logit Pairing technique: Typically used to ensure that a
     model’s prediction does not change between “counterfactual pairs”, where the
