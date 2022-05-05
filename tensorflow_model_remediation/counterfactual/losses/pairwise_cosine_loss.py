@@ -36,7 +36,7 @@ class PairwiseCosineLoss(base_loss.CounterfactualLoss):
   # pyformat: enable
 
   def __init__(self, name: Optional[str] = None):
-    """Initialize an instance of PairwiseMSELoss."""
+    """Initialize an instance of Pairwise Cosine Loss."""
     super(PairwiseCosineLoss,
           self).__init__(name=name or "pairwise_cosine_loss")
 
