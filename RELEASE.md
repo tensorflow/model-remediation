@@ -3,6 +3,25 @@
 # Current Version (Still in Development)
 
 ## Major Features and Improvements
+
+## Bug fixes and other small changes
+
+## Breaking changes
+
+## Deprecations
+
+# Version 0.1.7
+
+## Major Features and Improvements
+* Adding Counterfactual Logit Pairing to the TensorFlow Model Remediation library.
+
+## Bug fixes and other small changes
+
+## Breaking changes
+
+## Deprecations
+
+## Major Features and Improvements
 * Adding Counterfactual to the TensorFlow Model Remediation library.
 
 ## Bug fixes and other small changes
