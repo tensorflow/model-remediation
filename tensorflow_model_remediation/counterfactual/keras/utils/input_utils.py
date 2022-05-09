@@ -44,7 +44,7 @@ class CounterfactualPackedInputs(
       This corresponds to the `x` component described in `tf.keras.Model.fit`.
     counterfactual_data: Counterfactual value based on `original_x` that has
       been modified. Should be the form `(orginal_x, counterfactual_x,
-      counterfactual_samle_weight)`.
+      counterfactual_sample_weight)`.
   """
 
 
