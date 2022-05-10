@@ -17,7 +17,10 @@ toc:
   path: /responsible_ai/model_remediation/
 - title: Install
   path: /responsible_ai/model_remediation/install
+
 - heading: MinDiff
+- title: Overview
+  path: /responsible_ai/model_remediation/min_diff/guide/mindiff_overview
 - title: Usage requirements
   path: /responsible_ai/model_remediation/min_diff/guide/requirements
 - title: Data preparation
@@ -30,3 +33,13 @@ toc:
   path: /responsible_ai/model_remediation/min_diff/guide/integrating_min_diff_without_min_diff_model
 - title: Use MinDiff with Keras
   path: /responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras
+
+- heading: Counterfactual Logit Pairing
+- title: Overview
+  path: /responsible_ai/model_remediation/counterfactual/guide/counterfactual_overview
+- title: Using Counterfactual Logit Pairing
+  path: /responsible_ai/model_remediation/counterfactual/guide/counterfactual_usage_steps
+- title: Data preparation
+  path: /responsible_ai/model_remediation/counterfactual/guide/creating_a_custom_counterfactual_dataset
+- title: Use Counterfactual Logit Pairing with Keras
+  path: /responsible_ai/model_remediation/counterfactual/guide/counterfactual_keras

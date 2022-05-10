@@ -1,7 +1,7 @@
 # MinDiff Requirements
 
 ## When should I use MinDiff?
-We recommend applying MinDiff in instances where your model performs well
+Apply MinDiff in instances where your model performs well
 generally, but produces harmful errors more frequently on examples belonging to
 a sensitive group, and you wish to close the performance gap. The sensitive
 groups of interest may vary depending on your use case, but often include

@@ -21,142 +21,102 @@ landing_page:
   meta_tags:
   - name: description
     content: >
-      MinDiff techniques for model remediation
+      Techniques for model remediation
   rows:
   - classname: devsite-landing-row-100
-  - heading: What is Model Remediation?
+  - heading: What is TensorFlow Model Remediation?
+    options:
+    - description-100
+    items:
+    - description: >
+        <p>If you have identified fairness concerns
+        with your machine learning model, there are three
+        primary types of technical interventions available:
+        <ul style="padding-left: 20px">
+          <li>
+              <strong>Training data pre-processing techniques:</strong> Collecting more data, generating synthetic
+              data, adjusting the weights of examples and sampling rates of different slices.
+          </li>
+          <li>
+              <strong>Training-time modeling techniques:</strong> Changing the model itself by introducing or
+              altering model objectives and adding constraints.
+          </li>
+          <li>
+              <strong>Post-training techniques:</strong> Modifying the outputs of the model or
+              the interpretation of the outputs to improve performance across metrics.
+          </li>
+        </ul>
+        The TensorFlow Model Remediation library provides training-time techniques to intervene on the model.
+        </p>
+        <aside class="note">
+        <b>Note:</b> For an overview of machine learning fairness and to better understand the technical interventions listed above, refer to this
+          <a href="https://fairmlbook.org/">online textbook</a>.
+        </aside>
+
+  - classname: devsite-landing-row-100
+  - heading: Training-time Modeling
     options:
     - description-100
     items:
     - description: >
         <p>
-        Once you’ve performed <a
-        href="../fairness_indicators/guide/guidance">sliced evaluation</a> of a machine
-        learning model’s performance, you might notice that your model is underperforming across
-        certain slices of data. This type of unequal performance can sometimes lead to unfair and
-        potentially harmful outcomes for vulnerable subsets of the population. Generally, there are
-        three primary types of technical interventions for addressing bias concerns:
-        <ul style="padding-left: 20px">
-          <li>
-              <strong>Changing the input data:</strong> Collecting more data, generating synthetic
-              data, adjusting the weights and sampling rates of different slices, etc.<sup>1</sup>
-          </li>
-          <li>
-              <strong>Intervening on the model:</strong> Changing the model itself by introducing or
-              altering model objectives, adding constraints, etc.<sup>2</sup>
-          </li>
-          <li>
-              <strong>Post-processing the results:</strong> Modifying the outputs of the model or
-              the interpretation of the outputs to improve performance across metrics.<sup>3</sup>
-          </li>
-        </ul>
+        The TensorFlow Model Remediation library provides two techniques for addressing bias and
+        fairness issues in your model,
+        <a href="/responsible_ai/model_remediation/min_diff/guide/mindiff_overview">MinDiff</a> and
+        <a href="/responsible_ai/model_remediation/counterfactual/guide/counterfactual_overview">Counterfactual Logit Pairing (CLP)</a>.
+        They are described in the table below.
         </p>
 
-    - code_block: |
-          <pre class = "prettyprint">
-          from tensorflow_model_remediation import min_diff
-          import tensorflow as tf
-
-          # Start by defining a Keras model.
-          original_model = ...
-
-          # Set the MinDiff weight and choose a loss.
-          min_diff_loss = min_diff.losses.MMDLoss()
-          min_diff_weight = 1.0  # Hyperparamater to be tuned.
-
-          # Create a MinDiff model.
-          min_diff_model = min_diff.keras.MinDiffModel(
-          original_model, min_diff_loss, min_diff_weight)
-
-          # Compile the MinDiff model normally.
-          min_diff_model.compile(...)
-
-          # Create a MinDiff Dataset and train the min_diff_model.
-          min_diff_model.fit(min_diff_dataset, ...)
-          </pre>
-
-  - classname: devsite-landing-row-100
-  - heading: What is MinDiff?
-    options:
-    - description-100
-    items:
-    - classname: devsite-landing-row-100
-      description: >
-        <p>MinDiff is a model remediation technique that seeks to equalize two distributions. In
-        practice, it can be used to balance error rates across different slices of your data by
-        penalizing distributional differences.</p>
-        <p>Typically, one applies MinDiff when trying to minimize the difference in either false
-        positive rate (FPR) or false negative rate (FNR) between a slice of data belonging to a
-        sensitive class and a better performing slice. For in-depth discussion of fairness metrics,
-        review the literature on this subject.<sup>4 5 6</sup></p>
-        </p>
-
-  - classname: devsite-landing-row-100
-  - heading: How does MinDiff work?
-    options:
-    - description-100
-    items:
-    - classname: devsite-landing-row-100
-      description: >
-        <p>Given two sets of examples from our dataset, MinDiff penalizes the model during training
-        for differences in the distribution of scores between the two sets. The less distinguishable
-        the two sets are based on prediction scores, the smaller the penalty that will be
-        applied.</p>
-        <figure>
-            <img src="min_diff/guide/images/mindiff_graphs.svg">
-        </figure>
-        <p>The penalty is applied by adding a component to the loss with which the model is training.
-        It can be thought of as a measurement of the difference in distribution of model
-        predictions. As the model trains, it will try to minimize the penalty by bringing the
-        distributions closer together, as in the above graph.</p>
-        <p>Applying MinDiff may come with tradeoffs with respect to performance on the original
-        task. In practice, we have often found MinDiff to be effective while not deteriorating
-        performance beyond product needs, but this will be application dependent and the decision
-        should be made deliberately by the product owner. For examples showing how to implement
-        MinDiff, see <a
-        href="./min_diff/tutorials/min_diff_keras">our notebook tutorial</a>.</p>
-
-        <sup>1</sup>Zhang, G., Bai, B., Zhang, J., Bai, K., Zhu, C., Zhao, T. (2020). <a
-        href="https://arxiv.org/abs/2004.14088">Demographics Should Not Be the Reason of Toxicity:
-        Mitigating Discrimination in Text Classifications with Instance Weighting.</a><br>
-        <sup>2</sup>Prost, F., Qian H., Chen, Q., Chi, E., Chen, J., Beutel, A. (2019). <a
-        href="https://arxiv.org/abs/1910.11779">Toward a better trade-off between performance and
-        fairness with kernel-based distribution matching.</a><br>
-        <sup>3</sup>Alabdulmohsin, I. (2020). <a href="https://arxiv.org/abs/2005.14621">Fair
-        Classification via Unconstrained Optimization.</a><br>
-        <sup>4</sup>Dwork, C., Hardt, M., Pitassi, T., Reingold, O., Zemel, R. (2011). <a
-        href="https://arxiv.org/abs/1104.3913">Fairness Through Awareness.</a><br>
-        <sup>5</sup>Hardt, M., Price, E., Srebro, N. (2016). <a
-        href="https://arxiv.org/abs/1610.02413">Equality of Opportunity in Supervised
-        Learning.</a><br>
-        <sup>6</sup>Chouldechova, A. (2016). <a
-        href="https://arxiv.org/abs/1610.07524">Fair prediction with disparate impact: A study of
-        bias in recidivism prediction instruments.</a>
-
-  - classname: devsite-landing-row-100
-    items:
-    - description: >
-        <h3>Resources</h3>
-
-  - classname: devsite-landing-row-cards
-    items:
-    - heading: "See MinDiff applied on a text classification model"
-      image_path: /resources/images/tf-logo-card-16x9.png
-      path: /responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras
-      buttons:
-      - label: "Check out the notebook"
-        path: /responsible_ai/model_remediation/min_diff/tutorials/min_diff_keras
-
-    - heading: "MinDiff on the TensorFlow blog"
-      image_path: /resources/images/tf-logo-card-16x9.png
-      path: https://blog.tensorflow.org/2020/11/applying-mindiff-to-improve-model.html
-      buttons:
-      - label: "Read on the TensorFlow blog"
-        path: https://blog.tensorflow.org/2020/11/applying-mindiff-to-improve-model.html
-
-    - heading: "Model Remediation Library on GitHub"
-      image_path: /resources/images/github-card-16x9.png
-      path: https://github.com/tensorflow/model-remediation
-      buttons:
-      - label: "View on GitHub"
-        path: https://github.com/tensorflow/model-remediation
+        <table>
+          <tr>
+            <th></th>
+            <th>MinDiff</th>
+            <th>CLP</th>
+          </tr>
+          <tr>
+            <td><b>When should you use this technique?</b></td>
+            <td>
+              <p>
+              To ensure that a model predicts the preferred label equally well for all values of
+              a sensitive attribute.
+              </p>
+              <p>
+              To achieve group <a href="https://developers.google.com/machine-learning/glossary/fairness#equality_of_opportunity">
+              equality of opportunity</a>.
+              </p>
+            </td>
+            <td>
+              <p>
+              To ensure that a model's prediction does not change between
+              "counterfactual pairs" (where the sensitive attribute referenced in a feature
+              is different). For example, in a <a href="https://www.perspectiveapi.com/#/home ">
+              toxicity classifier</a>, examples such as "I am a man" and "I am a lesbian" should not
+              have a different prediction.
+              </p>
+              <p>
+              To achieve a form of <a href="https://developers.google.com/machine-learning/glossary/fairness#counterfactual_fairness">
+              counterfactual fairness</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td><b>How does it work?</b></td>
+            <td>
+              Penalizes the model during training for differences in the <i>distribution</i> of scores
+              between the two sets.
+            </td>
+            <td>
+              Penalizes the model during training for output differences between counterfactual
+              <i>pairs of examples</i>.
+            </td>
+          </tr>
+          <tr>
+            <td><b>Input Modalities</b></td>
+            <td>
+              Loss functions operate on output so are, in theory, agnostic to the input and model architecture.
+            </td>
+            <td>
+              Loss functions operate on output so are, in theory, agnostic to the input and model architecture.
+            </td>
+          </tr>
+        </table>
