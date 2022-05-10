@@ -19,7 +19,6 @@ from setuptools import setup
 
 REQUIRED_PACKAGES = [
     'dill',
-    # TODO: Look into removing mock from setup.
     'mock',
     'pandas',
     'tensorflow>=2.0.0',

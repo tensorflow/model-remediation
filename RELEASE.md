@@ -5,6 +5,7 @@
 ## Major Features and Improvements
 
 ## Bug fixes and other small changes
+Dropping unittest.mock in favor of mock within TFMR.
 
 ## Breaking changes
 

@@ -15,7 +15,7 @@
 
 """Tests for tensorflow_model_remediation.tools.tutorials_utils.uci.utils."""
 
-import unittest.mock as mock
+import mock
 import pandas as pd
 
 import tensorflow as tf
@@ -226,8 +226,8 @@ class MinDiffDatasetsTest(tf.test.TestCase):
   @mock.patch('tensorflow_model_remediation.tools.tutorials_utils'
               '.uci.utils.get_uci_min_diff_datasets',
               autospec=True)
-  def testGetUciWithMinDiffDatasetDefaults(self, mock_get_uci_min_diff_datasets,
-                                           mock_pack_data):
+  def testGetUciWithMinDiffDatasetDefaults(
+      self, mock_get_uci_min_diff_datasets, _):
     mock_ds = mock.MagicMock()
     mock_get_uci_min_diff_datasets.return_value = (mock_ds, mock_ds, mock_ds)
     _ = utils.get_uci_with_min_diff_dataset()

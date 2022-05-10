@@ -18,7 +18,7 @@
 import csv
 import os
 import tempfile
-import unittest.mock as mock
+import mock
 
 import tensorflow as tf
 from tensorflow_model_remediation.tools.tutorials_utils import min_diff_keras_utils
