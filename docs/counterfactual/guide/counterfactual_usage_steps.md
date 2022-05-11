@@ -81,7 +81,7 @@ product that the model is used in.
 
 To use CLP, you need the original Keras model you're
 looking to remediate, the original training dataset, and the counterfactual
-dataset. Determine what [`counterfactual loss`](responsible_ai/model_remediation/api_docs/python/model_remediation/counterfactual/losses/CounterfactualLoss)
+dataset. Determine what [`counterfactual loss`](https://www.tensorflow.org/responsible_ai/model_remediation/api_docs/python/model_remediation/counterfactual/losses/CounterfactualLoss)
 should be applied for the logit pairing. With this, you can build the
 Counterfactual model with the desired counterfactual loss function and loss
 function from your original model.
