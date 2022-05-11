@@ -60,7 +60,7 @@ def execute(output_dir, code_url_prefix, search_hints, site_path):
     doc_controls.decorate_all_class_attributes(
         decorator=doc_controls.do_not_doc_in_subclasses,
         cls=cls,
-        skip=["__init__", "call"])
+        skip=["__init__", "__call__"])
 
   # Hide `MinDiffLoss` and `MinDiffKernel` __call__ method.
   for cls in [
