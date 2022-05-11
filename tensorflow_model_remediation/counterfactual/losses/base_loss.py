@@ -94,20 +94,19 @@ class CounterfactualLoss(tf.keras.losses.Loss, abc.ABC):
                                                      sample_weight))
 
   @abc.abstractmethod
-  @docs.do_not_doc_in_subclasses
   def call(self,
            original: types.TensorType,
-           target: types.TensorType,
+           counterfactual: types.TensorType,
            sample_weight: Optional[types.TensorType] = None):
     # pyformat: disable
     """Invokes the `CounterfactualLoss` instance.
 
     Arguments:
       original:  The predictions from the original example values.
-        shape = `[batch_size, d0, .. dN]`. `Tensor` of type `float32` or
+        shape = `[batch_size, d0, .. dN]` with `Tensor` of type `float32` or
         `float64`. Required.
-      target: The predictions from the counterfactual examples.
-        shape = `[batch_size, d0, .. dN]`. `Tensor` of the same type and shape
+      counterfactual: The predictions from the counterfactual examples.
+        shape = `[batch_size, d0, .. dN]` with `Tensor` of the same type and shape
         as `original`. Required.
       sample_weight: (Optional) `sample_weight` acts as a coefficient for the
         loss. If a scalar is provided, then the loss is simply scaled by the
