@@ -50,66 +50,64 @@ class CounterfactualPackedInputs(
 
 def pack_counterfactual_data(
     original_input: tf.data.Dataset,
-    counterfactual_data: tf.data.Dataset) -> CounterfactualPackedInputs:
+    counterfactual_data: tf.data.Dataset) -> tf.data.Dataset:
   """Packs `counterfactual_data` with the `original_input`.
 
   Arguments:
-    original_input: `tf.data.Dataset` that was used before applying
-      Counterfactual. The output should conform to the format used in
+    original_input: An instance of `tf.data.Dataset` that was used for training
+      the original model. The output should conform to the format used in
       `tf.keras.Model.fit`.
-    counterfactual_data: `tf.data.Dataset` or valid Counterfactual structure
-      (unnested dict) of `tf.data.Dataset`s containing only examples to be used
-      to calculate the `counterfactual_loss`. This dataset is repeated to match
-      the number of examples in `original_input`.
+    counterfactual_data: An instance of `tf.data.Dataset` containing only
+      examples that will be used to calculate the `counterfactual_loss`. This
+      dataset is repeated to match the number of examples in `original_input`.
 
-  This function should be used to create the dataset that will be passed to
+  This function should be used to create an instance of
+  `CounterfactualPackedInputs` that will be passed to
   `counterfactual.keras.CounterfactualModel` during training and, optionally,
   during evaluation.
 
-  Warning: All input datasets should be batched **before** being passed in.
-
-  Each input dataset must output a tuple in the format used in
+  Each `original_input` must output a tuple in the format used in
   `tf.keras.Model.fit`. Specifically the output must be a tuple of
   length 1, 2 or 3 in the form `(x, y, sample_weight)`.
 
   Every batch from the returned `tf.data.Dataset` will contain one batch from
   each of the input datasets as a `CounterfactualPackedInputs`. Each returned
   batch will be a tuple from the original dataset and counterfactual dataset
-  such that `((x, y, sample_weight), (original_x, counterfactual_y,
+  of format `((x, y, sample_weight), (original_x, counterfactual_x,
   counterfactual_sample_weight))` matching the length of `original_input`
   batches where:
 
   - `original_input`: is a `tf.data.Dataset` that contains:
-    - `x`: `x` component taken directly from the `original_input` batch.
-    - `y`: `y` component taken directly from the `original_input` batch.
-    - `sample_weight`: `sample_weight` component taken directly from the
+    - `x`: The `x` component taken directly from the `original_input` batch.
+    - `y`: The `y` component taken directly from the `original_input` batch.
+    - `sample_weight`: The `sample_weight` component taken directly from the
       `original_input` batch.
 
   - `counterfactual_data`: is a `tf.data.Dataset` that contains:
-    - `original_x`: `x` component taken directly from the
+    - `original_x`: The `x` component taken directly from the
         `original_input` batch.
-    - `counterfactual_x`: Batch dataset of data formed from
-      `counterfactual_data` (as described in `utils.build_counterfactual_data`).
+    - `counterfactual_x`: The counterfactual value for `original_x` (as
+         described in `build_counterfactual_data`).
     - `counterfactual_sample_weight`: Batch of data formed from taken directly
-      from the `counterfactual_sample_weight` of `counterfactual_data`.
+         from the `counterfactual_sample_weight` of `counterfactual_data`.
 
-  Note that the `original_x` should be an `x` value within the original dataset
-  that contains an attribute you're looking to apply Counterfactuals to.
-  Additionally, `counterfactual_dataset` should only include instances of `x`
-  values that have a difference `counterfactual_x`. The shape of the two
-  datasets should also be the same, but it is fine (and expected) and there are
-  duplicate rows within the `counterfactual_dataset` to match the shape of the
-  original dataset.
+  Note: the `original_x` does not need to be an `x` value within the
+  original dataset. Additionally, `counterfactual_dataset` should only include
+  instances of `x` values that have a difference `counterfactual_x`. It is fine
+  (and expected) within `counterfactual_data` to include duplicate rows to
+  match the shape of the original dataset.
 
-  `counterfactual_data` will be used in
+  The return of `counterfactual_data` will be an instance of
+  `CounterfactualPackedInputs` that can be used in
   `counterfactual.keras.CounterfactualModel` when calculating the
   `counterfactual_loss`.
 
   Returns:
-    A tuple of `tf.data.Dataset` whose output contains ((`x`, `y`,
-      `sample_weight`), (`original_x`, `counterfactual_x`,
-      `counterfactual_sample_weight`)) matching the output length of
-      `original_input`.
+    A `tf,data,Dataset` of `CounterfactualPackedInputs`. Each
+    `CounterfactualPackedInputs` represents a
+    `(original_inputs, counterfactual_data)` pair where `original_inputs is
+    a `(x, y, sample_weight)` tuple, and `counterfactual_data` is a
+    `(original_x, counterfactual_x, counterfactual_sample_weight)` tuple.
   """
   # Validate original_input and counterfactual_data structure.
   structure_utils.validate_counterfactual_structure(
@@ -145,49 +143,61 @@ def build_counterfactual_data(
     original_input: `tf.data.Dataset` that was used before applying
       Counterfactual. The output should conform to the format used in
       `tf.keras.Model.fit`.
-    sensitive_terms_to_remove: List of terms that will be removed or a
-      dictionary of terms that will be replaced within the original dataset.
+    sensitive_terms_to_remove: List of terms that will be removed and filtered
+      from within the `original_input`.
     custom_counterfactual_function: Optional custom function to apply
       to `tf.data.Dataset.map` to build a custom counterfactual dataset. Note
-      that Needs return dataset must be in the form of `(original_x,
-      counterfactual_x, counterfactual_sample_weight)`
+      that it needs to  return a dataset in the form of `(original_x,
+      counterfactual_x, counterfactual_sample_weight)` and should only include
+      values that have been modified. Use `sensitive_terms_to_remove` to filter
+      values that have modifying terms included.
 
-  This function builds a `tf.data.Dataset` containing examples that are meant to
-  only be used when calculating a `counterfactual_loss`. This resulting dataset
-  will need to be packed with the original dataset used for the original task of
-  the model which can be done by calling `utils.pack_counterfactual_data`.
-
-  Warning: All input datasets should be batched **before** being passed in.
+  This function builds a `tf.data.Dataset` containing only examples that will be
+  used when calculating `counterfactual_loss`. This resulting dataset
+  will need to be packed with the `x` value in `original_input`, a modified
+  version of `x` that will act as `counterfactual_x`, and a
+  `counterfactual_sample_weight` that defaults to 1.0. The resulting dataset can
+  be passed to `pack_counterfactual_data` to create an instance of
+  `CounterfactualPackedInputs` for use within
+  `counterfactual.keras.CounterfactualModel`.
 
   `original_input` must output a tuple in the format used in
   `tf.keras.Model.fit`. Specifically the output must be a tuple of
-  length 1, 2 or 3 in the form `(x, y, sample_weight)`.
-
-  This output will be parsed internally in the following way:
+  length 1, 2 or 3 in the form `(x, y, sample_weight)`. This output will be
+  parsed internally in the following way:
 
   ```
-  batch = ...  # Batch from any of the input datasets.
   x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(batch)
   ```
 
-  Note: the `y` component of input datasets will be ignored completely so it can
-  be set to `None` or any other arbitrary value. If `sample_weight` is not
-  included, it can be left out entirely.
+  Alternatively to passing a `sensitive_terms_to_remove`, you can create
+  a custom function that you can pass to the original to create a
+  counterfactual dataset as specficied by the users. For example, you
+  might want to replace a target word instead of simply removing the word.
+  The returned `tf.data.Dataset` will need to have the unchanged `x`
+  values removed. Passing `sensitive_terms_to_remove` in this case
+  acts like a filter to only include terms that have been modified.
 
-  Every batch from the returned `tf.data.Dataset` will contain the same batch
-  input as before for each dataset, but with a modified counterfactual dataset
-  instead of the original text dataset.
+  A minimal example is given below:
 
-  Alternatively to passing a `sensitive_terms_to_remove`, a custom function can
-  be created that will be passed to the original to create a counterfactual
-  dataset as specficied by the users. For example a users might want to replace
-  a target word instead of simply removing the word.
+  >>> simple_dataset_x = tf.constant(["Bad word", "Good word"])
+
+  >>> simple_dataset = tf.data.Dataset.from_tensor_slices((simple_dataset_x))
+
+  >>> counterfactual_data = counterfactual.keras.utils.build_counterfactual_data(
+  ...   original_input=simple_dataset, sensitive_terms_to_remove=['Bad'])
+
+  >>> for original_value, counterfactual_value, _ in counterfactual_data.take(1):
+  ...   print("original: ", original_value)
+  ...   print("counterfactual: ", counterfactual_value)
+  ...   print("counterfactual_sample_weight: ", cf_weight)
+  original:  tf.Tensor(b'Bad word', shape=(), dtype=string)
+  counterfactual:  tf.Tensor(b' word', shape=(), dtype=string)
+  counterfactual_sample_weight:  tf.Tensor(1.0, shape=(), dtype=float32)
 
   Returns:
-    A `tf.data.Dataset` whose output is a tuple or structure (matching the
-      structure of the inputs) of `main: (x, y, sample_weight)
-      counterfactual: (original_x, counterfactual_x,
-      counterfactual_sample_weight)`.
+    A `tf.data.Dataset` whose output is a tuple matching `(original_x,
+      counterfactual_x, counterfactual_sample_weight)`.
 
   Raises:
     ValueError: If both `custom_counterfactual_function` and

@@ -51,7 +51,7 @@ def _get_loss(loss: Union[base_loss.CounterfactualLoss, str],
   directly. If `loss` is a string it must be an accepted loss name. A
   value of `None` is also accepted and simply returns `None`.
 
-  Args:
+  Arguments:
     loss: loss instance. Can be `None`, a string or an instance of
       `losses.CounterfactualLoss`.
     loss_var_name: Name of the loss variable. This is only used for error

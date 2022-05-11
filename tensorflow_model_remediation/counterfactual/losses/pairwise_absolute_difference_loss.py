@@ -28,9 +28,9 @@ class PairwiseAbsoluteDifferenceLoss(base_loss.CounterfactualLoss):
 
   """Absolute difference loss between the original and counterfactual.
 
-  Args:
-      name: Name used for logging and tracking. Defaults to
-        `'pairwise_absolute_difference_loss'`.
+  Arguments:
+    name: Name used for logging and tracking. Defaults to
+      `pairwise_absolute_difference_loss`.
   """
   # pyformat: enable
 

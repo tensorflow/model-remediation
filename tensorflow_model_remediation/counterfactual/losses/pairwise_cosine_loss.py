@@ -32,7 +32,6 @@ class PairwiseCosineLoss(base_loss.CounterfactualLoss):
     name: Name used for logging and tracking. Defaults to
       `'pairwise_cosine_loss'`.
   """
-
   # pyformat: enable
 
   def __init__(self, name: Optional[str] = None):

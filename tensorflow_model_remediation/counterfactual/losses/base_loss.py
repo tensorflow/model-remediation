@@ -52,7 +52,7 @@ class CounterfactualLoss(tf.keras.losses.Loss, abc.ABC):
                sample_weight: Optional[types.TensorType] = None):
     """Computes Counterfactual loss.
 
-    Args:
+    Arguments:
       original:  The predictions from the original example values. shape =
         `[batch_size, d0, .. dN]`. `Tensor` of type `float32` or `float64`.
         Required.

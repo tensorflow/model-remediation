@@ -36,15 +36,14 @@ class CounterfactualModel(tf.keras.Model):
 
   Inherits from: `tf.keras.Model`
 
-
   Arguments:
     original_model: Instance of `tf.keras.Model` that will be trained with the
       additional `counterfactual_loss`.
-    loss: `dict` or single element of string(s) (name of loss) or
-      `counterfactual.losses.CounterfactualLoss` instance that will be used to
-      calculate the `counterfactual_loss`. Defaults to PairwiseMSELoss.
-    loss_weight: `dict` of scalars or single scalar applied to the
-      `counterfactual_loss` before being included in training. Defaults to 1.0.
+    loss: Instance of `counterfactual.losses.CounterfactualLoss` or string of
+      loss name that will be used to calculate the `counterfactual_loss`.
+      Defaults to `PairwiseMSELoss`.
+    loss_weight: Scalar applied to the `counterfactual_loss` before being
+      included in training. Defaults to 1.0.
     **kwargs: Named parameters that will be passed directly to the base
       class' `__init__` function.
 
@@ -116,7 +115,7 @@ class CounterfactualModel(tf.keras.Model):
                                            # update_metrics method.
   ```
 
-  ### <a id=using_counterfactualmodel></a>Usage
+  ### <a id=using_counterfactualmodel></a>Usage:
 
   Once you have created an instance of `CounterfactualModel`, it can be used
   almost exactly the same way as the model it wraps. The main two exceptions to
@@ -140,8 +139,7 @@ class CounterfactualModel(tf.keras.Model):
                loss_weight=1.0,
                **kwargs):
 
-    """Initializes a CounterfactualModel instance.
-    """
+    """Initializes a CounterfactualModel instance."""
     # Roundabout way of accessing the Functional class.
     functional_class = tf.keras.Sequential.__bases__[0]
     # We need to handle a special case where a custom CounterfactualModel class
