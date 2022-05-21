@@ -44,7 +44,7 @@ class AdjustedMMDLossTest(tf.test.TestCase):
     predictions = tf.constant([[0.3], [0.1], [0.86], [0.06], [0.75]])
 
     loss_value = loss_fn(membership, predictions)
-    self.assertAllClose(8.627613, loss_value)
+    self.assertAllClose(8.627618, loss_value)
 
   def testGaussianKernelNegativeCorrelationNoWeights(self):
     loss_fn = adjusted_mmd_lib.AdjustedMMDLoss(predictions_transform=tf.sigmoid)
