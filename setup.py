@@ -23,6 +23,7 @@ REQUIRED_PACKAGES = [
     'pandas',
     'tensorflow>=2.0.0',
     'tensorflow-hub',
+    'apache-beam'
 ]
 
 # Get version from version module.
