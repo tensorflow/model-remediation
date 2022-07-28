@@ -40,11 +40,14 @@ class CounterfactualLoss(tf.keras.losses.Loss, abc.ABC):
   loss.
   """
 
-  def __init__(self, name: Optional[str] = None):
-    """Initialize `CounterfactualLoss` instance."""
+  def __init__(self,
+               name: Optional[str] = None,
+               global_batch_size: Optional[int] = None):
+    """Initializes `CounterfactualLoss` instance."""
     super(CounterfactualLoss, self).__init__(
         reduction=tf.keras.losses.Reduction.NONE, name=name)
     self.name = name or _to_snake_case(self.__class__.__name__)
+    self.global_batch_size = global_batch_size
 
   def __call__(self,
                original: types.TensorType,
@@ -83,15 +86,12 @@ class CounterfactualLoss(tf.keras.losses.Loss, abc.ABC):
         raise ValueError(
             'Incompatible shape {} vs {}|Dimensions must be equal.'.format(
                 original.shape.as_list(), counterfactual.shape.as_list()))
-
-      # The true and false arms for tf.cond are not equivalent, so
-
-
-      return tf.cond(
+      loss = tf.cond(
           tf.equal(tf.size(original),
-                   0), lambda: self._calculate_and_summarise_loss(),
-          lambda: self._calculate_and_summarise_loss(original, counterfactual,
-                                                     sample_weight))
+                   0), lambda: tf.constant(0.0, dtype=tf.dtypes.float32),
+          lambda: self._calculate_loss(original, counterfactual, sample_weight))
+      tf.summary.scalar('counterfactual_loss', loss)
+      return loss
 
   @abc.abstractmethod
   def call(self,
@@ -196,25 +196,31 @@ class CounterfactualLoss(tf.keras.losses.Loss, abc.ABC):
     config = cls._deserialize_config(config)
     return cls(**config)
 
-  def _calculate_and_summarise_loss(
+  def _calculate_loss(
       self,
-      original: Optional[types.TensorType] = None,
-      counterfactual: Optional[types.TensorType] = None,
-      sample_weight: Optional[types.TensorType] = None) -> types.TensorType:
-    loss = tf.constant(0.0, dtype=tf.dtypes.float32)
-    if original is not None and counterfactual is not None:
-      batch_size = original.shape[0]
-      if sample_weight is not None and tf.is_tensor(sample_weight):
-        if sample_weight.shape.as_list() not in [[None], [], [batch_size],
-                                                 [batch_size, 1]]:
-          raise ValueError(
-              'Incompatible `sample_weight` shape {}. Must be scalar or 1D'
-              ' tensor of shape [batch_size] i.e, [{}].'.format(
-                  sample_weight.shape.as_list(), batch_size))
-      loss = self.call(
-          _to_dense_tensor(original), _to_dense_tensor(counterfactual),
-          sample_weight)
-    tf.summary.scalar('counterfactual_loss', loss)
+      original: types.TensorType,
+      counterfactual: types.TensorType,
+      sample_weight: types.TensorType = None) -> types.TensorType:
+    batch_size = original.shape[0]
+    if sample_weight is not None and tf.is_tensor(sample_weight):
+      if sample_weight.shape.as_list() not in [[None], [], [batch_size],
+                                               [batch_size, 1]]:
+        raise ValueError(
+            'Incompatible `sample_weight` shape {}. Must be scalar or 1D'
+            ' tensor of shape [batch_size] i.e, [{}].'.format(
+                sample_weight.shape.as_list(), batch_size))
+    loss = self.call(
+        _to_dense_tensor(original), _to_dense_tensor(counterfactual))
+    # See https://www.tensorflow.org/tutorials/distribute/custom_training.
+    if loss.shape.rank != 0:
+      # Tensor rank must be atleast 1 for `tf.nn.compute_average_loss`.
+      return tf.nn.compute_average_loss(
+          loss,
+          sample_weight=sample_weight,
+          global_batch_size=self.global_batch_size)
+    if sample_weight is not None:
+      # For zero ranked loss tensors, scale by sample weight.
+      return tf.reduce_sum(tf.multiply(loss, sample_weight))
     return loss
 
 

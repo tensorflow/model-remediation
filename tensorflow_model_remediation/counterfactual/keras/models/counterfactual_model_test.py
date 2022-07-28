@@ -444,9 +444,9 @@ class CounterfactualModelTest(tf.test.TestCase):
     loss = cf_model.compute_counterfactual_loss(
         y_pred, y_pred_cf, cf_w)
 
-    expected_single_counterfactual_loss_weighted = losses.PairwiseMSELoss(
-    ).call(y_pred, y_pred_cf, cf_w)
-    self.assertAllClose(expected_single_counterfactual_loss_weighted, loss)
+    expected_single_counterfactual_loss_weighted = losses.PairwiseMSELoss()(
+        y_pred, y_pred_cf, cf_w)
+    self.assertAllClose(loss, expected_single_counterfactual_loss_weighted)
 
   def testComputeCounterfactualLossWithWeights(self):
     original_model = get_original_model()
@@ -467,8 +467,8 @@ class CounterfactualModelTest(tf.test.TestCase):
     loss = cf_model.compute_counterfactual_loss(
         y_pred, y_pred_cf, cf_w)
 
-    expected_single_counterfactual_loss_weighted = losses.PairwiseMSELoss(
-    ).call(y_pred, y_pred_cf, cf_w)
+    expected_single_counterfactual_loss_weighted = losses.PairwiseMSELoss()(
+        y_pred, y_pred_cf, cf_w)
     self.assertAllClose(
         expected_single_counterfactual_loss_weighted * loss_weight, loss)
 
@@ -501,8 +501,9 @@ class CounterfactualModelTest(tf.test.TestCase):
     # Assert correct inference call and calculated loss.
     loss = cf_model.compute_counterfactual_loss(
         y_pred, y_pred_cf, cf_w)
-    expected_single_counterfactual_loss = losses.PairwiseMSELoss().call(
-        y_pred, y_pred_cf, cf_w)
+    expected_single_counterfactual_loss = losses.PairwiseMSELoss()(y_pred,
+                                                                   y_pred_cf,
+                                                                   cf_w)
     self.assertAllClose(expected_single_counterfactual_loss, loss)
 
   def testCustomModelWithFunctionalRaisesErrorIfNoSkipInit(self):
@@ -780,6 +781,17 @@ class CounterfactualModelTest(tf.test.TestCase):
     self.assertEqual(
         set(cf_model.get_config().keys()),
         set(["loss", "loss_weight", "name", "original_model"]))
+
+  def testDistributedWorkflows(self):
+    strategy = tf.distribute.MirroredStrategy()
+    batch_size = 2
+    with strategy.scope():
+      original_model = get_original_model()
+      cf_model = counterfactual_model.CounterfactualModel(
+          original_model, losses.PairwiseMSELoss(global_batch_size=batch_size))
+      cf_model.compile(loss="mae", optimizer="adam")
+      cf_model.fit(self.packed_dataset.batch(batch_size), verbose=1)
+      cf_model.evaluate(self.packed_dataset.batch(batch_size), verbose=1)
 
 if __name__ == "__main__":
   tf.test.main()

@@ -57,7 +57,7 @@ class PairwiseMSELossTest(tf.test.TestCase):
     loss = loss_obj(original, counterfactual, sample_weight=sample_weight)
 
     self.assertEqual(sample_weight.shape, [2, 1])
-    self.assertAlmostEqual(self.evaluate(loss), 767.8 / 6, 2)
+    self.assertAlmostEqual(self.evaluate(loss), 127.9666, 2)
 
   def testLossWith1DShapeForSampleWeight(self):
     loss_obj = pairwise_mse_loss.PairwiseMSELoss()
@@ -68,7 +68,7 @@ class PairwiseMSELossTest(tf.test.TestCase):
     loss = loss_obj(original, counterfactual, sample_weight=sample_weight)
 
     self.assertEqual(sample_weight.shape, [2])
-    self.assertAlmostEqual(self.evaluate(loss), 767.8 / 6, 2)
+    self.assertAlmostEqual(self.evaluate(loss), 127.9666, 2)
 
   def testRaggedTensors(self):
     loss_obj = pairwise_mse_loss.PairwiseMSELoss()
@@ -155,6 +155,14 @@ class PairwiseMSELossTest(tf.test.TestCase):
     self.assertDictEqual(loss.get_config(), deserialized.get_config())
     self.assertAllClose(original_output, deserialized_output)
 
+  def testDistributedStrategy(self):
+    strategy = tf.distribute.MirroredStrategy()
+    with strategy.scope():
+      loss_obj = pairwise_mse_loss.PairwiseMSELoss(global_batch_size=2)
+      original = tf.constant([[1, 9, 2], [-5, -2, 6]])
+      counterfactual = tf.constant([[4, 8, 12], [8, 1, 3]], dtype=tf.float32)
+      loss = loss_obj(original, counterfactual)
+      self.assertAlmostEqual(self.evaluate(loss), 49.5, 3)
 
 if __name__ == '__main__':
   tf.test.main()

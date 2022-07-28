@@ -31,18 +31,22 @@ class PairwiseCosineLoss(base_loss.CounterfactualLoss):
   Arguments:
     name: Name used for logging and tracking. Defaults to
       `'pairwise_cosine_loss'`.
+    global_batch_size: Global batch size for training. This argument will be
+       used to reduce the loss across replicas when using
+       `tf.distribution.strategy`.
   """
   # pyformat: enable
 
-  def __init__(self, name: Optional[str] = None):
+  def __init__(self,
+               name: Optional[str] = None,
+               global_batch_size: Optional[int] = None):
     """Initialize an instance of Pairwise Cosine Loss."""
-    super(PairwiseCosineLoss,
-          self).__init__(name=name or "pairwise_cosine_loss")
+    super(PairwiseCosineLoss, self).__init__(
+        name=name or "pairwise_cosine_loss",
+        global_batch_size=global_batch_size)
 
-  def call(self,
-           original: types.TensorType,
-           counterfactual: types.TensorType,
-           sample_weight: Optional[types.TensorType] = None):
+  def call(self, original: types.TensorType,
+           counterfactual: types.TensorType) -> types.TensorType:
     """Computes the cosine distance between the original and counterfactual.
 
     Arguments:
@@ -52,19 +56,11 @@ class PairwiseCosineLoss(base_loss.CounterfactualLoss):
       counterfactual: The predictions from the counterfactual examples. shape =
         `[batch_size, d0, .. dN]` with `Tensor` of the same type and shape as
         `original`. Required.
-      sample_weight: (Optional) `sample_weight` acts as a coefficient for the
-        loss. If a scalar is provided, then the loss is simply scaled by the
-        given value. If `sample_weight` is a tensor of size `[batch_size]`, then
-        the total loss for each sample of the batch is rescaled by the
-        corresponding element in the `sample_weight` vector. If the shape of
-        `sample_weight` is `[batch_size, d0, .. dN-1]` (or can be broadcasted to
-        this shape), then each loss element of `original` is scaled
-        by the corresponding value of `sample_weight`. (Note on`dN-1`: all loss
-          functions reduce by 1 dimension, usually axis=-1.)
-
     Returns:
-     Computed cosine distance between original and counterfactual examples.
+     Computed cosine distance between original and counterfactual examples per
+     example in the batch shape = `[batch_size]`
     """
 
-    cosine = tf.keras.losses.CosineSimilarity()
-    return cosine(original, counterfactual, sample_weight=sample_weight)
+    cosine = tf.keras.losses.CosineSimilarity(
+        reduction=tf.keras.losses.Reduction.NONE)
+    return cosine(original, counterfactual)
