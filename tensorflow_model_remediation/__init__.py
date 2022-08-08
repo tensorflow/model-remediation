@@ -33,6 +33,7 @@ Other Documentation:
 
 from tensorflow_model_remediation import common
 from tensorflow_model_remediation import counterfactual
+from tensorflow_model_remediation import experimental
 from tensorflow_model_remediation import min_diff
 from tensorflow_model_remediation import tools
 
