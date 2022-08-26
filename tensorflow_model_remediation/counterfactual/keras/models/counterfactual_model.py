@@ -39,13 +39,15 @@ class CounterfactualModel(tf.keras.Model):
   Arguments:
     original_model: Instance of `tf.keras.Model` that will be trained with the
       additional `counterfactual_loss`.
-    loss: Instance of `counterfactual.losses.CounterfactualLoss` or string of
-      loss name that will be used to calculate the `counterfactual_loss`.
-      Defaults to `PairwiseMSELoss`.
-    loss_weight: Scalar applied to the `counterfactual_loss` before being
-      included in training. Defaults to 1.0.
-    **kwargs: Named parameters that will be passed directly to the base
-      class' `__init__` function.
+    loss: `counterfactual.losses.CounterfactualLoss` instance or `dict` with
+      objectives as keys and `counterfactual.losses.CounterfactualLoss`
+      instances as values.  This will be used to calculate the
+      `counterfactual_loss`. Defaults to `PairwiseMSELoss`.
+    loss_weight: `dict` of scalars or single scalar applied to the
+      `counterfactual_loss` before being included in training. Defaults to 1.0.
+      Must match the same structure as `loss`.
+    **kwargs: Named parameters that will be passed directly to the base class'
+      `__init__` function.
 
   `CounterfactualModel` wraps the model passed in, `original_model`, and adds a
   component to the loss during training and optionally during evaluation.
@@ -209,10 +211,11 @@ class CounterfactualModel(tf.keras.Model):
     # We list our `Metric` objects here so that `reset_states()` can be
     # called automatically at the start of each epoch
     # or at the start of `evaluate()`.
-    all_metrics = [
-        self._total_loss_metric, self._counterfactual_loss_metrics,
-        self._original_loss_metric
-    ]
+    all_metrics = [self._total_loss_metric, self._original_loss_metric]
+
+    all_metrics.extend(
+        structure_utils._flatten_counterfactual_structure(
+            self._counterfactual_loss_metrics))
     if self.compiled_metrics is not None:
       all_metrics.extend(self.compiled_metrics.metrics)
     return all_metrics
@@ -226,68 +229,71 @@ class CounterfactualModel(tf.keras.Model):
     """
     return self._original_model
 
-  def compute_total_loss(self, y, y_pred, y_pred_original,
-                         y_pred_counterfactual, sample_weight,
-                         cf_sample_weight):
+  def compute_total_loss(self, y, y_pred, sample_weight, cf_data):
+    """Adds up main task loss and counterfactual loss to give total loss.
+
+    Arguments:
+      y: Ground truth labels or logits used towards computing the main task
+        loss.
+      y_pred: Predicted labels or logits used towards computing the main task
+        loss.
+      sample_weight: Weight for the examples for computing the main task loss.
+      cf_data: Instance of `CounterfactualPackedInputs.counterfactual_data`.
+        Counterfactual data used for computing the counterfactual loss.
+
+    Returns:
+      A tuple consisting of total loss, list of `counterfactual_loss` values
+      and compiled loss.
+    """
     compiled_loss = self.compiled_loss(y, y_pred, sample_weight)
     total_loss = compiled_loss
+    counterfactual_losses = self.compute_counterfactual_loss(cf_data)
 
-    counterfactual_loss = None
-    if y_pred_counterfactual is not None:
-      # Compiled counterfactual losses.
-      counterfactual_loss = self.compute_counterfactual_loss(
-          y_pred_original, y_pred_counterfactual, cf_sample_weight)
-      total_loss += counterfactual_loss
-    return total_loss, counterfactual_loss, compiled_loss
+    total_loss += sum(counterfactual_losses)
+    return total_loss, counterfactual_losses, compiled_loss
 
-  def compute_counterfactual_loss(self, original_predictions,
-                                  counterfactual_predictions,
-                                  counterfactual_sample_weight):
+  def compute_counterfactual_loss(self, cf_data):
     """Computes `counterfactual_loss`(es) corresponding to `counterfactual_data`.
 
     Arguments:
-      original_predictions: Predictions on original data.
-      counterfactual_predictions: Predictions of a model on counterfactual data.
-      counterfactual_sample_weight: Per sample weight to scale counterfactual
-        loss.
+      cf_data: Instance of `CounterfactualPackedInputs.counterfactual_data`.
+        Counterfactual data used for computing the counterfactual loss.
 
     Returns:
-      Scalar (if only one) or list of `counterfactual_loss` values calculated
+      List of `counterfactual_loss` values calculated
         from `counterfactual_data`.
     """
 
 
     # Flatten everything and calculate counterfactual_loss for each
     # application.
+    flat_cf_data = structure_utils._flatten_counterfactual_structure(cf_data)
     flat_losses = structure_utils._flatten_counterfactual_structure(
         self._counterfactual_losses)
     flat_weights = structure_utils._flatten_counterfactual_structure(
         self._counterfactual_loss_weights)
     counterfactual_losses = [
         self._compute_single_counterfactual_loss(
-            original_predictions, counterfactual_predictions,
-            counterfactual_sample_weight, loss, weight)
-        for loss, weight in zip(flat_losses, flat_weights)
+            cf_data, loss, weight) for cf_data, loss, weight in zip(
+                flat_cf_data, flat_losses, flat_weights)
     ]
-    # If there is only one application return a scalar rather than a list.
-    if len(counterfactual_losses) == 1:
-      counterfactual_losses = counterfactual_losses[0]
     return counterfactual_losses
 
-  def _compute_single_counterfactual_loss(self, original_predictions,
-                                          counterfactual_predictions,
-                                          counterfactual_sample_weight, loss_fn,
-                                          loss_weight):
+  def _compute_single_counterfactual_loss(self, cf_data, loss_fn, loss_weight):
 
     """Computes a single `counterfactual_loss` given a loss, weight, and data.
 
     This will be called for each application of Counterfactual. See
     `CounterfactualModel.compute_counterfactual_loss` for details.
     """
+    x, cf_x, cf_sample_weight = (
+        tf.keras.utils.unpack_x_y_sample_weight(cf_data))
+    original_predictions = self.original_model(x)
+    counterfactual_predictions = self.original_model(cf_x)
     counterfactual_loss = loss_weight * loss_fn(
         original=original_predictions,
         counterfactual=counterfactual_predictions,
-        sample_weight=counterfactual_sample_weight)
+        sample_weight=cf_sample_weight)
     return counterfactual_loss
 
   @docs.do_not_doc_in_subclasses
@@ -298,35 +304,31 @@ class CounterfactualModel(tf.keras.Model):
     Has the exact same behavior as `tf.keras.Model.train_step` with the one
     exception that it adds the 'counterfactual_loss' per step.
     """
+
     if not isinstance(data, utils.CounterfactualPackedInputs):
       raise ValueError(
           "Training data must be an instance of CounterfactualPackedInputs. "
           f"Received: {data}")
+
     x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(
         data.original_input)
-    original_x, cf_x, cf_sample_weight = (
-        tf.keras.utils.unpack_x_y_sample_weight(data.counterfactual_data))
 
     with tf.GradientTape() as tape:
       y_pred = self.original_model(x)
-      y_pred_original = self.original_model(original_x)
-      y_pred_counterfactual = self.original_model(
-          cf_x) if cf_x is not None else None
-      total_loss, counterfactual_loss, compiled_loss = self.compute_total_loss(
-          y, y_pred, y_pred_original, y_pred_counterfactual, sample_weight,
-          cf_sample_weight)
+      total_loss, counterfactual_losses, compiled_loss = self.compute_total_loss(
+          y, y_pred, sample_weight, data.counterfactual_data)
 
-    # Compute gradients
-    trainable_vars = self.original_model.trainable_variables
-    gradients = tape.gradient(total_loss, trainable_vars)
+      # Compute gradients
+      trainable_vars = self.original_model.trainable_variables
+      gradients = tape.gradient(total_loss, trainable_vars)
 
-    # Update weights
-    self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+      # Update weights
+      self.optimizer.apply_gradients(zip(gradients, trainable_vars))
 
-    # Update the metrics.
-    self.update_metrics(y, y_pred, sample_weight, total_loss, compiled_loss,
-                        counterfactual_loss)
-    return {m.name: m.result() for m in self.metrics}
+      # Update the metrics.
+      self.update_metrics(y, y_pred, sample_weight, total_loss, compiled_loss,
+                          counterfactual_losses)
+      return {m.name: m.result() for m in self.metrics}
 
   @docs.do_not_doc_in_subclasses
   def call(self, inputs, *args, **kwargs):
@@ -341,45 +343,50 @@ class CounterfactualModel(tf.keras.Model):
     exception that it removes the 'counterfactual_loss' metric(s) if
     `counterfactual_data` is not available.
     """
+
     if isinstance(data, utils.CounterfactualPackedInputs):
       x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(
           data.original_input)
-      original_x, cf_x, cf_sample_weight = (
-          tf.keras.utils.unpack_x_y_sample_weight(data.counterfactual_data))
       y_pred = self.original_model(x)
-      y_pred_original = self.original_model(original_x)
-      y_pred_counterfactual = self.original_model(cf_x)
+      total_loss, counterfactual_loss, compiled_loss = self.compute_total_loss(
+          y, y_pred, sample_weight, data.counterfactual_data)
+      self.update_metrics(y, y_pred, sample_weight, total_loss, compiled_loss,
+                          counterfactual_loss)
+
     else:
       x, y, sample_weight = tf.keras.utils.unpack_x_y_sample_weight(data)
       y_pred = self.original_model(x)
-
-      # Set Counterfactual metrics to None.
-      y_pred_original = None
-      y_pred_counterfactual = None
-      cf_sample_weight = None
-
-    total_loss, counterfactual_loss, compiled_loss = self.compute_total_loss(
-        y, y_pred, y_pred_original, y_pred_counterfactual,
-        sample_weight, cf_sample_weight)
-    self.update_metrics(y, y_pred, sample_weight, total_loss, compiled_loss,
-                        counterfactual_loss)
+      counterfactual_loss = None
+      compiled_loss = self.compiled_loss(y, y_pred, sample_weight)
+      total_loss = compiled_loss
+      self.update_metrics(y, y_pred, sample_weight, total_loss, compiled_loss)
     metrics_to_return = []
     for metric in self.metrics:
       if (not isinstance(data, utils.CounterfactualPackedInputs)
-         ) and metric == self._counterfactual_loss_metrics:
+         ) and metric.name in list(self._counterfactual_loss_metrics.keys()):
         continue
       metrics_to_return.append(metric)
     return {m.name: m.result() for m in metrics_to_return}
 
   @docs.do_not_doc_in_subclasses
-  def update_metrics(self, y, y_pred, sample_weight, total_loss, compiled_loss,
-                     counterfactual_loss):
+  def update_metrics(self,
+                     y,
+                     y_pred,
+                     sample_weight,
+                     total_loss,
+                     compiled_loss,
+                     counterfactual_losses=None):
     """Updates mean metrics being tracked for Counterfactual losses."""
     self.compiled_metrics.update_state(y, y_pred, sample_weight)
     self._total_loss_metric.update_state(total_loss)
     self._original_loss_metric.update_state(compiled_loss)
-    if counterfactual_loss is not None:
-      self._counterfactual_loss_metrics.update_state(counterfactual_loss)
+
+    if counterfactual_losses:
+      counterfactual_loss_metrics = structure_utils._flatten_counterfactual_structure(
+          self._counterfactual_loss_metrics)
+      for cf_metric, cf_loss in zip(counterfactual_loss_metrics,
+                                    counterfactual_losses):
+        cf_metric.update_state(cf_loss)
 
   # We are overriding this solely to provide complete documentation on the
   # limitations of saving this way as opposed to behavior of normal models.
@@ -522,16 +529,15 @@ def _unique_metric_name(name, existing_metrics):
 def _create_unique_metrics(loss, existing_metrics):
   """Create uniquely named Counterfactual metric(s) corresponding to loss parameter."""
   if isinstance(loss, tf.keras.losses.Loss):
-    return tf.keras.metrics.Mean(
-        _unique_metric_name("counterfactual_loss", existing_metrics))
+    metric_name = _unique_metric_name("counterfactual_loss", existing_metrics)
+    return {metric_name: tf.keras.metrics.Mean(metric_name)}
 
-  counterfactual_metrics = []
+  counterfactual_metrics = {}
   for name in loss.keys():
-    counterfactual_metrics.append(
-        tf.keras.metrics.Mean(
-            _unique_metric_name(name + "_counterfactual_loss",
-                                existing_metrics)))
-  return tf.nest.pack_sequence_as(loss, counterfactual_metrics)
+    metric_name = _unique_metric_name(name + "_counterfactual_loss",
+                                      existing_metrics)
+    counterfactual_metrics[metric_name] = tf.keras.metrics.Mean(metric_name)
+  return counterfactual_metrics
 
 
 def _conform_weights_to_losses(loss, loss_weight, default_value=1.0):

@@ -60,18 +60,34 @@ class CounterfactualModelTest(tf.test.TestCase):
     super(CounterfactualModelTest, self).setUp()
     self.original_x = tf.constant([[-1.0, -2.0, -3.0], [-4.0, -5.0, -6.0],
                                    [-7.0, -8.0, -9.0], [-10.0, -11.0, -12.0]])
-    self.y = tf.constant([0.0, 0.0, 0.0, 0.0])
-    self.w = tf.constant([5.0, 6.0, 7.0, 8.0])
+    self.y = tf.constant([[0.0], [0.0], [0.0], [0.0]])
+    self.w = tf.constant([[5.0], [6.0], [7.0], [8.0]])
     self.counterfactual_x = tf.constant([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0],
                                          [7.0, 8.0, 9.0], [10.0, 11.0, 12.0]])
+    self.alt_original_x = tf.constant([[-10.0, -20.0, -30.0],
+                                       [-40.0, -50.0, -60.0],
+                                       [-70.0, -80.0, -90.0],
+                                       [-100.0, -110.0, -120.0]])
+    self.alt_counterfactual_x = tf.constant([[10.0, 20.0, 30.0],
+                                             [40.0, 50.0, 60.0],
+                                             [70.0, 80.0, 90.0],
+                                             [100.0, 110.0, 120.0]])
     self.cf_w = tf.constant([1.0, 2.0, 3.0, 4.0])
 
     self.original_input = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.y, self.w))
     self.cf_dataset = tf.data.Dataset.from_tensor_slices(
         (self.original_x, self.counterfactual_x, self.cf_w))
+    self.alt_cf_dataset = tf.data.Dataset.from_tensor_slices(
+        (self.alt_original_x, self.alt_counterfactual_x, self.cf_w))
     self.packed_dataset = utils.pack_counterfactual_data(
         self.original_input, self.cf_dataset)
+    self.multi_counterfactual_data = {
+        "fairness_vertical_1": self.cf_dataset.batch(2),
+        "fairness_vertical_2": self.alt_cf_dataset.batch(1),
+    }
+    self.multi_counterfactual_dataset = utils.pack_counterfactual_data(
+        self.original_input.batch(2), self.multi_counterfactual_data)
 
   def testIsModel(self):
     cf_model = counterfactual_model.CounterfactualModel(
@@ -121,8 +137,9 @@ class CounterfactualModelTest(tf.test.TestCase):
     original_model = CustomModel()
     cf_model = counterfactual_model.CounterfactualModel(
         original_model, losses.PairwiseMSELoss())
-    self.assertEqual(cf_model._counterfactual_loss_metrics.name,
-                     "counterfactual_loss_2")
+    self.assertEqual(
+        list(cf_model._counterfactual_loss_metrics.keys()),
+        ["counterfactual_loss_2"])
 
   def testBadLossStructureRaisesError(self):
     # Assert bad structure (nested dict) raises an error.
@@ -298,27 +315,26 @@ class CounterfactualModelTest(tf.test.TestCase):
         batch_counter.batch_end_count,
         6)  # 4 examples in dataset, batches of size 2, over 3 epochs
 
-  def testTotalLossForModelSumsoriginalLossAndCompiledLoss(self):
+  def testTotalLossForModelSumsOriginalLossAndCompiledLoss(self):
     original_model = get_original_model()
     cf_loss_obj = losses.PairwiseMSELoss()
     compiled_loss_obj = tf.keras.losses.MeanAbsoluteError()
     cf_model = counterfactual_model.CounterfactualModel(original_model,
                                                         cf_loss_obj)
     cf_model.compile(loss=compiled_loss_obj)
-
-    y = tf.constant([[1, 0, 0], [0, 1, 0]], dtype=tf.float32)
-    y_pred = tf.constant([[1, 1, 1], [2, 2, 2]], dtype=tf.float32)
-    y_pred_original = tf.constant(
-        [[1, 1, 0], [-2, -3, -2]], dtype=tf.float32)
-    y_pred_cf = tf.constant([[-1, -1, -1], [-2, -3, -2]], dtype=tf.float32)
-    cf_w = tf.constant([5, 7], dtype=tf.float32)
-    w = tf.constant([1, 2], dtype=tf.float32)
-
     total_loss, cf_loss, compiled_loss = cf_model.compute_total_loss(
-        y, y_pred, y_pred_original, y_pred_cf, w, cf_w)
-    self.assertAllClose(total_loss, cf_loss + compiled_loss)
-    self.assertAllClose(cf_loss, cf_loss_obj(y_pred_original, y_pred_cf, cf_w))
-    self.assertAllClose(compiled_loss, compiled_loss_obj(y, y_pred, w))
+        self.y, original_model(self.original_x), self.w,
+        (self.original_x, self.counterfactual_x, self.cf_w))
+    self.assertLen(cf_loss, 1)  # Single objective CF loss.
+    self.assertAllClose(total_loss, cf_loss[0] + compiled_loss)
+    self.assertAllClose(
+        cf_loss[0],
+        cf_loss_obj(
+            original_model(self.original_x),
+            original_model(self.counterfactual_x), self.cf_w))
+    self.assertAllClose(
+        compiled_loss,
+        compiled_loss_obj(self.y, original_model(self.original_x), self.w))
 
   def testTrainModelMetrics(self):
     original_model = get_original_model()
@@ -391,6 +407,54 @@ class CounterfactualModelTest(tf.test.TestCase):
     cf_model.fit(self.packed_dataset.batch(2), verbose=1)
     cf_model.evaluate(self.packed_dataset.batch(2), verbose=1)
 
+  def testMultipleObjectivesHappyPath(self):
+    original_model = get_original_model()
+    model = counterfactual_model.CounterfactualModel(
+        original_model,
+        loss={
+            "fairness_vertical_1": losses.PairwiseMSELoss(),
+            "fairness_vertical_2": losses.PairwiseMSELoss(),
+        },
+        loss_weight={
+            "fairness_vertical_1": 3.1,
+            "fairness_vertical_2": 5.3
+        })
+    loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+    model.compile(loss=loss, optimizer="adam", metrics=["acc"])
+    # Train model.
+    history = model.fit(self.multi_counterfactual_dataset)
+    self.assertSetEqual(
+        set(history.history.keys()),
+        set([
+            "original_loss", "total_loss", "acc",
+            "fairness_vertical_1_counterfactual_loss",
+            "fairness_vertical_2_counterfactual_loss"
+        ]))
+    # Verify loss computation.
+    self.assertEqual(
+        tf.math.add_n([
+            history.history["original_loss"],
+            history.history["fairness_vertical_1_counterfactual_loss"],
+            history.history["fairness_vertical_2_counterfactual_loss"]
+        ]), history.history["total_loss"])
+
+    # Evaluate with counterfactual_data.
+    output_metrics = model.evaluate(
+        self.multi_counterfactual_dataset, return_dict=True)
+    self.assertSetEqual(
+        set(output_metrics.keys()),
+        set([
+            "total_loss", "original_loss", "acc",
+            "fairness_vertical_1_counterfactual_loss",
+            "fairness_vertical_2_counterfactual_loss"
+        ]))
+
+    # Evaluate without counterfactual_data.
+    output_metrics = model.evaluate(
+        self.original_input.batch(1), return_dict=True)
+    self.assertSetEqual(
+        set(output_metrics.keys()), set(["total_loss", "original_loss", "acc"]))
+
   def testWithRegularizationInOriginalModel(self):
     original_model = tf.keras.Sequential([
         tf.keras.layers.Dense(1, activation="softmax"),
@@ -429,82 +493,35 @@ class CounterfactualModelTest(tf.test.TestCase):
 
   def testComputeCounterfactualLossWithDefaultWeights(self):
     original_model = get_original_model()
-    predictions = tf.expand_dims(tf.range(1.0, 51), axis=-1)
-    # Mock original_model's call function.
-    original_model.call = mock.MagicMock(return_value=predictions)
-
-    cf_model = counterfactual_model.CounterfactualModel(
-        original_model, losses.PairwiseMSELoss())
+    cf_loss_obj = losses.PairwiseMSELoss()
+    cf_model = counterfactual_model.CounterfactualModel(original_model,
+                                                        cf_loss_obj)
 
     # Assert correct inference call and calculated loss.
-    y_pred = tf.constant([[1, 1, 1], [2, 2, 2]], dtype=tf.float32)
-    y_pred_cf = tf.constant([[-1, -1, -1], [-2, -2, -2]], dtype=tf.float32)
-    cf_w = tf.constant([5, 7], dtype=tf.float32)
-
     loss = cf_model.compute_counterfactual_loss(
-        y_pred, y_pred_cf, cf_w)
-
-    expected_single_counterfactual_loss_weighted = losses.PairwiseMSELoss()(
-        y_pred, y_pred_cf, cf_w)
-    self.assertAllClose(loss, expected_single_counterfactual_loss_weighted)
+        (self.original_x, self.counterfactual_x, self.cf_w))
+    expected_single_counterfactual_loss = cf_loss_obj(
+        original_model(self.original_x), original_model(self.counterfactual_x),
+        self.cf_w)
+    self.assertLen(loss, 1)  # Single objective CF loss.
+    self.assertAllClose(expected_single_counterfactual_loss, loss[0])
 
   def testComputeCounterfactualLossWithWeights(self):
     original_model = get_original_model()
-    predictions = tf.expand_dims(tf.range(1.0, 51), axis=-1)
     loss_weight = 2.3  # Arbitrary value.
-
-    # Mock original_model's call function.
-    original_model.call = mock.MagicMock(return_value=predictions)
+    cf_loss_obj = losses.PairwiseMSELoss()
 
     cf_model = counterfactual_model.CounterfactualModel(
-        original_model, losses.PairwiseMSELoss(), loss_weight=loss_weight)
-
-    # Assert correct inference call and calculated loss.
-    y_pred = tf.constant([[1, 1, 1], [2, 2, 2]], dtype=tf.float32)
-    y_pred_cf = tf.constant([[-1, -1, -1], [-2, -2, -2]], dtype=tf.float32)
-    cf_w = tf.constant([5, 7], dtype=tf.float32)
+        original_model, cf_loss_obj, loss_weight=loss_weight)
 
     loss = cf_model.compute_counterfactual_loss(
-        y_pred, y_pred_cf, cf_w)
+        (self.original_x, self.counterfactual_x))
 
-    expected_single_counterfactual_loss_weighted = losses.PairwiseMSELoss()(
-        y_pred, y_pred_cf, cf_w)
+    expected_single_counterfactual_loss_weighted = cf_loss_obj(
+        original_model(self.original_x), original_model(self.counterfactual_x))
+    self.assertLen(loss, 1)  # Single objective CF loss.
     self.assertAllClose(
-        expected_single_counterfactual_loss_weighted * loss_weight, loss)
-
-  def testComputeCounterfactualLossPassesInputsThrough(self):
-    y_pred = tf.constant([[1, 1, 1], [2, 2, 2]], dtype=tf.float32)
-    y_pred_cf = tf.constant([[-1, -1, -1], [-2, -2, -2]], dtype=tf.float32)
-    cf_w = tf.constant([5, 7], dtype=tf.float32)
-
-    original_model = get_original_model()
-
-    cf_model = counterfactual_model.CounterfactualModel(
-        original_model, losses.PairwiseMSELoss())
-    cf_model._counterfactual_losses = mock.MagicMock()
-
-    _ = cf_model.compute_counterfactual_loss(y_pred, y_pred_cf, cf_w)
-    cf_model._counterfactual_losses.assert_called_once_with(
-        counterfactual=y_pred_cf, original=y_pred, sample_weight=cf_w)
-    cf_model._counterfactual_losses.reset_mock()
-
-  def testComputeCounterfactualLoss(self):
-    original_model = tf.keras.Sequential()
-
-    cf_model = counterfactual_model.CounterfactualModel(
-        original_model, losses.PairwiseMSELoss())
-
-    y_pred = tf.constant([[1, 1, 1], [2, 2, 2]], dtype=tf.float32)
-    y_pred_cf = tf.constant([[-1, -1, -1], [-2, -2, -2]], dtype=tf.float32)
-    cf_w = tf.constant([5, 7], dtype=tf.float32)
-
-    # Assert correct inference call and calculated loss.
-    loss = cf_model.compute_counterfactual_loss(
-        y_pred, y_pred_cf, cf_w)
-    expected_single_counterfactual_loss = losses.PairwiseMSELoss()(y_pred,
-                                                                   y_pred_cf,
-                                                                   cf_w)
-    self.assertAllClose(expected_single_counterfactual_loss, loss)
+        expected_single_counterfactual_loss_weighted * loss_weight, loss[0])
 
   def testCustomModelWithFunctionalRaisesErrorIfNoSkipInit(self):
 

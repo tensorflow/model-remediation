@@ -296,23 +296,30 @@ class PackCounterfactualDataTest(CounterfactualInputUtilsTestCase):
           counterfactual_w,
           tf.ones_like(counterfactual_x, tf.float32))
 
-  def testCounterfactualDatasetIsRepeated(self):
-    batch_size = 5
+  def testCounterfactualDatasetIsPackedWithoutRepetitions(self):
     original_input = tf.data.Dataset.from_tensor_slices(
-        (self.original_x, self.original_y)).batch(batch_size)
+        ([10, 20, 30, 40, 50], [1, 1, 1, 1, 1])).batch(1)
 
-    short_original_x = {
-        "f1": tf.reshape(
-            tf.constant(["bad word" + str(i) for i in range(30)]), [15, 2]),
-        "f2": tf.reshape(tf.range(175.0, 205.0), [15, 2]),
-    }
+    short_counterfactual_dataset = tf.data.Dataset.from_tensor_slices(
+        ([1, 2, 3, 4, 5], [-1, -2, -3, -4, -5])).batch(2)
 
-    short_counterfactual__dataset = tf.data.Dataset.from_tensor_slices(
-        (short_original_x, None, None)).batch(batch_size)
-
+    # Ensure that the packed dataset is truncated to match the cardinality of
+    # the smaller dataset.
     packed_dataset = input_utils.pack_counterfactual_data(
-        original_input, short_counterfactual__dataset)
-    self.assertEqual(packed_dataset.cardinality(), original_input.cardinality())
+        original_input, short_counterfactual_dataset)
+
+    self.assertEqual(original_input.cardinality(), 5)
+    self.assertEqual(short_counterfactual_dataset.cardinality(), 3)
+    # Verify if the packed dataset is truncated(and not repeated) to the
+    # length of smaller of the two datasets.
+    self.assertEqual(packed_dataset.cardinality(), 3)
+    original_input_list = list(original_input.as_numpy_iterator())
+    short_counterfactual_dataset_list = list(
+        short_counterfactual_dataset.as_numpy_iterator())
+    for i, packed_batch in enumerate(packed_dataset):
+      self.assertAllEqual(packed_batch.original_input, original_input_list[i])
+      self.assertAllEqual(packed_batch.counterfactual_data,
+                          short_counterfactual_dataset_list[i])
 
 if __name__ == "__main__":
   tf.test.main()

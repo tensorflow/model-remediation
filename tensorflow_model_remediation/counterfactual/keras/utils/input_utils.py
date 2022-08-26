@@ -39,9 +39,9 @@ class CounterfactualPackedInputs(
   training.
 
   Attributes:
-    original_input: Batch of inputs that would originally (i.e. without
-      applying Counterfactual) be passed in to a model's `Model.call` method.
-      This corresponds to the `x` component described in `tf.keras.Model.fit`.
+    original_input: Batch of inputs that would originally (i.e. without applying
+      Counterfactual) be passed in to a model's `Model.call` method. This
+      corresponds to the `x` component described in `tf.keras.Model.fit`.
     counterfactual_data: Counterfactual value based on `original_x` that has
       been modified. Should be the form `(orginal_x, counterfactual_x,
       counterfactual_sample_weight)`.
@@ -53,14 +53,6 @@ def pack_counterfactual_data(
     counterfactual_data: tf.data.Dataset) -> tf.data.Dataset:
   """Packs `counterfactual_data` with the `original_input`.
 
-  Arguments:
-    original_input: An instance of `tf.data.Dataset` that was used for training
-      the original model. The output should conform to the format used in
-      `tf.keras.Model.fit`.
-    counterfactual_data: An instance of `tf.data.Dataset` containing only
-      examples that will be used to calculate the `counterfactual_loss`. This
-      dataset is repeated to match the number of examples in `original_input`.
-
   This function should be used to create an instance of
   `CounterfactualPackedInputs` that will be passed to
   `counterfactual.keras.CounterfactualModel` during training and, optionally,
@@ -71,43 +63,57 @@ def pack_counterfactual_data(
   length 1, 2 or 3 in the form `(x, y, sample_weight)`.
 
   Every batch from the returned `tf.data.Dataset` will contain one batch from
-  each of the input datasets as a `CounterfactualPackedInputs`. Each returned
-  batch will be a tuple from the original dataset and counterfactual dataset
-  of format `((x, y, sample_weight), (original_x, counterfactual_x,
+  each of the input datasets as a `CounterfactualPackedInputs`. Batch sizes for
+  `original_data` and `counterfactual_data` can be different. Each batch will
+  be a tuple from the original dataset and counterfactual dataset of format
+  `((x, y, sample_weight), (original_x, counterfactual_x,
   counterfactual_sample_weight))` matching the length of `original_input`
   batches where:
+    - `original_input`: is a `tf.data.Dataset` that contains:
+        - `x`: The `x` component taken directly from the `original_input` batch.
+        - `y`: The `y` component taken directly from the `original_input` batch.
+        - `sample_weight`: The `sample_weight` component taken directly from the
+            `original_input` batch.
+   - `counterfactual_data`: is a `tf.data.Dataset` that contains:
+       - `original_x`: The `x` component taken directly from the
+            `original_input` batch.
+       - `counterfactual_x`: The counterfactual value for `original_x`
+            (as described in `build_counterfactual_data`).
+       - `counterfactual_sample_weight`: The sample weight for this
+            counterfactual pair.
 
-  - `original_input`: is a `tf.data.Dataset` that contains:
-    - `x`: The `x` component taken directly from the `original_input` batch.
-    - `y`: The `y` component taken directly from the `original_input` batch.
-    - `sample_weight`: The `sample_weight` component taken directly from the
-      `original_input` batch.
+   For multi-objective training, where
+   `counterfactual.keras.CounterfactualModel.loss` is trained on multiple
+   losses, `counterfactual_data` must be dictionary with objectives as keys
+   (matching the ones specified in the loss) and batched `tf.data.dataset`
+   objects as values.
 
-  - `counterfactual_data`: is a `tf.data.Dataset` that contains:
-    - `original_x`: The `x` component taken directly from the
-        `original_input` batch.
-    - `counterfactual_x`: The counterfactual value for `original_x` (as
-         described in `build_counterfactual_data`).
-    - `counterfactual_sample_weight`: Batch of data formed from taken directly
-         from the `counterfactual_sample_weight` of `counterfactual_data`.
+   Note: the `original_x` does not need to be an `x` value within the original
+    dataset. Additionally, `counterfactual_dataset` should only include
+    instances of `x` values that have a difference `counterfactual_x`. It is
+    fine (and expected) within `counterfactual_data` to include duplicate rows
+    to match the shape of the original dataset.  The return of
+    `counterfactual_data` will be an instance of `CounterfactualPackedInputs`
+    that can be used in `counterfactual.keras.CounterfactualModel` when
+    calculating the `counterfactual_loss`.
 
-  Note: the `original_x` does not need to be an `x` value within the
-  original dataset. Additionally, `counterfactual_dataset` should only include
-  instances of `x` values that have a difference `counterfactual_x`. It is fine
-  (and expected) within `counterfactual_data` to include duplicate rows to
-  match the shape of the original dataset.
-
-  The return of `counterfactual_data` will be an instance of
-  `CounterfactualPackedInputs` that can be used in
-  `counterfactual.keras.CounterfactualModel` when calculating the
-  `counterfactual_loss`.
-
+  Arguments:
+    original_input: An instance of `tf.data.Dataset` that was used for training
+      the original model. The output should conform to the format used in
+      `tf.keras.Model.fit`. This should be a batched dataset.
+    counterfactual_data: An instance of `tf.data.Dataset` containing only
+      examples that will be used to calculate the `counterfactual_loss`. Users
+      should ensure that this dataset has enough batches to match the number of
+      batches in `original_input`. This should be a batched dataset.
   Returns:
     A `tf,data,Dataset` of `CounterfactualPackedInputs`. Each
     `CounterfactualPackedInputs` represents a
     `(original_inputs, counterfactual_data)` pair where `original_inputs is
     a `(x, y, sample_weight)` tuple, and `counterfactual_data` is a
     `(original_x, counterfactual_x, counterfactual_sample_weight)` tuple.
+    This packed dataset shouldn't be batched and all batching should be applied
+    directly to the `original_dataset` and `counterfactual_dataset`.
+
   """
   # Validate original_input and counterfactual_data structure.
   structure_utils.validate_counterfactual_structure(
@@ -119,15 +125,18 @@ def pack_counterfactual_data(
       struct_name="counterfactual_data",
       element_type=tf.data.Dataset)
 
-  tf.nest.assert_same_structure(
-      original_input, counterfactual_data)
+  flattened_cf_data = structure_utils._flatten_counterfactual_structure(
+      counterfactual_data)
 
-  dataset = tf.data.Dataset.zip((original_input, counterfactual_data.repeat()))
+  for cf_data in flattened_cf_data:
+    tf.nest.assert_same_structure(original_input, cf_data)
+
+  dataset = tf.data.Dataset.zip((original_input, counterfactual_data))
 
   def _map_fn(original_batch, counterfactual_batch):
     return CounterfactualPackedInputs(
-        original_input=original_batch,
-        counterfactual_data=counterfactual_batch)
+        original_input=original_batch, counterfactual_data=counterfactual_batch)
+
   return dataset.map(_map_fn)
 
 
@@ -135,7 +144,7 @@ def build_counterfactual_data(
     original_input: tf.data.Dataset,
     sensitive_terms_to_remove: Optional[List[str]] = None,
     custom_counterfactual_function: Optional[Callable[[Any], Any]] = None
-    ) -> tf.data.Dataset:
+) -> tf.data.Dataset:
   # pyformat: disable
   """Build Counterfactual dataset from a list sensitive terms or custom function.
 
@@ -216,8 +225,8 @@ def build_counterfactual_data(
       original_input,
       struct_name="original_input",
       element_type=tf.data.Dataset)
-  original_input = tf.nest.map_structure(
-      lambda dataset: dataset, original_input)
+  original_input = tf.nest.map_structure(lambda dataset: dataset,
+                                         original_input)
   counterfactual_data = tf.data.Dataset.zip((original_input,))
 
   def _create_counterfactual_data(original_batch):
