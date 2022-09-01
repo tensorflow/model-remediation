@@ -229,7 +229,7 @@ class CounterfactualModel(tf.keras.Model):
     """
     return self._original_model
 
-  def compute_total_loss(self, y, y_pred, sample_weight, cf_data):
+  def compute_total_loss(self, y, y_pred, sample_weight, cf_data, **kwargs):
     """Adds up main task loss and counterfactual loss to give total loss.
 
     Arguments:
@@ -240,6 +240,7 @@ class CounterfactualModel(tf.keras.Model):
       sample_weight: Weight for the examples for computing the main task loss.
       cf_data: Instance of `CounterfactualPackedInputs.counterfactual_data`.
         Counterfactual data used for computing the counterfactual loss.
+      **kwargs: Arguments passed to the model call.
 
     Returns:
       A tuple consisting of total loss, list of `counterfactual_loss` values
@@ -247,17 +248,18 @@ class CounterfactualModel(tf.keras.Model):
     """
     compiled_loss = self.compiled_loss(y, y_pred, sample_weight)
     total_loss = compiled_loss
-    counterfactual_losses = self.compute_counterfactual_loss(cf_data)
+    counterfactual_losses = self.compute_counterfactual_loss(cf_data, **kwargs)
 
     total_loss += sum(counterfactual_losses)
     return total_loss, counterfactual_losses, compiled_loss
 
-  def compute_counterfactual_loss(self, cf_data):
+  def compute_counterfactual_loss(self, cf_data, **kwargs):
     """Computes `counterfactual_loss`(es) corresponding to `counterfactual_data`.
 
     Arguments:
       cf_data: Instance of `CounterfactualPackedInputs.counterfactual_data`.
         Counterfactual data used for computing the counterfactual loss.
+      **kwargs: Arguments passed to the model call.
 
     Returns:
       List of `counterfactual_loss` values calculated
@@ -279,7 +281,8 @@ class CounterfactualModel(tf.keras.Model):
     ]
     return counterfactual_losses
 
-  def _compute_single_counterfactual_loss(self, cf_data, loss_fn, loss_weight):
+  def _compute_single_counterfactual_loss(self, cf_data, loss_fn, loss_weight,
+                                          **kwargs):
 
     """Computes a single `counterfactual_loss` given a loss, weight, and data.
 
@@ -288,8 +291,8 @@ class CounterfactualModel(tf.keras.Model):
     """
     x, cf_x, cf_sample_weight = (
         tf.keras.utils.unpack_x_y_sample_weight(cf_data))
-    original_predictions = self.original_model(x)
-    counterfactual_predictions = self.original_model(cf_x)
+    original_predictions = self.original_model(x, **kwargs)
+    counterfactual_predictions = self.original_model(cf_x, **kwargs)
     counterfactual_loss = loss_weight * loss_fn(
         original=original_predictions,
         counterfactual=counterfactual_predictions,
