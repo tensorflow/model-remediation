@@ -30,6 +30,8 @@ from tensorflow_model_remediation.experimental.fair_data_reweighting.utils impor
 from tensorflow_model_remediation.experimental.fair_data_reweighting.utils import infer_schema
 from tensorflow_model_remediation.experimental.fair_data_reweighting.utils import tf_dataset_to_tf_examples_list
 
+from google.protobuf import text_format
+
 
 class SamplerTest(tf.test.TestCase):
 
@@ -92,6 +94,37 @@ class SamplerTest(tf.test.TestCase):
                                    self.labels[0])
     flag = has_key(
         SliceKey("slice", "a"),
+        tf_example,
+        is_label_dependent=True,
+        dependent_label_value=1,
+        label_feature_column="label")
+    self.assertEqual(flag, False)
+
+  def testHasKeyWithEmptySliceFeature(self):
+    # create an input where `slice_with_empty_val` is a feature with no value.
+    tf_example = text_format.Parse(
+        """
+        features {
+          feature {
+            key: "label"
+            value {
+              int64_list {
+                value: 0
+              }
+            }
+          }
+          feature {
+            key: "slice_with_empty_val"
+            value {
+              bytes_list {
+              }
+            }
+          }
+        }
+        """, tf.train.Example())
+
+    flag = has_key(
+        SliceKey("slice_with_empty_val", "a"),
         tf_example,
         is_label_dependent=True,
         dependent_label_value=1,

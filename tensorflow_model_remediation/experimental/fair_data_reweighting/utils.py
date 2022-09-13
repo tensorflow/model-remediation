@@ -16,7 +16,7 @@
 """Util functions for the FDW algorithm."""
 
 import math
-from typing import Any, Dict, Union, List, Iterator
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 import apache_beam as beam
 import tensorflow as tf
@@ -24,19 +24,20 @@ from tensorflow_model_remediation.experimental.fair_data_reweighting.datatypes i
 from tensorflow_model_remediation.experimental.fair_data_reweighting.datatypes import SliceKey
 
 
-def get_first_value(example: tf.train.Example, feature_name: str):
-  """Returns the value of the given feature_name in a given tf.train.Example."""
+def get_first_value(example: tf.train.Example,
+                    feature_name: str) -> Optional[Union[str, int, float]]:
+  """Returns the first value of `feature_name` in `example`, or None if not found."""
 
   bundle = example.features.feature[feature_name]
 
-  if bundle.HasField('bytes_list'):
+  if bundle.HasField('bytes_list') and bundle.bytes_list.value:
     return bundle.bytes_list.value[0].decode('utf-8')
-  elif bundle.HasField('float_list'):
+  elif bundle.HasField('float_list') and bundle.float_list.value:
     return bundle.float_list.value[0]
-  elif bundle.HasField('int64_list'):
+  elif bundle.HasField('int64_list') and bundle.int64_list.value:
     return bundle.int64_list.value[0]
   else:
-    raise ValueError('No value found in example')
+    return None
 
 
 def has_key(slice_key: SliceKey, example: tf.train.Example,
