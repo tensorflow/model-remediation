@@ -86,10 +86,7 @@ class CounterfactualLoss(tf.keras.losses.Loss, abc.ABC):
         raise ValueError(
             'Incompatible shape {} vs {}|Dimensions must be equal.'.format(
                 original.shape.as_list(), counterfactual.shape.as_list()))
-      loss = tf.cond(
-          tf.equal(tf.size(original),
-                   0), lambda: tf.constant(0.0, dtype=tf.dtypes.float32),
-          lambda: self._calculate_loss(original, counterfactual, sample_weight))
+      loss = self._calculate_loss(original, counterfactual, sample_weight)
       tf.summary.scalar('counterfactual_loss', loss)
       return loss
 

@@ -128,8 +128,9 @@ class PairwiseMSELossTest(tf.test.TestCase):
   def testEmptyInput(self):
     loss_obj = pairwise_mse_loss.PairwiseMSELoss()
 
-    self.assertAlmostEqual(
-        self.evaluate(loss_obj(tf.constant([]), tf.constant([]))), 0)
+    self.assertTrue(
+        self.evaluate(
+            tf.math.is_nan(loss_obj(tf.constant([]), tf.constant([])))))
 
   def testMismatchedSampleWeightShape(self):
     loss_obj = pairwise_mse_loss.PairwiseMSELoss()
