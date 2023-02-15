@@ -1155,8 +1155,10 @@ class MinDiffModelTest(tf.test.TestCase):
         loss_weight=loss_weight,
         name=model_name)
 
-    serialized_model = tf.keras.utils.serialize_keras_object(model)
-    deserialized_model = tf.keras.layers.deserialize(serialized_model)
+    serialized_model = utils.serialize_keras_object(model)
+    deserialized_model = utils.deserialize_layer(
+        serialized_model, use_legacy_format=True
+    )
 
     self.assertIsInstance(deserialized_model, min_diff_model.MinDiffModel)
     self.assertIsNone(deserialized_model._predictions_transform)
@@ -1177,8 +1179,10 @@ class MinDiffModelTest(tf.test.TestCase):
     model = min_diff_model.MinDiffModel(
         original_model, loss, loss_weight, name=model_name)
 
-    serialized_model = tf.keras.utils.serialize_keras_object(model)
-    deserialized_model = tf.keras.layers.deserialize(serialized_model)
+    serialized_model = utils.serialize_keras_object(model)
+    deserialized_model = utils.deserialize_layer(
+        serialized_model, use_legacy_format=True
+    )
 
     self.assertIsInstance(deserialized_model, min_diff_model.MinDiffModel)
     self.assertIsNone(deserialized_model._predictions_transform)
@@ -1202,8 +1206,10 @@ class MinDiffModelTest(tf.test.TestCase):
         predictions_transform=predictions_fn,
         name=model_name)
 
-    serialized_model = tf.keras.utils.serialize_keras_object(model)
-    deserialized_model = tf.keras.layers.deserialize(serialized_model)
+    serialized_model = utils.serialize_keras_object(model)
+    deserialized_model = utils.deserialize_layer(
+        serialized_model, use_legacy_format=True
+    )
 
     self.assertIsInstance(deserialized_model, min_diff_model.MinDiffModel)
     val = 7  # Arbitrary value.

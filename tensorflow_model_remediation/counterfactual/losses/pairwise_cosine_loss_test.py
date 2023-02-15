@@ -17,6 +17,7 @@
 
 import tensorflow as tf
 
+from tensorflow_model_remediation.counterfactual.losses import loss_utils as utils
 from tensorflow_model_remediation.counterfactual.losses import pairwise_cosine_loss
 
 
@@ -128,8 +129,8 @@ class PairwiseCosineLossTest(tf.test.TestCase):
     original = tf.constant([[1.0, 9.0], [2.0, -5.0], [-2.0, 6.0]])
     counterfactual = tf.constant([[4.0, 8.0], [12.0, 8.0], [1.0, 3.0]])
 
-    serialized = tf.keras.utils.serialize_keras_object(loss)
-    deserialized = tf.keras.utils.deserialize_keras_object(serialized)
+    serialized = utils.serialize_keras_object(loss)
+    deserialized = utils.deserialize_keras_object(serialized)
     original_output = loss(original, counterfactual)
     deserialized_output = deserialized(original, counterfactual)
 

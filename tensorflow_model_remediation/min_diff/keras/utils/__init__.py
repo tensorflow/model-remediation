@@ -21,4 +21,7 @@ from tensorflow_model_remediation.min_diff.keras.utils.input_utils import pack_m
 from tensorflow_model_remediation.min_diff.keras.utils.input_utils import unpack_min_diff_data
 from tensorflow_model_remediation.min_diff.keras.utils.input_utils import unpack_original_inputs
 
+from tensorflow_model_remediation.min_diff.keras.utils.structure_utils import deserialize_keras_object
+from tensorflow_model_remediation.min_diff.keras.utils.structure_utils import deserialize_layer
+from tensorflow_model_remediation.min_diff.keras.utils.structure_utils import serialize_keras_object
 from tensorflow_model_remediation.min_diff.keras.utils.structure_utils import validate_min_diff_structure

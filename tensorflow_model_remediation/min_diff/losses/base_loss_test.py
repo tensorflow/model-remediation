@@ -17,6 +17,7 @@
 
 import tensorflow as tf
 
+from tensorflow_model_remediation.min_diff.keras import utils
 from tensorflow_model_remediation.min_diff.losses import base_loss
 from tensorflow_model_remediation.min_diff.losses.kernels import base_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
@@ -231,8 +232,8 @@ class MinDiffLossTest(tf.test.TestCase):
 
   def testSerialization(self):
     loss = CustomLoss()
-    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
-    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+    serialized_loss = utils.serialize_keras_object(loss)
+    deserialized_loss = utils.deserialize_keras_object(serialized_loss)
 
     self.assertIsInstance(deserialized_loss, CustomLoss)
     self.assertIsNone(deserialized_loss.membership_transform)
@@ -250,8 +251,8 @@ class MinDiffLossTest(tf.test.TestCase):
         membership_kernel='gaussian',
         predictions_transform=predictions_fn,
         predictions_kernel='laplacian')
-    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
-    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+    serialized_loss = utils.serialize_keras_object(loss)
+    deserialized_loss = utils.deserialize_keras_object(serialized_loss)
 
     self.assertIsInstance(deserialized_loss, CustomLoss)
     val = 7  # Arbitrary value.

@@ -16,9 +16,9 @@
 """Tests for counterfactual_model."""
 
 import copy
+import inspect
 import os
 import tempfile
-
 from unittest import mock
 
 import tensorflow as tf
@@ -39,6 +39,25 @@ def get_original_model():
 
   model = tf.keras.Sequential([SumLayer(input_shape=(3,))])
   return model
+
+
+def serialize_keras_object(obj):
+  if hasattr(tf.keras.utils, "legacy"):
+    return tf.keras.utils.legacy.serialize_keras_object(obj)
+  else:
+    return tf.keras.utils.serialize_keras_object(obj)
+
+
+def deserialize_layer(config, use_legacy_format=False):
+  if (
+      "use_legacy_format"
+      in inspect.getfullargspec(tf.keras.layers.deserialize).args
+  ):
+    return tf.keras.layers.deserialize(
+        config, use_legacy_format=use_legacy_format
+    )
+  else:
+    return tf.keras.layers.deserialize(config)
 
 
 class BatchCounterCallback(tf.keras.callbacks.Callback):
@@ -623,8 +642,10 @@ class CounterfactualModelTest(tf.test.TestCase):
         loss_weight=loss_weight,
         name=model_name)
 
-    serialized_model = tf.keras.utils.serialize_keras_object(cf_model)
-    deserialized_model = tf.keras.layers.deserialize(serialized_model)
+    serialized_model = serialize_keras_object(cf_model)
+    deserialized_model = deserialize_layer(
+        serialized_model, use_legacy_format=True
+    )
 
     self.assertIsInstance(deserialized_model,
                           counterfactual_model.CounterfactualModel)
@@ -647,8 +668,10 @@ class CounterfactualModelTest(tf.test.TestCase):
     cf_model = counterfactual_model.CounterfactualModel(
         original_model, loss, loss_weight, name=model_name)
 
-    serialized_model = tf.keras.utils.serialize_keras_object(cf_model)
-    deserialized_model = tf.keras.layers.deserialize(serialized_model)
+    serialized_model = serialize_keras_object(cf_model)
+    deserialized_model = deserialize_layer(
+        serialized_model, use_legacy_format=True
+    )
 
     self.assertIsInstance(deserialized_model,
                           counterfactual_model.CounterfactualModel)

@@ -17,12 +17,33 @@
 
 from typing import Union
 
+import tensorflow as tf
 from tensorflow_model_remediation.counterfactual.losses import base_loss
 from tensorflow_model_remediation.counterfactual.losses import pairwise_absolute_difference_loss
 from tensorflow_model_remediation.counterfactual.losses import pairwise_cosine_loss
 from tensorflow_model_remediation.counterfactual.losses import pairwise_mse_loss
 
 _STRING_TO_LOSS_DICT = {}
+
+
+def serialize_keras_object(obj):
+  if hasattr(tf.keras.utils, 'legacy'):
+    return tf.keras.utils.legacy.serialize_keras_object(obj)
+  else:
+    return tf.keras.utils.serialize_keras_object(obj)
+
+
+def deserialize_keras_object(
+    config, module_objects=None, custom_objects=None, printable_module_name=None
+):
+  if hasattr(tf.keras.utils, 'legacy'):
+    return tf.keras.utils.legacy.deserialize_keras_object(
+        config, custom_objects, module_objects, printable_module_name
+    )
+  else:
+    return tf.keras.utils.deserialize_keras_object(
+        config, custom_objects, module_objects, printable_module_name
+    )
 
 
 def _register_loss_names(loss_class, names):

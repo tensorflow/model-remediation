@@ -20,6 +20,7 @@ that tuples are considered single elements rather than structs that can be
 unpacked.
 """
 
+import inspect
 import tensorflow as tf
 
 
@@ -234,3 +235,35 @@ def validate_min_diff_structure(struct,
     if element_type is not None:
       err_msg += " and contain only elements of type {}".format(element_type)
     raise ValueError("{}. Given: {}".format(err_msg, struct))
+
+
+def serialize_keras_object(obj):
+  if hasattr(tf.keras.utils, "legacy"):
+    return tf.keras.utils.legacy.serialize_keras_object(obj)
+  else:
+    return tf.keras.utils.serialize_keras_object(obj)
+
+
+def deserialize_keras_object(
+    config, module_objects=None, custom_objects=None, printable_module_name=None
+):
+  if hasattr(tf.keras.utils, "legacy"):
+    return tf.keras.utils.legacy.deserialize_keras_object(
+        config, custom_objects, module_objects, printable_module_name
+    )
+  else:
+    return tf.keras.utils.deserialize_keras_object(
+        config, custom_objects, module_objects, printable_module_name
+    )
+
+
+def deserialize_layer(config, use_legacy_format=False):
+  if (
+      "use_legacy_format"
+      in inspect.getfullargspec(tf.keras.layers.deserialize).args
+  ):
+    return tf.keras.layers.deserialize(
+        config, use_legacy_format=use_legacy_format
+    )
+  else:
+    return tf.keras.layers.deserialize(config)

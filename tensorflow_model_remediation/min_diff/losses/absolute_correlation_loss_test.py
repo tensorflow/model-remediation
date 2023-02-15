@@ -17,6 +17,7 @@
 
 import tensorflow as tf
 
+from tensorflow_model_remediation.min_diff.keras import utils
 from tensorflow_model_remediation.min_diff.losses import absolute_correlation_loss as loss_lib
 
 
@@ -145,9 +146,9 @@ class AbsoluteCorrelationLossTest(tf.test.TestCase):
 
   def testSerialization(self):
     loss = loss_lib.AbsoluteCorrelationLoss(name='custom_name')
-    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
+    serialized_loss = utils.serialize_keras_object(loss)
 
-    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+    deserialized_loss = utils.deserialize_keras_object(serialized_loss)
     self.assertIsInstance(deserialized_loss, loss_lib.AbsoluteCorrelationLoss)
     self.assertEqual(deserialized_loss.name, loss.name)
 

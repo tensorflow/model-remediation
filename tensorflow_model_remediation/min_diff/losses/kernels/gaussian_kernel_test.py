@@ -17,6 +17,7 @@
 
 import tensorflow as tf
 
+from tensorflow_model_remediation.min_diff.keras import utils
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 
 
@@ -89,10 +90,9 @@ class GaussianKernelTest(tf.test.TestCase):
     kernel_length = 5  # Arbitrary value.
     kernel = gaussian_kernel.GaussianKernel(kernel_length)
 
-    serialized_kernel = tf.keras.utils.serialize_keras_object(kernel)
+    serialized_kernel = utils.serialize_keras_object(kernel)
 
-    deserialized_kernel = tf.keras.utils.deserialize_keras_object(
-        serialized_kernel)
+    deserialized_kernel = utils.deserialize_keras_object(serialized_kernel)
     self.assertIsInstance(deserialized_kernel, gaussian_kernel.GaussianKernel)
     self.assertEqual(deserialized_kernel.kernel_length, kernel_length)
 

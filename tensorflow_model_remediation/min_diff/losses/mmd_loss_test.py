@@ -17,6 +17,7 @@
 
 import tensorflow as tf
 
+from tensorflow_model_remediation.min_diff.keras import utils
 from tensorflow_model_remediation.min_diff.losses import mmd_loss as mmd_lib
 from tensorflow_model_remediation.min_diff.losses.kernels import gaussian_kernel
 from tensorflow_model_remediation.min_diff.losses.kernels import laplacian_kernel
@@ -263,8 +264,10 @@ class MMDLossTest(tf.test.TestCase):
 
   def testSerialization(self):
     loss = mmd_lib.MMDLoss()
-    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
-    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+    serialized_loss = utils.serialize_keras_object(loss)
+    deserialized_loss = utils.deserialize_keras_object(
+        serialized_loss
+    )
 
     self.assertIsInstance(deserialized_loss, mmd_lib.MMDLoss)
     self.assertIsNone(deserialized_loss.predictions_transform)
@@ -277,8 +280,10 @@ class MMDLossTest(tf.test.TestCase):
 
     loss = mmd_lib.MMDLoss(
         predictions_transform=predictions_fn, kernel="laplacian")
-    serialized_loss = tf.keras.utils.serialize_keras_object(loss)
-    deserialized_loss = tf.keras.utils.deserialize_keras_object(serialized_loss)
+    serialized_loss = utils.serialize_keras_object(loss)
+    deserialized_loss = utils.deserialize_keras_object(
+        serialized_loss
+    )
 
     self.assertIsInstance(deserialized_loss, mmd_lib.MMDLoss)
     val = 7  # Arbitrary value.
