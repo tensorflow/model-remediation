@@ -20,14 +20,13 @@ import random
 from typing import Dict, Iterator
 
 import apache_beam as beam
-import numpy as np
 import tensorflow as tf
 from tensorflow_model_remediation.experimental.fair_data_reweighting.datatypes import MetricByFeatureSlice
 from tensorflow_model_remediation.experimental.fair_data_reweighting.datatypes import SliceKey
 from tensorflow_model_remediation.experimental.fair_data_reweighting.utils import has_key
 
 
-def _get_random_number() -> np.random.Generator:
+def _get_random_number() -> float:
   """Returns a default random number generator."""
   return random.uniform(0, 1.0)
 
